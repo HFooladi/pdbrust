@@ -2,9 +2,38 @@
 name = "pdbrust"
 version = "0.1.0"
 edition = "2021"
-authors = ["Hosein Fooladi <fooladi.hosein@gmail.com>"]
-description = "A Rust library for parsing PDB (Protein Data Bank) files"
+authors = ["Your Name <your.email@example.com>"]
+description = "A comprehensive Rust library for parsing and analyzing Protein Data Bank (PDB) files"
+documentation = "https://docs.rs/pdbrust"
+repository = "https://github.com/yourusername/pdbrust"
 license = "MIT"
+keywords = ["bioinformatics", "protein", "pdb", "structural-biology", "chemistry"]
+categories = ["science", "parser-implementations"]
+readme = "README.md"
 
 [dependencies]
 thiserror = "1.0"
+rayon = { version = "1.8", optional = true }
+nalgebra = { version = "0.32", optional = true }
+itertools = "0.12"
+
+[dev-dependencies]
+criterion = "0.5"
+proptest = "1.4"
+tempfile = "3.9"
+
+[features]
+default = []
+parallel = ["rayon"]
+geometry = ["nalgebra"]
+
+[package.metadata]
+msrv = "1.70.0"  # Minimum Supported Rust Version
+
+[[bench]]
+name = "parsing_benchmark"
+harness = false
+
+[lib]
+name = "pdbrust"
+path = "src/lib.rs"
