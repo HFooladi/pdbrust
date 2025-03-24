@@ -1,88 +1,205 @@
+//! PDBRust: A Rust library for parsing and analyzing Protein Data Bank (PDB) files
+//! 
+//! This library provides a robust and efficient way to work with PDB files, supporting various record
+//! types including ATOM, SEQRES, CONECT, SSBOND, and more. It offers functionality for structural
+//! analysis, sequence information retrieval, and connectivity analysis of molecular structures.
+//!
+//! For detailed documentation, examples, and best practices, see the [guide](guide) module.
+//!
+//! # Features
+//!
+//! - Parse PDB files with comprehensive error handling
+//! - Support for multiple models in a single structure
+//! - Chain and residue analysis
+//! - Connectivity information through CONECT records
+//! - Sequence information through SEQRES records
+//! - Support for disulfide bonds through SSBOND records
+//! - Remark handling for additional structural information
+//!
+//! # Example
+//!
+//! ```rust
+//! use pdbrust::PdbStructure;
+//!
+//! fn main() -> Result<(), Box<dyn std::error::Error>> {
+//!     let structure = PdbStructure::from_file("example.pdb")?;
+//!     
+//!     // Get all chain IDs in the structure
+//!     let chains = structure.get_chain_ids();
+//!     
+//!     // Get sequence for a specific chain
+//!     if let Some(chain_id) = chains.first() {
+//!         let sequence = structure.get_sequence(chain_id);
+//!         println!("Sequence for chain {}: {:?}", chain_id, sequence);
+//!     }
+//!     
+//!     Ok(())
+//! }
+//! ```
+
+/// Documentation and usage guide
+pub mod guide;
+
 use std::fs::File;
 use std::io::{self, BufRead, BufReader};
 use std::path::Path;
 use thiserror::Error;
 
+/// Represents errors that can occur during PDB file parsing and analysis.
 #[derive(Debug, Error)]
 pub enum PdbError {
+    /// Represents I/O errors that occur when reading PDB files.
     #[error("IO error: {0}")]
     Io(#[from] io::Error),
+    
+    /// Indicates that a record in the PDB file has an invalid format.
     #[error("Invalid record format: {0}")]
     InvalidRecord(String),
+    
+    /// Represents general parsing errors that occur during data extraction.
     #[error("Parse error: {0}")]
     ParseError(String),
 }
 
+/// Represents an atom record from a PDB file.
+///
+/// Contains all standard PDB ATOM record fields including position,
+/// identification, and thermal factor information.
 #[derive(Debug, Clone)]
 pub struct Atom {
+    /// Atom serial number.
     pub serial: i32,
+    /// Atom name.
     pub name: String,
+    /// Alternate location indicator (if any).
     pub alt_loc: Option<char>,
+    /// Residue name.
     pub residue_name: String,
+    /// Chain identifier.
     pub chain_id: String,
+    /// Residue sequence number.
     pub residue_seq: i32,
+    /// X coordinate in Angstroms.
     pub x: f64,
+    /// Y coordinate in Angstroms.
     pub y: f64,
+    /// Z coordinate in Angstroms.
     pub z: f64,
+    /// Occupancy.
     pub occupancy: f64,
+    /// Temperature factor.
     pub temp_factor: f64,
+    /// Element symbol.
     pub element: String,
 }
 
+/// Represents a SEQRES record from a PDB file.
+///
+/// Contains sequence information for a specific chain in the structure.
 #[derive(Debug, Clone)]
 pub struct SeqRes {
+    /// Serial number of the SEQRES record.
     pub serial: i32,
+    /// Chain identifier.
     pub chain_id: String,
+    /// Number of residues in the sequence.
     pub num_residues: i32,
+    /// List of residue names in the sequence.
     pub residues: Vec<String>,
 }
 
+/// Represents a CONECT record from a PDB file.
+///
+/// Specifies connectivity between atoms in the structure.
 #[derive(Debug, Clone)]
 pub struct Conect {
+    /// Serial number of the central atom.
     pub atom_serial: i32,
+    /// Serial numbers of atoms bonded to the central atom.
     pub bonded_atoms: Vec<i32>,
 }
 
+/// Represents an SSBOND record from a PDB file.
+///
+/// Describes disulfide bonds between pairs of cysteine residues.
 #[derive(Debug, Clone)]
 pub struct SSBond {
+    /// Serial number of the SSBOND record.
     pub serial: i32,
+    /// Name of the first residue.
     pub residue1_name: String,
+    /// Chain identifier for the first residue.
     pub chain1_id: String,
+    /// Sequence number of the first residue.
     pub residue1_seq: i32,
+    /// Name of the second residue.
     pub residue2_name: String,
+    /// Chain identifier for the second residue.
     pub chain2_id: String,
+    /// Sequence number of the second residue.
     pub residue2_seq: i32,
+    /// Distance between the two sulfur atoms (if available).
     pub distance: Option<f64>,
 }
 
+/// Represents a REMARK record from a PDB file.
+///
+/// Contains additional information about the structure.
 #[derive(Debug, Clone)]
 pub struct Remark {
+    /// Remark number identifying the type of information.
     pub number: i32,
+    /// Content of the remark.
     pub content: String,
 }
 
+/// Represents a MODEL record from a PDB file.
+///
+/// Contains atoms and remarks specific to one model in a multi-model structure.
 #[derive(Debug, Clone)]
 pub struct Model {
+    /// Serial number of the model.
     pub serial: i32,
+    /// List of atoms in the model.
     pub atoms: Vec<Atom>,
+    /// List of remarks specific to this model.
     pub remarks: Vec<Remark>,
 }
 
+/// Main structure representing a PDB file.
+///
+/// This structure contains all the information parsed from a PDB file,
+/// including atomic coordinates, sequence information, connectivity,
+/// and other structural features.
 #[derive(Debug, Default)]
 pub struct PdbStructure {
+    /// List of all atoms in the structure.
     pub atoms: Vec<Atom>,
+    /// Header information from the PDB file.
     pub header: Option<String>,
+    /// Title of the structure.
     pub title: Option<String>,
+    /// Sequence information from SEQRES records.
     pub seqres: Vec<SeqRes>,
+    /// Connectivity information from CONECT records.
     pub connects: Vec<Conect>,
+    /// Disulfide bond information from SSBOND records.
     pub ssbonds: Vec<SSBond>,
+    /// Additional information from REMARK records.
     pub remarks: Vec<Remark>,
+    /// List of models in case of multi-model structures.
     pub models: Vec<Model>,
+    /// Currently active model number (if any).
     pub current_model: Option<i32>,
 }
 
 
 impl PdbStructure {
+    /// Creates a new empty PDB structure.
+    ///
+    /// # Returns
+    ///
+    /// Returns a new `PdbStructure` instance with all fields initialized to their default empty values.
     pub fn new() -> Self {
         Self {
             atoms: Vec::new(),
@@ -97,6 +214,24 @@ impl PdbStructure {
         }
     }
 
+    /// Reads and parses a PDB file from the specified path.
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - Path to the PDB file to read
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` containing either the parsed `PdbStructure` or a `PdbError`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use pdbrust::PdbStructure;
+    ///
+    /// let structure = PdbStructure::from_file("example.pdb")?;
+    /// println!("Number of atoms: {}", structure.atoms.len());
+    /// ```
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, PdbError> {
         let file = File::open(path)?;
         let reader = BufReader::new(file);
@@ -151,6 +286,23 @@ impl PdbStructure {
         Ok(structure)
     }
 
+    /// Parses an ATOM record from a PDB file line.
+    ///
+    /// This method extracts all relevant information from an ATOM record line
+    /// according to the PDB file format specification.
+    ///
+    /// # Arguments
+    ///
+    /// * `line` - A string slice containing the ATOM record line
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` containing either the parsed `Atom` or a `PdbError`.
+    ///
+    /// # Errors
+    ///
+    /// Returns `PdbError::InvalidRecord` if the line format is invalid or
+    /// `PdbError::ParseError` if numeric values cannot be parsed.
     fn parse_atom_record(line: &str) -> Result<Atom, PdbError> {
         if line.len() < 66 {
             return Err(PdbError::InvalidRecord(
@@ -225,6 +377,21 @@ impl PdbStructure {
         })
     }
 
+    /// Parses a MODEL record from a PDB file line.
+    ///
+    /// # Arguments
+    ///
+    /// * `line` - A string slice containing the MODEL record line
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` containing either the parsed model serial number
+    /// or a `PdbError`.
+    ///
+    /// # Errors
+    ///
+    /// Returns `PdbError::InvalidRecord` if the line format is invalid or
+    /// `PdbError::ParseError` if the model number cannot be parsed.
     fn parse_model_record(line: &str) -> Result<i32, PdbError> {
         if line.len() < 14 {
             return Err(PdbError::InvalidRecord(
@@ -238,6 +405,23 @@ impl PdbStructure {
             .map_err(|_| PdbError::ParseError("Invalid model serial number".to_string()))
     }
 
+    /// Parses a SEQRES record from a PDB file line.
+    ///
+    /// This method extracts sequence information including chain ID,
+    /// residue count, and residue names from a SEQRES record.
+    ///
+    /// # Arguments
+    ///
+    /// * `line` - A string slice containing the SEQRES record line
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` containing either the parsed `SeqRes` or a `PdbError`.
+    ///
+    /// # Errors
+    ///
+    /// Returns `PdbError::InvalidRecord` if the line format is invalid or
+    /// `PdbError::ParseError` if numeric values cannot be parsed.
     fn parse_seqres_record(line: &str) -> Result<SeqRes, PdbError> {
         if line.len() < 70 {
             return Err(PdbError::InvalidRecord(
@@ -245,24 +429,29 @@ impl PdbStructure {
             ));
         }
 
-        let parts: Vec<&str> = line.split_whitespace().collect();
-        if parts.len() < 4 {
-            return Err(PdbError::InvalidRecord(
-                "SEQRES record must have at least serial, chain ID, and number of residues".to_string(),
-            ));
-        }
-
-        let serial = parts[1]
+        let serial = line[7..10]
+            .trim()
             .parse()
             .map_err(|_| PdbError::ParseError("Invalid SEQRES serial number".to_string()))?;
 
-        let chain_id = parts[2].to_string();
+        let chain_id = line[11..12].trim().to_string();
         
-        let num_residues = parts[3]
+        let num_residues = line[13..17]
+            .trim()
             .parse()
             .map_err(|_| PdbError::ParseError("Invalid number of residues".to_string()))?;
 
-        let residues = parts[4..].iter().map(|s| s.to_string()).collect();
+        // Residues start at position 19 and each residue name is 4 characters wide
+        let residue_section = &line[19..];
+        let mut residues = Vec::new();
+        let mut pos = 0;
+        while pos + 4 <= residue_section.len() {
+            let residue = residue_section[pos..pos+4].trim();
+            if !residue.is_empty() {
+                residues.push(residue.to_string());
+            }
+            pos += 4;
+        }
 
         Ok(SeqRes {
             serial,
@@ -272,6 +461,23 @@ impl PdbStructure {
         })
     }
 
+    /// Parses a CONECT record from a PDB file line.
+    ///
+    /// This method extracts connectivity information between atoms,
+    /// including the central atom and all atoms bonded to it.
+    ///
+    /// # Arguments
+    ///
+    /// * `line` - A string slice containing the CONECT record line
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` containing either the parsed `Conect` or a `PdbError`.
+    ///
+    /// # Errors
+    ///
+    /// Returns `PdbError::InvalidRecord` if the line format is invalid or
+    /// `PdbError::ParseError` if atom serial numbers cannot be parsed.
     fn parse_conect_record(line: &str) -> Result<Conect, PdbError> {
         if line.len() < 11 {
             return Err(PdbError::InvalidRecord(
@@ -301,8 +507,26 @@ impl PdbStructure {
         })
     }
 
+    /// Parses an SSBOND record from a PDB file line.
+    ///
+    /// This method extracts information about disulfide bonds between
+    /// cysteine residues, including residue names, chain IDs, and
+    /// sequence numbers.
+    ///
+    /// # Arguments
+    ///
+    /// * `line` - A string slice containing the SSBOND record line
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` containing either the parsed `SSBond` or a `PdbError`.
+    ///
+    /// # Errors
+    ///
+    /// Returns `PdbError::InvalidRecord` if the line format is invalid or
+    /// `PdbError::ParseError` if numeric values cannot be parsed.
     fn parse_ssbond_record(line: &str) -> Result<SSBond, PdbError> {
-        if line.len() < 38 {
+        if line.len() < 70 {
             return Err(PdbError::InvalidRecord(
                 "SSBOND record line too short".to_string(),
             ));
@@ -329,11 +553,15 @@ impl PdbStructure {
             .parse()
             .map_err(|_| PdbError::ParseError("Invalid second residue sequence number".to_string()))?;
             
-        // Try to find the distance value by looking for a number at the end of the line
-        let distance = line[35..]
-            .split_whitespace()
-            .filter_map(|s| s.parse::<f64>().ok())
-            .next();
+        // Distance is in columns 73-78
+        let distance = if line.len() >= 78 {
+            line[72..78]
+                .trim()
+                .parse()
+                .ok()
+        } else {
+            None
+        };
 
         Ok(SSBond {
             serial,
@@ -347,6 +575,22 @@ impl PdbStructure {
         })
     }
 
+    /// Parses a REMARK record from a PDB file line.
+    ///
+    /// This method extracts the remark number and content from a REMARK record.
+    ///
+    /// # Arguments
+    ///
+    /// * `line` - A string slice containing the REMARK record line
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` containing either the parsed `Remark` or a `PdbError`.
+    ///
+    /// # Errors
+    ///
+    /// Returns `PdbError::InvalidRecord` if the line format is invalid or
+    /// `PdbError::ParseError` if the remark number cannot be parsed.
     fn parse_remark_record(line: &str) -> Result<Remark, PdbError> {
         if line.len() < 11 {
             return Err(PdbError::InvalidRecord(
@@ -366,7 +610,21 @@ impl PdbStructure {
         Ok(Remark { number, content })
     }
 
-    /// Get all unique chain IDs in the structure
+    /// Returns a list of all unique chain identifiers in the structure.
+    ///
+    /// This method collects chain IDs from both ATOM records and SEQRES records
+    /// to ensure complete coverage of all chains in the structure.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Vec<String>` containing unique chain identifiers.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// let chains = structure.get_chain_ids();
+    /// println!("Structure contains chains: {:?}", chains);
+    /// ```
     pub fn get_chain_ids(&self) -> Vec<String> {
         let mut chain_ids: Vec<String> = self.atoms
             .iter()
@@ -377,7 +635,25 @@ impl PdbStructure {
         chain_ids
     }
 
-    /// Get all residues for a specific chain
+    /// Gets all residues for a specific chain.
+    ///
+    /// # Arguments
+    ///
+    /// * `chain_id` - The chain identifier to get residues for
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Vec` of tuples containing residue sequence numbers and names
+    /// for the specified chain.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// let residues = structure.get_residues_for_chain("A");
+    /// for (seq, name) in residues {
+    ///     println!("Residue {} at position {}", name, seq);
+    /// }
+    /// ```
     pub fn get_residues_for_chain(&self, chain_id: &str) -> Vec<(i32, String)> {
         let mut residues: Vec<(i32, String)> = self.atoms
             .iter()
@@ -389,7 +665,23 @@ impl PdbStructure {
         residues
     }
 
-    /// Get sequence for a specific chain from SEQRES records
+    /// Gets the amino acid sequence for a specific chain from SEQRES records.
+    ///
+    /// # Arguments
+    ///
+    /// * `chain_id` - The chain identifier to get the sequence for
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Vec<String>` containing the sequence of residue names
+    /// for the specified chain.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// let sequence = structure.get_sequence("A");
+    /// println!("Chain A sequence: {:?}", sequence);
+    /// ```
     pub fn get_sequence(&self, chain_id: &str) -> Vec<String> {
         self.seqres
             .iter()
@@ -398,7 +690,24 @@ impl PdbStructure {
             .collect()
     }
 
-    /// Get all remarks with a specific number
+    /// Gets all remarks with a specific remark number.
+    ///
+    /// # Arguments
+    ///
+    /// * `number` - The remark number to filter by
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Vec` of references to `Remark` structs matching the specified number.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// let resolution_remarks = structure.get_remarks_by_number(2);
+    /// for remark in resolution_remarks {
+    ///     println!("Resolution info: {}", remark.content);
+    /// }
+    /// ```
     pub fn get_remarks_by_number(&self, number: i32) -> Vec<&Remark> {
         self.remarks
             .iter()
@@ -406,7 +715,26 @@ impl PdbStructure {
             .collect()
     }
 
-    /// Get all atoms connected to a specific atom
+    /// Gets all atoms that are connected to a specific atom.
+    ///
+    /// # Arguments
+    ///
+    /// * `atom_serial` - The serial number of the atom to find connections for
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Vec` of references to `Atom` structs that are connected
+    /// to the specified atom according to CONECT records.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// let connected_atoms = structure.get_connected_atoms(1);
+    /// for atom in connected_atoms {
+    ///     println!("Connected to atom {} at ({}, {}, {})",
+    ///              atom.serial, atom.x, atom.y, atom.z);
+    /// }
+    /// ```
     pub fn get_connected_atoms(&self, atom_serial: i32) -> Vec<&Atom> {
         // First find all atoms that are connected to this atom
         let connected_serials: Vec<i32> = self.connects
