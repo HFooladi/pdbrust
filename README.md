@@ -1,5 +1,9 @@
 # PDBRust
 
+[![Rust CI/CD](https://github.com/[username]/pdbrust/actions/workflows/rust.yml/badge.svg)](https://github.com/[username]/pdbrust/actions/workflows/rust.yml)
+[![codecov](https://codecov.io/gh/[username]/pdbrust/branch/main/graph/badge.svg)](https://codecov.io/gh/[username]/pdbrust)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 A comprehensive Rust library for parsing and analyzing PDB (Protein Data Bank) files. This library provides a robust and efficient way to work with protein structure data in PDB format.
 
 ## Features
