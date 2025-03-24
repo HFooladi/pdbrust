@@ -40,6 +40,7 @@ fn test_parse_single_atom() {
     assert!((atom.occupancy - 1.00).abs() < 1e-6);
     assert!((atom.temp_factor - 39.29).abs() < 1e-6);
     assert_eq!(&atom.element, "N");
+    assert_eq!(atom.ins_code, None);
 }
 
 #[test]

@@ -22,7 +22,7 @@ fn generate_atom_record(
     z: f64,
 ) -> String {
     format!(
-        "ATOM  {:5} {:4} {:3} {:1}{:4}    {:8.3}{:8.3}{:8.3}  1.00  0.00           {:>2}  ",
+        "ATOM  {:5} {:4} {:3} {:1}{:4}     {:8.3}{:8.3}{:8.3}  1.00  0.00           {:>2}  ",
         serial, name, residue_name, chain_id, residue_seq, x, y, z,
         name.chars().next().unwrap()
     )

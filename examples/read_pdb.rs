@@ -1,15 +1,21 @@
 use pdbrust::PdbStructure;
 use std::env;
+use std::error::Error;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> Result<(), Box<dyn Error>> {
+    // Get the PDB file path from command line arguments
     let args: Vec<String> = env::args().collect();
     if args.len() != 2 {
         eprintln!("Usage: {} <pdb_file>", args[0]);
         std::process::exit(1);
     }
 
-    let structure = PdbStructure::from_file(&args[1])?;
-    
+    let pdb_file = &args[1];
+    println!("Reading PDB file: {}", pdb_file);
+
+    // Read the PDB file
+    let structure = PdbStructure::from_file(pdb_file)?;
+
     // Print basic information about the structure
     if let Some(header) = &structure.header {
         println!("Header: {}", header);
@@ -17,94 +23,32 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(title) = &structure.title {
         println!("Title: {}", title);
     }
-    
+
+    // Print statistics
+    println!("\nStructure Statistics:");
     println!("Number of atoms: {}", structure.atoms.len());
-    
-    // Print model information
-    println!("\nModels: {}", structure.models.len());
-    for model in &structure.models {
-        println!("  Model {}: {} atoms", model.serial, model.atoms.len());
-    }
+    println!("Number of models: {}", structure.models.len());
     
     // Print chain information
-    let chain_ids = structure.get_chain_ids();
-    println!("\nChains: {}", chain_ids.len());
-    for chain_id in &chain_ids {
+    let chains = structure.get_chain_ids();
+    println!("\nChains in structure: {}", chains.len());
+    for chain_id in &chains {
         let residues = structure.get_residues_for_chain(chain_id);
-        println!("  Chain {}: {} residues", chain_id, residues.len());
-        
-        // Print sequence if available
         let sequence = structure.get_sequence(chain_id);
-        if !sequence.is_empty() {
-            println!("    Sequence: {} residues", sequence.len());
-            // Print first 10 residues if available
-            if sequence.len() > 10 {
-                println!("    First 10 residues: {}", sequence[0..10].join("-"));
-            } else {
-                println!("    Sequence: {}", sequence.join("-"));
-            }
-        }
+        println!("Chain {}: {} residues, {} residues in SEQRES", 
+                chain_id, residues.len(), sequence.len());
     }
-    
-    // Print disulfide bonds
-    println!("\nDisulfide bonds: {}", structure.ssbonds.len());
-    for (i, bond) in structure.ssbonds.iter().enumerate() {
-        println!("  Bond {}: {} {} {} -- {} {} {}", 
-            i + 1,
-            bond.residue1_name, bond.chain1_id, bond.residue1_seq,
-            bond.residue2_name, bond.chain2_id, bond.residue2_seq
-        );
-        if let Some(dist) = bond.distance {
-            println!("    Distance: {:.2} Å", dist);
-        }
-    }
-    
-    // Print some remarks (if any)
+
+    // Print connectivity information
+    println!("\nConnectivity Information:");
+    println!("Number of CONECT records: {}", structure.connects.len());
+    println!("Number of disulfide bonds: {}", structure.ssbonds.len());
+
+    // Print some remarks if present
     if !structure.remarks.is_empty() {
-        println!("\nRemarks:");
-        
-        // Get unique remark numbers
-        let remark_numbers: Vec<i32> = {
-            let mut numbers: Vec<i32> = structure.remarks.iter()
-                .map(|r| r.number)
-                .collect();
-            numbers.sort();
-            numbers.dedup();
-            numbers
-        };
-        
-        for num in remark_numbers.iter().take(5) {
-            let remarks = structure.get_remarks_by_number(*num);
-            println!("  REMARK {}: {} entries", num, remarks.len());
-            
-            // Print first remark of this type
-            if !remarks.is_empty() {
-                println!("    First entry: {}", remarks[0].content);
-            }
-        }
-        
-        if remark_numbers.len() > 5 {
-            println!("  ... and {} more remark types", remark_numbers.len() - 5);
-        }
-    }
-    
-    // Print connectivity information for the first few atoms
-    println!("\nConnectivity examples:");
-    for i in 0..5 {
-        if i < structure.atoms.len() {
-            let atom = &structure.atoms[i];
-            let connected = structure.get_connected_atoms(atom.serial);
-            println!("  Atom {} ({}): connected to {} atoms", 
-                atom.serial, atom.name, connected.len());
-            
-            for (j, conn_atom) in connected.iter().take(3).enumerate() {
-                println!("    {}: Atom {} ({})", 
-                    j + 1, conn_atom.serial, conn_atom.name);
-            }
-            
-            if connected.len() > 3 {
-                println!("    ... and {} more atoms", connected.len() - 3);
-            }
+        println!("\nFirst few remarks:");
+        for remark in structure.remarks.iter().take(3) {
+            println!("REMARK {}: {}", remark.number, remark.content);
         }
     }
 

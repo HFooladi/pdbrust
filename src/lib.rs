@@ -41,7 +41,7 @@
 pub mod guide;
 
 use std::fs::File;
-use std::io::{self, BufRead, BufReader};
+use std::io::{self, BufRead, BufReader, Write};
 use std::path::Path;
 use thiserror::Error;
 
@@ -91,6 +91,8 @@ pub struct Atom {
     pub temp_factor: f64,
     /// Element symbol.
     pub element: String,
+    /// Insertion code.
+    pub ins_code: Option<char>, 
 }
 
 /// Represents a SEQRES record from a PDB file.
@@ -361,6 +363,19 @@ impl PdbStructure {
             "".to_string()
         };
 
+        let ins_code = {
+            let c = if line.len() > 26 {
+                line.chars().nth(26).unwrap_or(' ')
+            } else {
+                ' '
+            };
+            if c == ' ' {
+                None
+            } else {
+                Some(c)
+            }
+        };
+
         Ok(Atom {
             serial,
             name,
@@ -374,6 +389,7 @@ impl PdbStructure {
             occupancy,
             temp_factor,
             element,
+            ins_code,
         })
     }
 
@@ -441,16 +457,14 @@ impl PdbStructure {
             .parse()
             .map_err(|_| PdbError::ParseError("Invalid number of residues".to_string()))?;
 
-        // Residues start at position 19 and each residue name is 4 characters wide
-        let residue_section = &line[19..];
         let mut residues = Vec::new();
-        let mut pos = 0;
-        while pos + 4 <= residue_section.len() {
-            let residue = residue_section[pos..pos+4].trim();
+        let mut pos = 19;
+        while pos + 3 <= line.len() && residues.len() < 13 {  // Max 13 residues per line
+            let residue = line[pos..pos+3].trim();
             if !residue.is_empty() {
                 residues.push(residue.to_string());
             }
-            pos += 4;
+            pos += 4;  // Move to next residue (3 chars + 1 space)
         }
 
         Ok(SeqRes {
@@ -539,28 +553,26 @@ impl PdbStructure {
 
         let residue1_name = line[11..14].trim().to_string();
         let chain1_id = line[15..16].trim().to_string();
-        
         let residue1_seq = line[17..21]
             .trim()
             .parse()
-            .map_err(|_| PdbError::ParseError("Invalid first residue sequence number".to_string()))?;
+            .map_err(|_| PdbError::ParseError("Invalid residue1 sequence number".to_string()))?;
 
         let residue2_name = line[25..28].trim().to_string();
         let chain2_id = line[29..30].trim().to_string();
-        
         let residue2_seq = line[31..35]
             .trim()
             .parse()
-            .map_err(|_| PdbError::ParseError("Invalid second residue sequence number".to_string()))?;
-            
+            .map_err(|_| PdbError::ParseError("Invalid residue2 sequence number".to_string()))?;
+
         // Distance is in columns 73-78
         let distance = if line.len() >= 78 {
-            line[72..78]
+            Some(line[72..78]
                 .trim()
                 .parse()
-                .ok()
+                .unwrap_or(0.0))
         } else {
-            None
+            Some(0.0)  // Default distance if not specified
         };
 
         Ok(SSBond {
@@ -749,11 +761,168 @@ impl PdbStructure {
             .filter(|a| connected_serials.contains(&a.serial))
             .collect()
     }
+    /// Translate all atoms in the structure by a given amount.     
+    ///
+    /// # Arguments
+    ///
+    /// * `dx` - The amount to translate along the x-axis
+    /// * `dy` - The amount to translate along the y-axis
+    /// * `dz` - The amount to translate along the z-axis
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// let mut structure = PdbStructure::new();
+    /// structure.translate(1.0, 2.0, 3.0);
+    pub fn translate(&mut self, dx: f64, dy: f64, dz: f64) {
+        for atom in &mut self.atoms {
+            atom.x += dx;
+            atom.y += dy;
+            atom.z += dz;
+        }
+    }
+
+    /// Writes the structure to a PDB file.
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - Path where the PDB file should be written
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` indicating success or containing a `PdbError`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// let mut structure = PdbStructure::new();
+    /// // Add atoms and other records...
+    /// structure.to_file("output.pdb")?;
+    /// ```
+    pub fn to_file<P: AsRef<Path>>(&self, path: P) -> Result<(), PdbError> {
+        let mut file = File::create(path)?;
+
+        // Write header if present
+        if let Some(header) = &self.header {
+            writeln!(file, "HEADER    {:<72}", header)?;
+        }
+
+        // Write title if present
+        if let Some(title) = &self.title {
+            writeln!(file, "TITLE     {:<70}", title)?;
+        }
+
+        // Write remarks
+        for remark in &self.remarks {
+            writeln!(file, "{}", Self::format_remark_record(remark))?;
+        }
+
+        // Write SEQRES records
+        for seqres in &self.seqres {
+            writeln!(file, "{}", Self::format_seqres_record(seqres))?;
+        }
+
+        // Write SSBOND records
+        for ssbond in &self.ssbonds {
+            writeln!(file, "{}", Self::format_ssbond_record(ssbond))?;
+        }
+
+        // If there are models, write them with MODEL/ENDMDL records
+        if !self.models.is_empty() {
+            for model in &self.models {
+                writeln!(file, "MODEL     {:>4}", model.serial)?;
+                for atom in &model.atoms {
+                    writeln!(file, "{}", Self::format_atom_record(atom))?;
+                }
+                writeln!(file, "ENDMDL")?;
+            }
+        } else {
+            // Otherwise write atoms directly
+            for atom in &self.atoms {
+                writeln!(file, "{}", Self::format_atom_record(atom))?;
+            }
+        }
+
+        // Write CONECT records
+        for conect in &self.connects {
+            writeln!(file, "{}", Self::format_conect_record(conect))?;
+        }
+
+        // Write END record
+        writeln!(file, "END")?;
+
+        Ok(())
+    }
+
+    /// Formats an ATOM record according to the PDB format specification.
+    fn format_atom_record(atom: &Atom) -> String {
+        format!(
+            "{:<6}{:>5} {:<4}{:3} {}{:>4}    {:>8.3}{:>8.3}{:>8.3}{:>6.2}{:>6.2}          {:>2}",
+            if atom.name.starts_with("H") { "HETATM" } else { "ATOM" },
+            atom.serial,
+            atom.name,
+            atom.residue_name,
+            atom.chain_id,
+            atom.residue_seq,
+            atom.x,
+            atom.y,
+            atom.z,
+            atom.occupancy,
+            atom.temp_factor,
+            atom.element
+        )
+    }
+
+    /// Formats a SEQRES record according to the PDB format specification.
+    fn format_seqres_record(seqres: &SeqRes) -> String {
+        let mut residues_str = String::new();
+        for residue in &seqres.residues {
+            residues_str.push_str(&format!("{:<4}", residue));
+        }
+        format!(
+            "SEQRES  {:>3} {} {:>4}  {}",
+            seqres.serial,
+            seqres.chain_id,
+            seqres.num_residues,
+            residues_str
+        )
+    }
+
+    /// Formats a CONECT record according to the PDB format specification.
+    fn format_conect_record(conect: &Conect) -> String {
+        let mut result = format!("CONECT{:>5}", conect.atom_serial);
+        for bonded in &conect.bonded_atoms {
+            result.push_str(&format!("{:>5}", bonded));
+        }
+        result
+    }
+
+    /// Formats an SSBOND record according to the PDB format specification.
+    fn format_ssbond_record(ssbond: &SSBond) -> String {
+        format!(
+            "SSBOND {:>3} {} {} {:>4}    {} {} {:>4}                       {:>6.2}",
+            ssbond.serial,
+            ssbond.residue1_name,
+            ssbond.chain1_id,
+            ssbond.residue1_seq,
+            ssbond.residue2_name,
+            ssbond.chain2_id,
+            ssbond.residue2_seq,
+            ssbond.distance.unwrap_or(0.0)
+        )
+    }
+
+    /// Formats a REMARK record according to the PDB format specification.
+    fn format_remark_record(remark: &Remark) -> String {
+        format!("REMARK {:>3} {}", remark.number, remark.content)
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::io::Read;
+    use tempfile::NamedTempFile;
 
     #[test]
     fn test_parse_atom_record() {
@@ -844,6 +1013,7 @@ mod tests {
             occupancy: 1.0,
             temp_factor: 0.0,
             element: "N".to_string(),
+            ins_code: None,
         });
         structure.atoms.push(Atom {
             serial: 2,
@@ -858,6 +1028,7 @@ mod tests {
             occupancy: 1.0,
             temp_factor: 0.0,
             element: "C".to_string(),
+            ins_code: None,
         });
 
         let chain_ids = structure.get_chain_ids();
@@ -880,6 +1051,7 @@ mod tests {
             occupancy: 1.0,
             temp_factor: 0.0,
             element: "N".to_string(),
+            ins_code: None,
         });
         structure.atoms.push(Atom {
             serial: 2,
@@ -894,6 +1066,7 @@ mod tests {
             occupancy: 1.0,
             temp_factor: 0.0,
             element: "C".to_string(),
+            ins_code: None,
         });
 
         let residues = structure.get_residues_for_chain("A");
@@ -932,6 +1105,7 @@ mod tests {
             occupancy: 1.0,
             temp_factor: 0.0,
             element: "N".to_string(),
+            ins_code: None,
         });
         structure.atoms.push(Atom {
             serial: 2,
@@ -946,6 +1120,7 @@ mod tests {
             occupancy: 1.0,
             temp_factor: 0.0,
             element: "C".to_string(),
+            ins_code: None,
         });
 
         // Add connectivity
@@ -958,5 +1133,127 @@ mod tests {
         assert_eq!(connected.len(), 1);
         assert_eq!(connected[0].serial, 2);
         assert_eq!(connected[0].name, "CA");
+    }
+
+    #[test]
+    fn test_write_and_read_pdb() -> Result<(), Box<dyn std::error::Error>> {
+        // Create a test structure
+        let mut structure = PdbStructure::new();
+        structure.header = Some("TEST STRUCTURE".to_string());
+        structure.title = Some("TEST TITLE".to_string());
+        
+        // Add an atom
+        structure.atoms.push(Atom {
+            serial: 1,
+            name: "N".to_string(),
+            alt_loc: None,
+            residue_name: "ASP".to_string(),
+            chain_id: "A".to_string(),
+            residue_seq: 1,
+            x: 1.0,
+            y: 2.0,
+            z: 3.0,
+            occupancy: 1.0,
+            temp_factor: 20.0,
+            element: "N".to_string(),
+            ins_code: None,
+        });
+
+        // Add a SEQRES record
+        structure.seqres.push(SeqRes {
+            serial: 1,
+            chain_id: "A".to_string(),
+            num_residues: 1,
+            residues: vec!["ASP".to_string()],
+        });
+
+        // Add a CONECT record
+        structure.connects.push(Conect {
+            atom_serial: 1,
+            bonded_atoms: vec![2],
+        });
+
+        // Create a temporary file
+        let temp_file = NamedTempFile::new()?;
+        let temp_path = temp_file.path().to_owned();
+
+        // Write the structure
+        structure.to_file(&temp_path)?;
+
+        // Read the file contents
+        let mut contents = String::new();
+        File::open(&temp_path)?.read_to_string(&mut contents)?;
+
+        // Verify the contents
+        assert!(contents.contains("HEADER    TEST STRUCTURE"));
+        assert!(contents.contains("TITLE     TEST TITLE"));
+        assert!(contents.contains("ATOM      1 N   ASP A   1       1.000   2.000   3.000  1.00 20.00           N"));
+        assert!(contents.contains("SEQRES    1 A    1  ASP"));
+        assert!(contents.contains("CONECT    1    2"));
+        assert!(contents.contains("END"));
+
+        // Read the structure back
+        let read_structure = PdbStructure::from_file(&temp_path)?;
+
+        // Verify the structure
+        assert_eq!(read_structure.header, Some("TEST STRUCTURE".to_string()));
+        assert_eq!(read_structure.title, Some("TEST TITLE".to_string()));
+        assert_eq!(read_structure.atoms.len(), 1);
+        assert_eq!(read_structure.atoms[0].serial, 1);
+        assert_eq!(read_structure.atoms[0].name, "N");
+        assert_eq!(read_structure.seqres.len(), 1);
+        assert_eq!(read_structure.connects.len(), 1);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_format_atom_record() {
+        let atom = Atom {
+            serial: 1,
+            name: "N".to_string(),
+            alt_loc: None,
+            residue_name: "ASP".to_string(),
+            chain_id: "A".to_string(),
+            residue_seq: 1,
+            x: 1.0,
+            y: 2.0,
+            z: 3.0,
+            occupancy: 1.0,
+            temp_factor: 20.0,
+            element: "N".to_string(),
+            ins_code: None,
+        };
+
+        let formatted = PdbStructure::format_atom_record(&atom);
+        assert_eq!(
+            formatted,
+            "ATOM      1 N   ASP A   1       1.000   2.000   3.000  1.00 20.00           N"
+        );
+    }
+
+    #[test]
+    fn test_format_hetatm_record() {
+        let atom = Atom {
+            serial: 1,
+            name: "HOH".to_string(),
+            alt_loc: None,
+            residue_name: "WAT".to_string(),
+            chain_id: "A".to_string(),
+            residue_seq: 1,
+            x: 1.0,
+            y: 2.0,
+            z: 3.0,
+            occupancy: 1.0,
+            temp_factor: 20.0,
+            element: "O".to_string(),
+            ins_code: None,
+        };
+
+        let formatted = PdbStructure::format_atom_record(&atom);
+        assert_eq!(
+            formatted,
+            "HETATM    1 HOH WAT A   1       1.000   2.000   3.000  1.00 20.00           O"
+        );
     }
 }
