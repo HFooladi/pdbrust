@@ -1,0 +1,24 @@
+HEADER    PROTEIN                                 01-JAN-24   TEST
+TITLE     TEST PROTEIN STRUCTURE
+REMARK   1 TEST REMARK
+REMARK   2 RESOLUTION. 2.0 ANGSTROMS
+SEQRES   1 A   3  ALA GLY VAL                                                      
+MODEL        1
+ATOM      1  N   ALA A   1       0.000   0.000   0.000  1.00 20.00           N  
+ATOM      2  CA  ALA A   1       1.458   0.000   0.000  1.00 20.00           C  
+ATOM      3  C   ALA A   1       2.009   1.420   0.000  1.00 20.00           C  
+ATOM      4  O   ALA A   1       1.239   2.384   0.000  1.00 20.00           O  
+ATOM      5  N   GLY A   2       3.331   1.553   0.000  1.00 20.00           N  
+ATOM      6  CA  GLY A   2       3.970   2.860   0.000  1.00 20.00           C  
+ATOM      7  C   GLY A   2       3.613   3.667   1.233  1.00 20.00           C  
+ATOM      8  O   GLY A   2       3.302   3.121   2.291  1.00 20.00           O  
+ENDMDL
+CONECT    1    2
+CONECT    2    1    3
+CONECT    3    2    4    5
+CONECT    4    3
+CONECT    5    3    6
+CONECT    6    5    7
+CONECT    7    6    8
+CONECT    8    7
+SSBOND   1 CYS A   85    CYS A  101                          2.03 
