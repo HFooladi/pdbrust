@@ -1,0 +1,10 @@
+[package]
+name = "pdbrust"
+version = "0.1.0"
+edition = "2021"
+authors = ["Hosein Fooladi <fooladi.hosein@gmail.com>"]
+description = "A Rust library for parsing PDB (Protein Data Bank) files"
+license = "MIT"
+
+[dependencies]
+thiserror = "1.0"
