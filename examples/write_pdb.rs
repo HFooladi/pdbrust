@@ -1,4 +1,4 @@
-use pdbrust::{PdbStructure, Atom, SeqRes, Conect, SSBond, Remark, write_pdb_file};
+use pdbrust::{write_pdb_file, Atom, Conect, PdbStructure, Remark, SSBond, SeqRes};
 use std::error::Error;
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -132,11 +132,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("\nStructure Information:");
     println!("Number of atoms: {}", structure.atoms.len());
     println!("Number of chains: {}", structure.get_chain_ids().len());
-    
+
     // Example of translating the structure
     println!("\nTranslating structure by (1.0, 1.0, 1.0)...");
     structure.translate(1.0, 1.0, 1.0);
-    
+
     // Write the translated structure
     write_pdb_file(&structure, "example_translated.pdb")?;
     println!("Successfully wrote example_translated.pdb");

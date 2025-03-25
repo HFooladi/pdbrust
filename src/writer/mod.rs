@@ -1,8 +1,8 @@
+use crate::error::PdbError;
+use crate::PdbStructure;
 use std::fs::File;
 use std::io::{self, Write};
 use std::path::Path;
-use crate::PdbStructure;
-use crate::error::PdbError;
 
 /// Writes a PDB structure to a file.
 pub fn write_pdb_file<P: AsRef<Path>>(structure: &PdbStructure, path: P) -> Result<(), PdbError> {
@@ -44,12 +44,12 @@ pub fn write_pdb<W: Write>(structure: &PdbStructure, mut writer: W) -> Result<()
         // Write models if present
         for model in &structure.models {
             writeln!(writer, "MODEL     {:4}", model.serial)?;
-            
+
             // Write atoms for this model
             for atom in &model.atoms {
                 write_atom_record(&mut writer, atom)?;
             }
-            
+
             writeln!(writer, "ENDMDL")?;
         }
     } else {
@@ -61,16 +61,17 @@ pub fn write_pdb<W: Write>(structure: &PdbStructure, mut writer: W) -> Result<()
 
     // Write CONECT records
     for conect in &structure.connects {
-        let atom3_str = conect.atom3.map_or("     ".to_string(), |a| format!("{:5}", a));
-        let atom4_str = conect.atom4.map_or("     ".to_string(), |a| format!("{:5}", a));
-        
+        let atom3_str = conect
+            .atom3
+            .map_or("     ".to_string(), |a| format!("{:5}", a));
+        let atom4_str = conect
+            .atom4
+            .map_or("     ".to_string(), |a| format!("{:5}", a));
+
         writeln!(
             writer,
             "CONECT{:5}{:5}{}{}",
-            conect.atom1,
-            conect.atom2,
-            atom3_str,
-            atom4_str
+            conect.atom1, conect.atom2, atom3_str, atom4_str
         )?;
     }
 
@@ -78,7 +79,7 @@ pub fn write_pdb<W: Write>(structure: &PdbStructure, mut writer: W) -> Result<()
     for ssbond in &structure.ssbonds {
         let icode1 = ssbond.icode1.unwrap_or(' ');
         let icode2 = ssbond.icode2.unwrap_or(' ');
-        
+
         writeln!(
             writer,
             "SSBOND {:3} {:3} {}{:4}{} {:3} {}{:4}{} {:5} {:5} {:6.2}",
@@ -107,7 +108,7 @@ pub fn write_pdb<W: Write>(structure: &PdbStructure, mut writer: W) -> Result<()
 fn write_atom_record<W: Write>(writer: &mut W, atom: &crate::records::Atom) -> io::Result<()> {
     let alt_loc = atom.alt_loc.unwrap_or(' ');
     let ins_code = atom.ins_code.unwrap_or(' ');
-    
+
     writeln!(
         writer,
         "ATOM  {:5} {:4}{}{:3} {}{:4}{}   {:8.3}{:8.3}{:8.3}{:6.2}{:6.2}      {:2}  ",

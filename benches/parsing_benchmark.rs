@@ -22,7 +22,14 @@ fn generate_atom_record(
 ) -> String {
     format!(
         "ATOM  {:5} {:4} {:3} {:1}{:4}    {:8.3}{:8.3}{:8.3}  1.00  0.00           {:>2}  \n",
-        serial, name, residue_name, chain_id, residue_seq, x, y, z,
+        serial,
+        name,
+        residue_name,
+        chain_id,
+        residue_seq,
+        x,
+        y,
+        z,
         name.chars().next().unwrap()
     )
 }
@@ -126,4 +133,4 @@ fn benchmark_operations(c: &mut Criterion) {
 }
 
 criterion_group!(benches, benchmark_parsing, benchmark_operations);
-criterion_main!(benches); 
+criterion_main!(benches);

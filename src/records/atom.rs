@@ -31,5 +31,5 @@ pub struct Atom {
     /// Element symbol.
     pub element: String,
     /// Insertion code.
-    pub ins_code: Option<char>, 
+    pub ins_code: Option<char>,
 }

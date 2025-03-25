@@ -1,22 +1,22 @@
 //! # PDBRust User Guide
-//! 
+//!
 //! This guide provides comprehensive documentation for using the PDBRust library
 //! to work with Protein Data Bank (PDB) files.
-//! 
+//!
 //! ## Getting Started
-//! 
+//!
 //! First, add PDBRust to your `Cargo.toml`:
-//! 
+//!
 //! ```toml
 //! [dependencies]
 //! pdbrust = "0.1.0"
 //! ```
-//! 
+//!
 //! Then, import and use the library:
-//! 
+//!
 //! ```rust
 //! use pdbrust::PdbStructure;
-//! 
+//!
 //! fn main() -> Result<(), Box<dyn std::error::Error>> {
 //!     // Load a PDB file
 //!     let structure = PdbStructure::from_file("example.pdb")?;
@@ -28,14 +28,14 @@
 //!     Ok(())
 //! }
 //! ```
-//! 
+//!
 //! ## Common Use Cases
-//! 
+//!
 //! ### 1. Analyzing Protein Structure
-//! 
+//!
 //! ```rust
 //! use pdbrust::PdbStructure;
-//! 
+//!
 //! fn analyze_structure(pdb_file: &str) -> Result<(), Box<dyn std::error::Error>> {
 //!     let structure = PdbStructure::from_file(pdb_file)?;
 //!     
@@ -55,9 +55,9 @@
 //!     Ok(())
 //! }
 //! ```
-//! 
+//!
 //! ### 2. Working with Multiple Models (e.g., NMR Structures)
-//! 
+//!
 //! ```rust
 //! fn analyze_models(structure: &PdbStructure) {
 //!     // Check number of models
@@ -69,23 +69,23 @@
 //!         
 //!         // Process model-specific remarks
 //!         for remark in &model.remarks {
-//!             println!("Model {} remark {}: {}", 
+//!             println!("Model {} remark {}: {}",
 //!                     model.serial, remark.number, remark.content);
 //!         }
 //!     }
 //! }
 //! ```
-//! 
+//!
 //! ### 3. Analyzing Connectivity
-//! 
+//!
 //! ```rust
 //! fn analyze_connectivity(structure: &PdbStructure) {
 //!     // Analyze disulfide bonds
 //!     for bond in &structure.ssbonds {
 //!         println!("SS-bond between:");
-//!         println!("  Residue: {} {} {}", 
+//!         println!("  Residue: {} {} {}",
 //!                 bond.residue1_name, bond.chain1_id, bond.residue1_seq);
-//!         println!("  Residue: {} {} {}", 
+//!         println!("  Residue: {} {} {}",
 //!                 bond.residue2_name, bond.chain2_id, bond.residue2_seq);
 //!         if let Some(distance) = bond.distance {
 //!             println!("  Distance: {:.2} Å", distance);
@@ -96,19 +96,19 @@
 //!     for atom in &structure.atoms {
 //!         let connected = structure.get_connected_atoms(atom.serial);
 //!         if !connected.is_empty() {
-//!             println!("Atom {} ({}) is connected to:", 
+//!             println!("Atom {} ({}) is connected to:",
 //!                     atom.serial, atom.name);
 //!             for connected_atom in connected {
-//!                 println!("  Atom {} ({})", 
+//!                 println!("  Atom {} ({})",
 //!                         connected_atom.serial, connected_atom.name);
 //!             }
 //!         }
 //!     }
 //! }
 //! ```
-//! 
+//!
 //! ## Best Practices
-//! 
+//!
 //! 1. **Error Handling**
 //!    - Always use the `Result` type to handle potential errors
 //!    - Check for specific error types using pattern matching
@@ -128,7 +128,7 @@
 //!        }
 //!    }
 //!    ```
-//! 
+//!
 //! 2. **Memory Management**
 //!    - Use references when passing `PdbStructure` to functions
 //!    - Consider using iterators instead of collecting vectors for large structures
@@ -141,7 +141,7 @@
 //!            // Process each atom
 //!        });
 //!    ```
-//! 
+//!
 //! 3. **Data Validation**
 //!    - Validate PDB files before processing
 //!    - Check for required records
@@ -153,19 +153,19 @@
 //!        eprintln!("Warning: No sequence information available");
 //!    }
 //!    ```
-//! 
+//!
 //! ## Performance Considerations
-//! 
+//!
 //! 1. **Memory Usage**
 //!    - The library stores all atoms in memory
 //!    - For very large structures, consider processing atoms in chunks
 //!    - Use iterators instead of collecting vectors when possible
-//! 
+//!
 //! 2. **Processing Speed**
 //!    - Parsing is done in a single pass through the file
 //!    - Atom lookups are O(n) - consider building indices for frequent lookups
 //!    - Chain and residue operations are optimized with sorting and deduplication
-//! 
+//!
 //! 3. **Optimization Tips**
 //!    ```rust
 //!    // Create indices for frequent lookups
@@ -181,9 +181,9 @@
 //!        // Process atom
 //!    }
 //!    ```
-//! 
+//!
 //! ## Examples of Handling Different PDB Record Types
-//! 
+//!
 //! ### 1. ATOM Records
 //! ```rust
 //! // Processing ATOM records
@@ -194,7 +194,7 @@
 //!     }
 //! }
 //! ```
-//! 
+//!
 //! ### 2. SEQRES Records
 //! ```rust
 //! // Processing sequence information
@@ -206,18 +206,18 @@
 //!     println!();
 //! }
 //! ```
-//! 
+//!
 //! ### 3. SSBOND Records
 //! ```rust
 //! // Processing disulfide bonds
 //! for bond in &structure.ssbonds {
 //!     println!("Disulfide bond between:");
-//!     println!("{} {} {} - {} {} {}", 
+//!     println!("{} {} {} - {} {} {}",
 //!             bond.residue1_name, bond.chain1_id, bond.residue1_seq,
 //!             bond.residue2_name, bond.chain2_id, bond.residue2_seq);
 //! }
 //! ```
-//! 
+//!
 //! ### 4. REMARK Records
 //! ```rust
 //! // Processing specific remarks
@@ -228,7 +228,7 @@
 //!     }
 //! }
 //! ```
-//! 
+//!
 //! ### 5. MODEL Records
 //! ```rust
 //! // Processing multiple models
@@ -237,4 +237,4 @@
 //!     println!("  Number of atoms: {}", model.atoms.len());
 //!     println!("  Number of remarks: {}", model.remarks.len());
 //! }
-//! ``` 
+//! ```

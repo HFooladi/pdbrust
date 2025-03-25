@@ -1,5 +1,5 @@
 //! PDBRust: A Rust library for parsing and analyzing Protein Data Bank (PDB) files
-//! 
+//!
 //! This library provides a robust and efficient way to work with PDB files, supporting various record
 //! types including ATOM, SEQRES, CONECT, SSBOND, and more. It offers functionality for structural
 //! analysis, sequence information retrieval, and connectivity analysis of molecular structures.
@@ -40,15 +40,15 @@
 // Module exports
 pub mod core;
 pub mod error;
-pub mod records;
-pub mod parser;
-pub mod writer;
 pub mod guide;
+pub mod parser;
+pub mod records;
 mod utils;
+pub mod writer;
 
 // Re-exports for convenience
-pub use error::PdbError;
 pub use core::PdbStructure;
-pub use records::{Atom, Model, SeqRes, Conect, SSBond, Remark};
+pub use error::PdbError;
 pub use parser::parse_pdb_file;
+pub use records::{Atom, Conect, Model, Remark, SSBond, SeqRes};
 pub use writer::write_pdb_file;

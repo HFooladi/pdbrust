@@ -1,4 +1,4 @@
-use pdbrust::{PdbStructure, parse_pdb_file};
+use pdbrust::{parse_pdb_file, PdbStructure};
 use std::env;
 use std::error::Error;
 
@@ -28,15 +28,19 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("\nStructure Statistics:");
     println!("Number of atoms: {}", structure.atoms.len());
     println!("Number of models: {}", structure.models.len());
-    
+
     // Print chain information
     let chains = structure.get_chain_ids();
     println!("\nChains in structure: {}", chains.len());
     for chain_id in &chains {
         let residues = structure.get_residues_for_chain(chain_id);
         let sequence = structure.get_sequence(chain_id);
-        println!("Chain {}: {} residues, {} residues in SEQRES", 
-                chain_id, residues.len(), sequence.len());
+        println!(
+            "Chain {}: {} residues, {} residues in SEQRES",
+            chain_id,
+            residues.len(),
+            sequence.len()
+        );
     }
 
     // Print connectivity information
@@ -57,8 +61,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         println!("\nExample of atom connectivity:");
         let first_atom = &structure.atoms[0];
         let connected = structure.get_connected_atoms(first_atom.serial);
-        println!("Atom {} ({}) is connected to {} atoms", 
-                first_atom.serial, first_atom.name, connected.len());
+        println!(
+            "Atom {} ({}) is connected to {} atoms",
+            first_atom.serial,
+            first_atom.name,
+            connected.len()
+        );
         for atom in connected {
             println!("  - Atom {} ({})", atom.serial, atom.name);
         }

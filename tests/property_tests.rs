@@ -118,4 +118,4 @@ proptest! {
             assert_eq!(atom.element, "N");
         }
     }
-} 
+}

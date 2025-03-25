@@ -1,4 +1,4 @@
-use pdbrust::{parse_pdb_file, PdbStructure, Atom, SeqRes, Conect, SSBond};
+use pdbrust::{parse_pdb_file, Atom, Conect, PdbStructure, SSBond, SeqRes};
 use std::fs::File;
 use std::io::Write;
 use tempfile::NamedTempFile;
@@ -23,7 +23,8 @@ fn test_parse_empty_file() {
 
 #[test]
 fn test_parse_single_atom() {
-    let content = "ATOM      1  N   ALA A   1      27.047  14.099   3.115  1.00 13.79           N\n";
+    let content =
+        "ATOM      1  N   ALA A   1      27.047  14.099   3.115  1.00 13.79           N\n";
     let file = create_test_pdb(content);
     let result = parse_pdb_file(file.path());
     assert!(result.is_ok());
@@ -114,8 +115,14 @@ END
     let result = parse_pdb_file(file.path());
     assert!(result.is_ok());
     let structure = result.unwrap();
-    assert_eq!(structure.header, Some("PROTEIN                                01-JAN-01   1ABC".to_string()));
-    assert_eq!(structure.title, Some("EXAMPLE PROTEIN STRUCTURE".to_string()));
+    assert_eq!(
+        structure.header,
+        Some("PROTEIN                                01-JAN-01   1ABC".to_string())
+    );
+    assert_eq!(
+        structure.title,
+        Some("EXAMPLE PROTEIN STRUCTURE".to_string())
+    );
     assert_eq!(structure.remarks.len(), 1);
     assert_eq!(structure.remarks[0].content, "THIS IS A TEST STRUCTURE");
     assert_eq!(structure.seqres.len(), 1);
@@ -142,15 +149,15 @@ END
     assert!(result.is_ok());
     let structure = result.unwrap();
     assert_eq!(structure.models.len(), 2);
-    
+
     let model1 = &structure.models[0];
     assert_eq!(model1.serial, 1);
     assert_eq!(model1.atoms.len(), 2);
-    
+
     let model2 = &structure.models[1];
     assert_eq!(model2.serial, 2);
     assert_eq!(model2.atoms.len(), 2);
-    
+
     // All atoms should be in the structure.atoms as well
     assert_eq!(structure.atoms.len(), 4);
 }

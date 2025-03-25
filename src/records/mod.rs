@@ -1,16 +1,16 @@
 //! Data structures for different PDB record types
 
 mod atom;
-mod model;
-mod seqres;
 mod conect;
-mod ssbond;
+mod model;
 mod remark;
+mod seqres;
+mod ssbond;
 
 // Re-export record types for easy access
 pub use atom::Atom;
-pub use model::Model;
-pub use seqres::SeqRes;
 pub use conect::Conect;
-pub use ssbond::SSBond;
+pub use model::Model;
 pub use remark::Remark;
+pub use seqres::SeqRes;
+pub use ssbond::SSBond;

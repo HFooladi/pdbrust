@@ -1,6 +1,6 @@
-use std::path::Path;
 use crate::error::PdbError;
-use crate::records::{Atom, Model, SeqRes, Conect, SSBond, Remark};
+use crate::records::{Atom, Conect, Model, Remark, SSBond, SeqRes};
+use std::path::Path;
 
 /// Main structure representing a PDB file.
 #[derive(Debug, Clone)]
@@ -116,5 +116,11 @@ impl PdbStructure {
     /// Writes the structure to a file.
     pub fn to_file<P: AsRef<Path>>(&self, path: P) -> Result<(), PdbError> {
         crate::writer::write_pdb_file(self, path)
+    }
+}
+
+impl Default for PdbStructure {
+    fn default() -> Self {
+        Self::new()
     }
 }
