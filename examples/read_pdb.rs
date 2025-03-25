@@ -1,4 +1,4 @@
-use pdbrust::PdbStructure;
+use pdbrust::{PdbStructure, parse_pdb_file};
 use std::env;
 use std::error::Error;
 
@@ -13,8 +13,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let pdb_file = &args[1];
     println!("Reading PDB file: {}", pdb_file);
 
-    // Read the PDB file
-    let structure = PdbStructure::from_file(pdb_file)?;
+    // Read the PDB file using the new parse_pdb_file function
+    let structure = parse_pdb_file(pdb_file)?;
 
     // Print basic information about the structure
     if let Some(header) = &structure.header {
@@ -49,6 +49,18 @@ fn main() -> Result<(), Box<dyn Error>> {
         println!("\nFirst few remarks:");
         for remark in structure.remarks.iter().take(3) {
             println!("REMARK {}: {}", remark.number, remark.content);
+        }
+    }
+
+    // Example of getting connected atoms
+    if !structure.atoms.is_empty() {
+        println!("\nExample of atom connectivity:");
+        let first_atom = &structure.atoms[0];
+        let connected = structure.get_connected_atoms(first_atom.serial);
+        println!("Atom {} ({}) is connected to {} atoms", 
+                first_atom.serial, first_atom.name, connected.len());
+        for atom in connected {
+            println!("  - Atom {} ({})", atom.serial, atom.name);
         }
     }
 
