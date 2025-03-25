@@ -1,6 +1,5 @@
 //! ATOM record structure and implementations
 
-
 /// Represents an atom record from a PDB file.
 ///
 /// Contains all standard PDB ATOM record fields including position,

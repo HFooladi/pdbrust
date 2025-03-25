@@ -44,7 +44,6 @@ pub mod records;
 pub mod parser;
 pub mod writer;
 pub mod guide;
-pub mod models;
 mod utils;
 
 // Re-exports for convenience

@@ -2,7 +2,6 @@
 
 use super::{Atom, Remark};
 
-
 /// Represents a MODEL record from a PDB file.
 ///
 /// Contains atoms and remarks specific to one model in a multi-model structure.

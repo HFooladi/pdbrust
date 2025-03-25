@@ -62,7 +62,7 @@ impl PdbStructure {
         let mut residues = std::collections::HashSet::new();
         for atom in &self.atoms {
             if atom.chain_id == chain_id {
-                residues.insert((atom.residue_number, atom.residue_name.clone()));
+                residues.insert((atom.residue_seq, atom.residue_name.clone()));
             }
         }
         let mut residues: Vec<(i32, String)> = residues.into_iter().collect();
@@ -117,4 +117,4 @@ impl PdbStructure {
     pub fn to_file<P: AsRef<Path>>(&self, path: P) -> Result<(), PdbError> {
         crate::writer::write_pdb_file(self, path)
     }
-} 
+}

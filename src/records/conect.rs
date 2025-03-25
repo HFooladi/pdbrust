@@ -5,8 +5,12 @@
 /// Specifies connectivity between atoms in the structure.
 #[derive(Debug, Clone)]
 pub struct Conect {
-    /// Serial number of the central atom.
-    pub atom_serial: i32,
-    /// Serial numbers of atoms bonded to the central atom.
-    pub bonded_atoms: Vec<i32>,
+    /// Serial number of atom 1.
+    pub atom1: i32,
+    /// Serial number of atom 2.
+    pub atom2: i32,
+    /// Serial number of atom 3 (optional).
+    pub atom3: Option<i32>,
+    /// Serial number of atom 4 (optional).
+    pub atom4: Option<i32>,
 }

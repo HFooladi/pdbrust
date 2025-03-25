@@ -1,6 +1,5 @@
 //! SEQRES record structure and implementations
 
-
 /// Represents a SEQRES record from a PDB file.
 ///
 /// Contains sequence information for a specific chain in the structure.

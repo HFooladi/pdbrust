@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using these metadata."
+type: software
+abstract: "PDBRust is a high-performance Rust library designed for parsing and analyzing Protein Data Bank (PDB) files. It provides efficient data structures and methods for working with molecular structures, making it suitable for structural biology and bioinformatics applications."
+authors:
+  - given-names: "Hossein"
+    family-names: "Fooladi"
+    orcid: "https://orcid.org/0000-0002-3124-2761"
+title: "PDBRust: A Rust library for parsing and analyzing PDB files"
+version: 0.1.0
+date-released: "2025-03-25"
+repository-code: "https://github.com/hfooladi/pdbrust"
+repository-artifact: "https://github.com/hfooladi/pdbrust/releases"
+url: "https://github.com/hfooladi/pdbrust"
+keywords:
+  - bioinformatics
+  - structural biology
+  - PDB
+  - protein structure
+  - crystallography
+  - Rust
+license: MIT
+programming-languages:
+  - Rust
+operating-systems:
+  - cross-platform
+dependencies:
+  - type: "software"
+    name: "Rust"
+    version: ">=1.70.0"
+    url: "https://www.rust-lang.org/"
