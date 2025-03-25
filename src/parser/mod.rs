@@ -67,7 +67,17 @@ pub fn parse_pdb_file<P: AsRef<Path>>(path: P) -> Result<PdbStructure, PdbError>
                 }
                 
                 // Start a new model
-                let serial = parse_int(&line[10..14])?;
+                let serial = if line.len() >= 14 {
+                    let serial_str = line[10..14].trim();
+                    if serial_str.is_empty() {
+                        1 // Default model number if empty
+                    } else {
+                        parse_int(serial_str)?
+                    }
+                } else {
+                    1 // Default model number if line is too short
+                };
+                
                 current_model = Some(Model {
                     serial,
                     atoms: Vec::new(),
@@ -226,7 +236,7 @@ fn parse_conect_record(line: &str) -> Result<Conect, PdbError> {
 
 /// Parses an SSBOND record.
 fn parse_ssbond_record(line: &str) -> Result<SSBond, PdbError> {
-    if line.len() < 70 {
+    if line.len() < 35 {  // Changed from 70 to 35 to handle shorter SSBOND records
         return Err(PdbError::InvalidRecord("SSBOND record too short".to_string()));
     }
 
@@ -253,10 +263,16 @@ fn parse_ssbond_record(line: &str) -> Result<SSBond, PdbError> {
         None
     };
     
-    // Default values in case the record is truncated
-    let sym1 = if line.len() >= 65 { parse_int(&line[59..65])? } else { 0 };
-    let sym2 = if line.len() >= 72 { parse_int(&line[66..72])? } else { 0 };
-    let length = if line.len() >= 78 { parse_float(&line[73..78])? } else { 0.0 };
+    // Parse symmetry operators and length if available
+    let (sym1, sym2, length) = if line.len() >= 70 {
+        (
+            parse_int(&line[59..63])?,
+            parse_int(&line[66..70])?,
+            if line.len() >= 78 { parse_float(&line[73..78])? } else { 2.04 }  // Default to 2.04 if length not specified
+        )
+    } else {
+        (1555, 1555, 2.04)  // Default values if not specified
+    };
 
     Ok(SSBond {
         serial,
@@ -276,20 +292,11 @@ fn parse_ssbond_record(line: &str) -> Result<SSBond, PdbError> {
 
 /// Parses a REMARK record.
 fn parse_remark_record(line: &str) -> Result<Remark, PdbError> {
-    if line.len() < 11 {
+    if line.len() < 10 {
         return Err(PdbError::InvalidRecord("REMARK record too short".to_string()));
     }
 
-    let number_str = line[7..10].trim();
-    let number = if number_str.is_empty() {
-        0 // Default for unspecified remark number
-    } else {
-        match number_str.parse::<i32>() {
-            Ok(num) => num,
-            Err(_) => 0, // Default for unparseable remark number
-        }
-    };
-
+    let number = parse_int(&line[6..10])?;
     let content = line[11..].trim().to_string();
 
     Ok(Remark {

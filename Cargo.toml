@@ -7,8 +7,27 @@ description = "A comprehensive Rust library for parsing and analyzing Protein Da
 documentation = "https://docs.rs/pdbrust"
 repository = "https://github.com/hfooladi/pdbrust"
 license = "MIT"
-keywords = ["bioinformatics", "protein", "pdb", "structural-biology", "chemistry"]
-categories = ["science", "parser-implementations"]
+keywords = [
+    "bioinformatics",
+    "protein",
+    "pdb",
+    "structural-biology",
+    "chemistry",
+    "molecular-biology",
+    "protein-structure",
+    "x-ray-crystallography",
+    "nuclear-magnetic-resonance",
+    "cryo-electron-microscopy"
+]
+categories = [
+    "science",
+    "parser-implementations",
+    "bioinformatics",
+    "chemistry",
+    "data-structures",
+    "filesystem",
+    "text-processing"
+]
 readme = "README.md"
 
 [dependencies]
@@ -21,6 +40,7 @@ itertools = "0.12"
 criterion = "0.5"
 proptest = "1.4"
 tempfile = "3.9"
+codecov = "0.1"
 
 [features]
 default = []
@@ -29,6 +49,9 @@ geometry = ["nalgebra"]
 
 [package.metadata]
 msrv = "1.70.0"  # Minimum Supported Rust Version
+rust-version = "1.70.0"
+maintenance = { status = "actively-developed" }
+docsrs = { all-features = true }
 
 [[bench]]
 name = "parsing_benchmark"

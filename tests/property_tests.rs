@@ -51,39 +51,37 @@ proptest! {
         assert!((atom.y - y).abs() < 1e-6);
         assert!((atom.z - z).abs() < 1e-6);
         assert_eq!(atom.name, "N");
-        assert_eq!(atom.res_name, "ALA");
-        assert_eq!(atom.chain_id, 'A');
-        assert_eq!(atom.res_seq, serial);
-        assert_eq!(atom.alt_loc, ' ');
-        assert_eq!(atom.i_code, ' ');
+        assert_eq!(atom.residue_name, "ALA");
+        assert_eq!(atom.chain_id, "A");
+        assert_eq!(atom.residue_seq, serial);
+        assert_eq!(atom.alt_loc, None);
+        assert_eq!(atom.ins_code, None);
         assert_eq!(atom.occupancy, 1.00);
         assert_eq!(atom.temp_factor, 13.79);
-        assert_eq!(atom.segment, "");
         assert_eq!(atom.element, "N");
-        assert_eq!(atom.charge, "");
     }
 
     #[test]
     fn test_valid_conect_records(
-        serial1 in 1..1000i32,
-        serial2 in 1..1000i32,
-        serial3 in 1..1000i32,
-        serial4 in 1..1000i32,
+        atom1 in 1..1000i32,
+        atom2 in 1..1000i32,
+        atom3 in 1..1000i32,
+        atom4 in 1..1000i32,
     ) {
         let content = format!(
             "CONECT{:>5}{:>5}{:>5}{:>5}",
-            serial1, serial2, serial3, serial4
+            atom1, atom2, atom3, atom4
         );
         let file = create_test_pdb(&content);
         let result = parse_pdb_file(file.path());
         assert!(result.is_ok());
         let structure = result.unwrap();
-        assert_eq!(structure.conect.len(), 1);
-        let conect = &structure.conect[0];
-        assert_eq!(conect.serial1, serial1);
-        assert_eq!(conect.serial2, serial2);
-        assert_eq!(conect.serial3, Some(serial3));
-        assert_eq!(conect.serial4, Some(serial4));
+        assert_eq!(structure.connects.len(), 1);
+        let conect = &structure.connects[0];
+        assert_eq!(conect.atom1, atom1);
+        assert_eq!(conect.atom2, atom2);
+        assert_eq!(conect.atom3, Some(atom3));
+        assert_eq!(conect.atom4, Some(atom4));
     }
 
     #[test]
@@ -94,8 +92,8 @@ proptest! {
         ),
     ) {
         let mut content = String::new();
-        for (serial, x, y, z) in atoms {
-            content.push_str(&generate_atom_record(serial, x, y, z));
+        for (serial, x, y, z) in &atoms {
+            content.push_str(&generate_atom_record(*serial, *x, *y, *z));
             content.push('\n');
         }
         let file = create_test_pdb(&content);
@@ -110,16 +108,14 @@ proptest! {
             assert!((atom.y - y).abs() < 1e-6);
             assert!((atom.z - z).abs() < 1e-6);
             assert_eq!(atom.name, "N");
-            assert_eq!(atom.res_name, "ALA");
-            assert_eq!(atom.chain_id, 'A');
-            assert_eq!(atom.res_seq, *serial);
-            assert_eq!(atom.alt_loc, ' ');
-            assert_eq!(atom.i_code, ' ');
+            assert_eq!(atom.residue_name, "ALA");
+            assert_eq!(atom.chain_id, "A");
+            assert_eq!(atom.residue_seq, *serial);
+            assert_eq!(atom.alt_loc, None);
+            assert_eq!(atom.ins_code, None);
             assert_eq!(atom.occupancy, 1.00);
             assert_eq!(atom.temp_factor, 13.79);
-            assert_eq!(atom.segment, "");
             assert_eq!(atom.element, "N");
-            assert_eq!(atom.charge, "");
         }
     }
 } 

@@ -13,7 +13,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let pdb_file = &args[1];
     println!("Reading PDB file: {}", pdb_file);
 
-    // Read the PDB file using the new parse_pdb_file function
+    // Read the PDB file
     let structure = parse_pdb_file(pdb_file)?;
 
     // Print basic information about the structure

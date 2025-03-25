@@ -3,7 +3,6 @@
 use std::fmt;
 use std::io;
 use std::num::{ParseFloatError, ParseIntError};
-use thiserror::Error;
 
 /// Errors that can occur when working with PDB files.
 #[derive(Debug)]

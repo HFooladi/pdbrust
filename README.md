@@ -3,6 +3,8 @@
 [![Rust CI/CD](https://github.com/hfooladi/pdbrust/actions/workflows/rust.yml/badge.svg)](https://github.com/hfooladi/pdbrust/actions/workflows/rust.yml)
 [![codecov](https://codecov.io/gh/hfooladi/pdbrust/branch/main/graph/badge.svg)](https://codecov.io/gh/hfooladi/pdbrust)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Crates.io](https://img.shields.io/crates/v/pdbrust.svg)](https://crates.io/crates/pdbrust)
+[![Documentation](https://docs.rs/pdbrust/badge.svg)](https://docs.rs/pdbrust)
 
 A comprehensive Rust library for parsing and analyzing PDB (Protein Data Bank) files. This library provides a robust and efficient way to work with protein structure data in PDB format.
 
@@ -95,63 +97,112 @@ fn analyze_connectivity(structure: &PdbStructure) {
         println!("Disulfide bond between:");
         println!("  Residue 1: {} {} {}", bond.residue1_name, bond.chain1_id, bond.residue1_seq);
         println!("  Residue 2: {} {} {}", bond.residue2_name, bond.chain2_id, bond.residue2_seq);
-        if let Some(dist) = bond.distance {
-            println!("  Distance: {:.2} Å", dist);
-        }
-    }
-    
-    // Analyze atom connectivity
-    for atom in &structure.atoms {
-        let connected = structure.get_connected_atoms(atom.serial);
-        println!("Atom {} ({}) is connected to {} other atoms", 
-            atom.serial, atom.name, connected.len());
+        println!("  Distance: {:.2} Å", bond.length);
     }
 }
 ```
 
-### Working with Models
+### Parallel Processing
 
 ```rust
 use pdbrust::PdbStructure;
+use pdbrust::features::parallel;
 
-fn analyze_models(structure: &PdbStructure) {
-    for model in &structure.models {
-        println!("Model {} contains {} atoms", model.serial, model.atoms.len());
-        
-        // Access model-specific remarks
-        for remark in &model.remarks {
-            println!("Model-specific remark {}: {}", remark.number, remark.content);
-        }
-    }
+#[cfg(feature = "parallel")]
+fn process_structures_parallel(structures: Vec<PdbStructure>) {
+    use rayon::prelude::*;
+    
+    let results: Vec<_> = structures.par_iter()
+        .map(|structure| {
+            // Process each structure in parallel
+            structure.atoms.len()
+        })
+        .collect();
+    
+    println!("Total atoms across all structures: {}", results.iter().sum::<usize>());
 }
 ```
 
-## Error Handling
-
-The library provides detailed error handling through the `PdbError` enum:
+### Geometric Analysis
 
 ```rust
-use pdbrust::{PdbStructure, PdbError};
+use pdbrust::PdbStructure;
+use pdbrust::features::geometry;
 
-fn load_structure(path: &str) -> Result<PdbStructure, PdbError> {
-    let structure = PdbStructure::from_file(path)?;
-    Ok(structure)
+#[cfg(feature = "geometry")]
+fn analyze_structure_geometry(structure: &PdbStructure) {
+    use nalgebra::Vector3;
+    
+    // Calculate center of mass
+    let com = structure.calculate_center_of_mass();
+    println!("Center of mass: {:?}", com);
+    
+    // Calculate radius of gyration
+    let rg = structure.calculate_radius_of_gyration();
+    println!("Radius of gyration: {:.2} Å", rg);
 }
 ```
 
-## Running Examples
+## Features
 
-The repository includes example programs demonstrating various features:
+PDBRust supports several optional features that can be enabled in your `Cargo.toml`:
 
-```bash
-# Run the basic PDB reader example
-cargo run --example read_pdb path/to/your/protein.pdb
+```toml
+[dependencies]
+pdbrust = { version = "0.1.0", features = ["parallel", "geometry"] }
 ```
+
+- `parallel`: Enables parallel processing capabilities using Rayon
+- `geometry`: Adds geometric analysis functions using nalgebra
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+We welcome contributions! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+### Development Setup
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/hfooladi/pdbrust.git
+   cd pdbrust
+   ```
+
+2. Install dependencies:
+   ```bash
+   cargo build
+   ```
+
+3. Run tests:
+   ```bash
+   cargo test
+   ```
+
+4. Run benchmarks:
+   ```bash
+   cargo bench
+   ```
+
+### Code Style
+
+- Follow the Rust standard style guide
+- Run `cargo fmt` before committing
+- Run `cargo clippy` to check for linting issues
+- Ensure all tests pass with `cargo test`
+- Add tests for new functionality
+- Update documentation as needed
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details. 
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- The Protein Data Bank (PDB) for providing the standard format
+- The Rust community for excellent tools and libraries
+- All contributors to this project 

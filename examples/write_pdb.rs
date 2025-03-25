@@ -92,39 +92,39 @@ fn main() -> Result<(), Box<dyn Error>> {
     structure.connects.push(Conect {
         atom1: 1,
         atom2: 2,
-        atom3: 0,
-        atom4: 0,
+        atom3: None,
+        atom4: None,
     });
     structure.connects.push(Conect {
         atom1: 2,
         atom2: 3,
-        atom3: 0,
-        atom4: 0,
+        atom3: None,
+        atom4: None,
     });
     structure.connects.push(Conect {
         atom1: 3,
         atom2: 4,
-        atom3: 0,
-        atom4: 0,
+        atom3: None,
+        atom4: None,
     });
 
     // Add an SSBOND record (example)
     structure.ssbonds.push(SSBond {
-        ser_num: 1,
-        res1: "CYS".to_string(),
-        chain1: "A".to_string(),
-        resseq1: 1,
-        icode1: " ".to_string(),
-        res2: "CYS".to_string(),
-        chain2: "A".to_string(),
-        resseq2: 2,
-        icode2: " ".to_string(),
-        sym1: "1_555".to_string(),
-        sym2: "1_555".to_string(),
+        serial: 1,
+        residue1_name: "CYS".to_string(),
+        chain1_id: "A".to_string(),
+        residue1_seq: 1,
+        icode1: None,
+        residue2_name: "CYS".to_string(),
+        chain2_id: "A".to_string(),
+        residue2_seq: 2,
+        icode2: None,
+        sym1: 1555,
+        sym2: 1555,
         length: 2.03,
     });
 
-    // Write the structure to a file using the new write_pdb_file function
+    // Write the structure to a file
     write_pdb_file(&structure, "example.pdb")?;
     println!("Successfully wrote example.pdb");
 
@@ -142,4 +142,4 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("Successfully wrote example_translated.pdb");
 
     Ok(())
-} 
+}
