@@ -14,10 +14,6 @@ keywords = [
     "structural-biology",
     "chemistry",
     "molecular-biology",
-    "protein-structure",
-    "x-ray-crystallography",
-    "nuclear-magnetic-resonance",
-    "cryo-electron-microscopy"
 ]
 categories = [
     "science",
@@ -25,8 +21,6 @@ categories = [
     "bioinformatics",
     "chemistry",
     "data-structures",
-    "filesystem",
-    "text-processing"
 ]
 readme = "README.md"
 
