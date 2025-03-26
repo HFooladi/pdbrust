@@ -1,4 +1,4 @@
-use pdbrust::{parse_pdb_file, PdbStructure};
+use pdbrust::{parse_pdb_file};
 use std::env;
 use std::error::Error;
 

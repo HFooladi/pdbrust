@@ -50,5 +50,5 @@ pub mod writer;
 pub use core::PdbStructure;
 pub use error::PdbError;
 pub use parser::parse_pdb_file;
-pub use records::{Atom, Conect, Model, Remark, SSBond, SeqRes};
+pub use records::{Atom, Conect, Model, Remark, Residue, SSBond, SeqRes};
 pub use writer::write_pdb_file;
