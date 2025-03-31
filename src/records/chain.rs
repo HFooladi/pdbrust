@@ -51,12 +51,12 @@ impl Chain {
     }
 
     /// Gets the number of residues in the chain.
-    pub fn residue_count(&self) -> usize {
+    pub fn get_residue_count(&self) -> usize {
         self.residues.len()
     }
 
     /// Gets the number of atoms in the chain.
-    pub fn atom_count(&self) -> usize {
+    pub fn get_atom_count(&self) -> usize {
         self.residues.values().map(|r| r.atoms.len()).sum()
     }
 
@@ -107,7 +107,7 @@ impl Chain {
     }
 
     /// Gets the center of mass of the chain.
-    pub fn center_of_mass(&self) -> (f64, f64, f64) {
+    pub fn get_center_of_mass(&self) -> (f64, f64, f64) {
         let mut x_sum = 0.0;
         let mut y_sum = 0.0;
         let mut z_sum = 0.0;
@@ -158,8 +158,8 @@ mod tests {
     fn test_chain_creation() {
         let chain = Chain::new("A".to_string());
         assert_eq!(chain.id, "A");
-        assert_eq!(chain.residue_count(), 0);
-        assert_eq!(chain.atom_count(), 0);
+        assert_eq!(chain.get_residue_count(), 0);
+        assert_eq!(chain.get_atom_count(), 0);
     }
 
     #[test]
@@ -168,8 +168,8 @@ mod tests {
         let atom = create_test_atom(1, "ALA", 1.0, 2.0, 3.0);
 
         chain.add_atom(atom.clone(), false);
-        assert_eq!(chain.residue_count(), 1);
-        assert_eq!(chain.atom_count(), 1);
+        assert_eq!(chain.get_residue_count(), 1);
+        assert_eq!(chain.get_atom_count(), 1);
 
         let residue = chain.get_residue("1").unwrap();
         assert_eq!(residue.name, "ALA");
@@ -184,8 +184,8 @@ mod tests {
         chain.add_atom(create_test_atom(1, "ALA", 1.0, 2.0, 3.0), false);
         chain.add_atom(create_test_atom(2, "GLY", 4.0, 5.0, 6.0), false);
 
-        assert_eq!(chain.residue_count(), 2);
-        assert_eq!(chain.atom_count(), 2);
+        assert_eq!(chain.get_residue_count(), 2);
+        assert_eq!(chain.get_atom_count(), 2);
 
         let residues = chain.get_residues();
         assert_eq!(residues.len(), 2);
@@ -240,7 +240,7 @@ mod tests {
         chain.add_atom(create_test_atom(1, "ALA", 0.0, 0.0, 0.0), false);
         chain.add_atom(create_test_atom(2, "GLY", 2.0, 2.0, 2.0), false);
 
-        let (x, y, z) = chain.center_of_mass();
+        let (x, y, z) = chain.get_center_of_mass();
         assert!((x - 1.0).abs() < 1e-10);
         assert!((y - 1.0).abs() < 1e-10);
         assert!((z - 1.0).abs() < 1e-10);
@@ -249,7 +249,7 @@ mod tests {
     #[test]
     fn test_empty_chain_center_of_mass() {
         let chain = Chain::new("A".to_string());
-        let (x, y, z) = chain.center_of_mass();
+        let (x, y, z) = chain.get_center_of_mass();
         assert_eq!((x, y, z), (0.0, 0.0, 0.0));
     }
 }

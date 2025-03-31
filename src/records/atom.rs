@@ -116,12 +116,12 @@ impl Atom {
     }
 
     /// Returns the 3D coordinates of the atom as a tuple.
-    pub fn coordinates(&self) -> (f64, f64, f64) {
+    pub fn get_coordinates(&self) -> (f64, f64, f64) {
         (self.x, self.y, self.z)
     }
 
     /// Returns the distance between this atom and another atom.
-    pub fn distance_to(&self, other: &Atom) -> f64 {
+    pub fn calculate_distance_to(&self, other: &Atom) -> f64 {
         let dx = self.x - other.x;
         let dy = self.y - other.y;
         let dz = self.z - other.z;
@@ -129,7 +129,7 @@ impl Atom {
     }
 
     /// Returns the squared distance between this atom and another atom.
-    pub fn distance_squared_to(&self, other: &Atom) -> f64 {
+    pub fn calculate_distance_squared_to(&self, other: &Atom) -> f64 {
         let dx = self.x - other.x;
         let dy = self.y - other.y;
         let dz = self.z - other.z;
@@ -139,11 +139,11 @@ impl Atom {
     /// Gives the angle between the centers of three atoms in degrees.
     /// The angle is calculated as the angle between the two lines that include
     /// atoms [1, 2] and [2, 3]
-    pub fn angle_between(&self, atom2: &Atom, atom3: &Atom) -> f64 {
+    pub fn calculate_angle_between(&self, atom2: &Atom, atom3: &Atom) -> f64 {
         // Get the coordinates as individual values
-        let (x1, y1, z1) = self.coordinates();
-        let (x2, y2, z2) = atom2.coordinates();
-        let (x3, y3, z3) = atom3.coordinates();
+        let (x1, y1, z1) = self.get_coordinates();
+        let (x2, y2, z2) = atom2.get_coordinates();
+        let (x3, y3, z3) = atom3.get_coordinates();
         
         // Calculate vectors between atoms
         let v1x = x2 - x1;
@@ -184,12 +184,12 @@ impl Atom {
     }
 
     /// Returns the residue identifier as a tuple of (chain_id, residue_seq, ins_code).
-    pub fn residue_id(&self) -> (&str, i32, Option<char>) {
+    pub fn get_residue_id(&self) -> (&str, i32, Option<char>) {
         (&self.chain_id, self.residue_seq, self.ins_code)
     }
 
     /// Returns a formatted string representation of the atom's position.
-    pub fn position_string(&self) -> String {
+    pub fn get_position_string(&self) -> String {
         format!("{:.3} {:.3} {:.3}", self.x, self.y, self.z)
     }
 }
@@ -235,7 +235,7 @@ mod tests {
         assert_eq!(atom.residue_name, "ALA");
         assert_eq!(atom.chain_id, "A");
         assert_eq!(atom.residue_seq, 1);
-        assert_eq!(atom.coordinates(), (1.0, 2.0, 3.0));
+        assert_eq!(atom.get_coordinates(), (1.0, 2.0, 3.0));
     }
 
     #[test]
@@ -272,7 +272,7 @@ mod tests {
             None,
         );
 
-        assert!((atom1.distance_to(&atom2) - 1.732050808).abs() < 1e-6);
+        assert!((atom1.calculate_distance_to(&atom2) - 1.732050808).abs() < 1e-6);
     }
 
     #[test]
@@ -325,7 +325,7 @@ mod tests {
         
         // The expected angle should be 90 degrees (right angle) because:
         // Vector from atom1 to atom2 is (1,0,0) and vector from atom2 to atom3 is (0,1,0)
-        let angle = atom1.angle_between(&atom2, &atom3);
+        let angle = atom1.calculate_angle_between(&atom2, &atom3);
         
         // Use appropriate precision comparison for floating-point values
         assert!((angle - 90.0).abs() < 1e-6, "Expected angle to be 90°, got {}°", angle);
@@ -349,7 +349,7 @@ mod tests {
         
         // Vector from atom1 to atom2 is (1,0,0) and vector from atom2 to atom4 is (1,0,0)
         // These are parallel so the angle should be 0
-        let angle2 = atom1.angle_between(&atom2, &atom4);
+        let angle2 = atom1.calculate_angle_between(&atom2, &atom4);
         assert!(angle2.abs() < 1e-6, "Expected angle to be 0°, got {}°", angle2);
         
         // Additional test for 180 degree angle
@@ -371,7 +371,7 @@ mod tests {
         
         // Vector from atom2 to atom5 is (-1,0,0) and vector from atom2 to atom4 is (1,0,0)
         // These are in opposite directions so the angle should be 180
-        let angle3 = atom2.angle_between(&atom5, &atom4);
+        let angle3 = atom2.calculate_angle_between(&atom5, &atom4);
         assert!((angle3 - 180.0).abs() < 1e-6, "Expected angle to be 180°, got {}°", angle3);
     }
 

@@ -38,7 +38,7 @@ impl Residue {
     ///
     /// This combines the residue number and insertion code to create a unique key
     /// that can be used for lookups.
-    pub fn id(&self) -> String {
+    pub fn get_id(&self) -> String {
         match self.ins_code {
             Some(code) => format!("{}{}", self.number, code),
             None => self.number.to_string(),
@@ -56,7 +56,7 @@ impl Residue {
     }
 
     /// Gets the center of mass of the residue.
-    pub fn center_of_mass(&self) -> (f64, f64, f64) {
+    pub fn get_center_of_mass(&self) -> (f64, f64, f64) {
         if self.atoms.is_empty() {
             return (0.0, 0.0, 0.0);
         }
@@ -108,8 +108,8 @@ mod tests {
         let residue1 = Residue::new("ALA".to_string(), 1, None, false);
         let residue2 = Residue::new("ALA".to_string(), 1, Some('A'), false);
 
-        assert_eq!(residue1.id(), "1");
-        assert_eq!(residue2.id(), "1A");
+        assert_eq!(residue1.get_id(), "1");
+        assert_eq!(residue2.get_id(), "1A");
     }
 
     #[test]
@@ -198,7 +198,7 @@ mod tests {
             None,
         ));
 
-        let (x, y, z) = residue.center_of_mass();
+        let (x, y, z) = residue.get_center_of_mass();
         assert!((x - 0.5).abs() < 1e-6);
         assert!((y - 0.5).abs() < 1e-6);
         assert!((z - 0.5).abs() < 1e-6);
@@ -207,7 +207,7 @@ mod tests {
     #[test]
     fn test_empty_residue_center_of_mass() {
         let residue = Residue::new("ALA".to_string(), 1, None, false);
-        let (x, y, z) = residue.center_of_mass();
+        let (x, y, z) = residue.get_center_of_mass();
         assert_eq!((x, y, z), (0.0, 0.0, 0.0));
     }
 
@@ -245,7 +245,7 @@ mod tests {
         assert_eq!(residue.atoms.len(), 3);
 
         // Test center of mass with multiple atoms
-        let (x, y, z) = residue.center_of_mass();
+        let (x, y, z) = residue.get_center_of_mass();
         assert!((x - 1.0).abs() < 1e-6);
         assert!((y - 1.0).abs() < 1e-6);
         assert!((z - 1.0).abs() < 1e-6);

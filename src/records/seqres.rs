@@ -60,12 +60,12 @@ impl SeqRes {
     }
 
     /// Returns the sequence as a single string.
-    pub fn sequence(&self) -> String {
+    pub fn get_sequence(&self) -> String {
         self.residues.join("")
     }
 
     /// Returns the length of the sequence.
-    pub fn length(&self) -> usize {
+    pub fn get_length(&self) -> usize {
         self.residues.len()
     }
 
@@ -91,7 +91,7 @@ impl SeqRes {
 
     /// Returns the sequence as a one-letter code string.
     /// Note: This is a simplified version and may not handle all amino acids.
-    pub fn one_letter_code(&self) -> String {
+    pub fn get_one_letter_code(&self) -> String {
         self.residues
             .iter()
             .map(|res| match res.as_str() {
@@ -152,7 +152,7 @@ mod tests {
         assert_eq!(seqres.serial, 1);
         assert_eq!(seqres.chain_id, "A");
         assert_eq!(seqres.num_residues, 21);
-        assert_eq!(seqres.length(), 12);
+        assert_eq!(seqres.get_length(), 12);
         assert_eq!(seqres.get_residue(0), Some("ALA"));
         assert_eq!(seqres.get_residue(11), Some("CYS"));
     }
@@ -162,7 +162,7 @@ mod tests {
         let residues = vec!["ALA".to_string(), "GLY".to_string(), "SER".to_string()];
         let seqres = SeqRes::new(1, "A".to_string(), 3, residues);
 
-        assert_eq!(seqres.sequence(), "ALAGLYSER");
+        assert_eq!(seqres.get_sequence(), "ALAGLYSER");
     }
 
     #[test]
@@ -170,7 +170,7 @@ mod tests {
         let residues = vec!["ALA".to_string(), "GLY".to_string(), "SER".to_string()];
         let seqres = SeqRes::new(1, "A".to_string(), 3, residues);
 
-        assert_eq!(seqres.one_letter_code(), "AGS");
+        assert_eq!(seqres.get_one_letter_code(), "AGS");
     }
 
     #[test]
