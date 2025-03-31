@@ -4,7 +4,6 @@ use std::fs::File;
 use std::io::Write;
 use tempfile::NamedTempFile;
 
-
 fn create_test_pdb(content: &str) -> NamedTempFile {
     let mut file = NamedTempFile::new().unwrap();
     file.write_all(content.as_bytes()).unwrap();
@@ -185,14 +184,14 @@ proptest! {
             content.push_str("ENDMDL\n");
         }
         content.push_str("END\n");
-        
+
         let file = create_test_pdb(&content);
         let result = parse_pdb_file(file.path());
         assert!(result.is_ok());
         let structure = result.unwrap();
         assert_eq!(structure.models.len(), num_models);
         assert_eq!(structure.atoms.len(), num_models * atoms_per_model);
-        
+
         for (i, model) in structure.models.iter().enumerate() {
             assert_eq!(model.serial, (i + 1) as i32);
             assert_eq!(model.atoms.len(), atoms_per_model);

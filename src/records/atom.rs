@@ -136,6 +136,35 @@ impl Atom {
         dx * dx + dy * dy + dz * dz
     }
 
+    /// Gives the angle between the centers of three atoms in degrees.
+    /// The angle is calculated as the angle between the two lines that include
+    /// atoms [1, 2] and [2, 3]
+    pub fn angle_between(&self, atom2: &Atom, atom3: &Atom) -> f64 {
+        // Get the coordinates as individual values
+        let (x1, y1, z1) = self.coordinates();
+        let (x2, y2, z2) = atom2.coordinates();
+        let (x3, y3, z3) = atom3.coordinates();
+        
+        // Calculate vectors between atoms
+        let v1x = x2 - x1;
+        let v1y = y2 - y1;
+        let v1z = z2 - z1;
+        
+        let v2x = x3 - x2;
+        let v2y = y3 - y2;
+        let v2z = z3 - z2;
+        
+        // Calculate dot product
+        let dot = v1x * v2x + v1y * v2y + v1z * v2z;
+        
+        // Calculate magnitudes
+        let mag1 = (v1x * v1x + v1y * v1y + v1z * v1z).sqrt();
+        let mag2 = (v2x * v2x + v2y * v2y + v2z * v2z).sqrt();
+        
+        // Calculate angle and convert to degrees
+        (dot / (mag1 * mag2)).acos().to_degrees()
+    }
+
     /// Returns true if this atom is a backbone atom (N, CA, C, O).
     pub fn is_backbone(&self) -> bool {
         matches!(
@@ -244,6 +273,106 @@ mod tests {
         );
 
         assert!((atom1.distance_to(&atom2) - 1.732050808).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_atom_angle() {
+        let atom1 = Atom::new(
+            1,
+            "CA".to_string(),
+            None,
+            "ALA".to_string(),
+            "A".to_string(),
+            1,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            20.0,
+            "C".to_string(),
+            None,
+        );
+        let atom2 = Atom::new(
+            2,
+            "CA".to_string(),
+            None,
+            "ALA".to_string(),
+            "A".to_string(),
+            2,
+            1.0,
+            0.0,
+            0.0,
+            1.0,
+            20.0,
+            "C".to_string(),
+            None,
+        );
+        let atom3 = Atom::new(
+            3,
+            "CA".to_string(),
+            None,
+            "ALA".to_string(),
+            "A".to_string(),
+            3,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            20.0,
+            "C".to_string(),
+            None,
+        );
+        
+        // The expected angle should be 90 degrees (right angle) because:
+        // Vector from atom1 to atom2 is (1,0,0) and vector from atom2 to atom3 is (0,1,0)
+        let angle = atom1.angle_between(&atom2, &atom3);
+        
+        // Use appropriate precision comparison for floating-point values
+        assert!((angle - 90.0).abs() < 1e-6, "Expected angle to be 90°, got {}°", angle);
+        
+        // Test another configuration for thoroughness
+        let atom4 = Atom::new(
+            4,
+            "CA".to_string(),
+            None,
+            "ALA".to_string(),
+            "A".to_string(),
+            4,
+            2.0,
+            0.0,
+            0.0,
+            1.0,
+            20.0,
+            "C".to_string(),
+            None,
+        );
+        
+        // Vector from atom1 to atom2 is (1,0,0) and vector from atom2 to atom4 is (1,0,0)
+        // These are parallel so the angle should be 0
+        let angle2 = atom1.angle_between(&atom2, &atom4);
+        assert!(angle2.abs() < 1e-6, "Expected angle to be 0°, got {}°", angle2);
+        
+        // Additional test for 180 degree angle
+        let atom5 = Atom::new(
+            5,
+            "CA".to_string(),
+            None,
+            "ALA".to_string(),
+            "A".to_string(),
+            5,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            20.0,
+            "C".to_string(),
+            None,
+        );
+        
+        // Vector from atom2 to atom5 is (-1,0,0) and vector from atom2 to atom4 is (1,0,0)
+        // These are in opposite directions so the angle should be 180
+        let angle3 = atom2.angle_between(&atom5, &atom4);
+        assert!((angle3 - 180.0).abs() < 1e-6, "Expected angle to be 180°, got {}°", angle3);
     }
 
     #[test]

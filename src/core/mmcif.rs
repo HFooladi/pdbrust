@@ -39,7 +39,7 @@ impl MmcifParser {
         for line in reader.lines() {
             let line = line?;
             let trimmed = line.trim();
-            
+
             if trimmed.is_empty() || trimmed.starts_with('#') {
                 continue;
             }
@@ -72,10 +72,13 @@ impl MmcifParser {
                 } else {
                     // Handle non-loop single value items
                     let value = parts[1].split_whitespace().nth(1).unwrap_or("").to_string();
-                    let category = self.categories.entry(category_name.clone()).or_insert(Category {
-                        headers: vec![field_name.clone()],
-                        rows: Vec::new(),
-                    });
+                    let category =
+                        self.categories
+                            .entry(category_name.clone())
+                            .or_insert(Category {
+                                headers: vec![field_name.clone()],
+                                rows: Vec::new(),
+                            });
                     category.rows.push(vec![value]);
                 }
                 continue;
@@ -85,10 +88,13 @@ impl MmcifParser {
                 // Parse data rows
                 if let Some(category_name) = &current_category {
                     let values = parse_values(trimmed);
-                    let category = self.categories.entry(category_name.clone()).or_insert(Category {
-                        headers: current_headers.clone(),
-                        rows: Vec::new(),
-                    });
+                    let category =
+                        self.categories
+                            .entry(category_name.clone())
+                            .or_insert(Category {
+                                headers: current_headers.clone(),
+                                rows: Vec::new(),
+                            });
                     category.rows.push(values);
                 }
             }
@@ -177,7 +183,10 @@ ATOM 2 N
         let atom_site = parser.get_category("_atom_site").unwrap();
         assert_eq!(atom_site.headers.len(), 3);
         assert_eq!(atom_site.rows.len(), 2);
-        assert_eq!(atom_site.get_column("group_PDB").unwrap(), vec!["ATOM", "ATOM"]);
+        assert_eq!(
+            atom_site.get_column("group_PDB").unwrap(),
+            vec!["ATOM", "ATOM"]
+        );
     }
 
     #[test]
@@ -194,6 +203,9 @@ _entity.description
 
         let entity = parser.get_category("_entity").unwrap();
         assert_eq!(entity.rows.len(), 2);
-        assert_eq!(entity.get_column("type").unwrap(), vec!["polymer", "non-polymer"]);
+        assert_eq!(
+            entity.get_column("type").unwrap(),
+            vec!["polymer", "non-polymer"]
+        );
     }
 }

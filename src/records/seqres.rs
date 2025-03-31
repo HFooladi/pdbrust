@@ -37,7 +37,7 @@ impl SeqRes {
         let serial = line[8..11].trim().parse().unwrap_or(0);
         let chain_id = line[11..12].trim().to_string();
         let num_residues = line[13..17].trim().parse().unwrap_or(0);
-        
+
         // Parse residue names (13 residues per line, 4 characters each)
         let mut residues = Vec::new();
         for i in 0..13 {

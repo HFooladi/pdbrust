@@ -1,5 +1,5 @@
 //! Core PDB structure representation and manipulation.
-//! 
+//!
 //! This module provides the main structure for representing and manipulating PDB (Protein Data Bank) files.
 //! The `PdbStructure` struct is the central data structure that holds all information from a PDB file,
 //! including atoms, models, connectivity information, and metadata.
@@ -7,16 +7,16 @@
 //! # Examples
 //! ```rust
 //! use pdbrust::core::PdbStructure;
-//! 
+//!
 //! // Create a new empty structure
 //! let structure = PdbStructure::new();
-//! 
+//!
 //! // Load a structure from a file
 //! let structure = PdbStructure::from_file("path/to/structure.pdb")?;
-//! 
+//!
 //! // Get all chain IDs
 //! let chain_ids = structure.get_chain_ids();
-//! 
+//!
 //! // Get residues for a specific chain
 //! let residues = structure.get_residues_for_chain("A");
 //! ```
@@ -50,10 +50,10 @@ use std::path::Path;
 /// # Examples
 /// ```rust
 /// use pdbrust::core::PdbStructure;
-/// 
+///
 /// // Create a new structure
 /// let structure = PdbStructure::new();
-/// 
+///
 /// // Load from file
 /// let structure = PdbStructure::from_file("example.pdb")?;
 /// ```
@@ -87,7 +87,7 @@ impl PdbStructure {
     /// # Examples
     /// ```rust
     /// use pdbrust::core::PdbStructure;
-    /// 
+    ///
     /// let structure = PdbStructure::new();
     /// assert!(structure.atoms.is_empty());
     /// assert!(structure.header.is_none());
@@ -117,7 +117,7 @@ impl PdbStructure {
     /// # Examples
     /// ```rust
     /// use pdbrust::core::PdbStructure;
-    /// 
+    ///
     /// let structure = PdbStructure::from_file("example.pdb")?;
     /// ```
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, PdbError> {
@@ -134,7 +134,7 @@ impl PdbStructure {
     /// # Examples
     /// ```rust
     /// use pdbrust::core::PdbStructure;
-    /// 
+    ///
     /// let structure = PdbStructure::from_file("example.pdb")?;
     /// let chain_ids = structure.get_chain_ids();
     /// println!("Found chains: {:?}", chain_ids);
@@ -163,7 +163,7 @@ impl PdbStructure {
     /// # Examples
     /// ```rust
     /// use pdbrust::core::PdbStructure;
-    /// 
+    ///
     /// let structure = PdbStructure::from_file("example.pdb")?;
     /// let residues = structure.get_residues_for_chain("A");
     /// for (seq_num, res_name) in residues {
@@ -196,7 +196,7 @@ impl PdbStructure {
     /// # Examples
     /// ```rust
     /// use pdbrust::core::PdbStructure;
-    /// 
+    ///
     /// let structure = PdbStructure::from_file("example.pdb")?;
     /// let sequence = structure.get_sequence("A");
     /// println!("Chain A sequence: {:?}", sequence);
@@ -224,7 +224,7 @@ impl PdbStructure {
     /// # Examples
     /// ```rust
     /// use pdbrust::core::PdbStructure;
-    /// 
+    ///
     /// let structure = PdbStructure::from_file("example.pdb")?;
     /// let resolution_remarks = structure.get_remarks_by_number(2);
     /// for remark in resolution_remarks {
@@ -249,7 +249,7 @@ impl PdbStructure {
     /// # Examples
     /// ```rust
     /// use pdbrust::core::PdbStructure;
-    /// 
+    ///
     /// let structure = PdbStructure::from_file("example.pdb")?;
     /// let connected = structure.get_connected_atoms(1);
     /// println!("Atoms connected to atom 1: {:?}", connected);
@@ -283,7 +283,7 @@ impl PdbStructure {
     /// # Examples
     /// ```rust
     /// use pdbrust::core::PdbStructure;
-    /// 
+    ///
     /// let mut structure = PdbStructure::from_file("example.pdb")?;
     /// // Move structure 1.0 Å in each direction
     /// structure.translate(1.0, 1.0, 1.0);
@@ -309,7 +309,7 @@ impl PdbStructure {
     /// # Examples
     /// ```rust
     /// use pdbrust::core::PdbStructure;
-    /// 
+    ///
     /// let structure = PdbStructure::from_file("input.pdb")?;
     /// structure.to_file("output.pdb")?;
     /// ```
@@ -330,11 +330,11 @@ impl Default for PdbStructure {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::records::{Atom, Conect, Remark, SeqRes, SSBond};
+    use crate::records::{Atom, Conect, Remark, SSBond, SeqRes};
 
     fn create_test_structure() -> PdbStructure {
         let mut structure = PdbStructure::new();
-        
+
         // Add some test atoms
         structure.atoms = vec![
             Atom {
@@ -344,14 +344,13 @@ mod tests {
                 residue_name: "ALA".to_string(),
                 chain_id: "A".to_string(),
                 residue_seq: 1,
-                icode: None,
+                ins_code: None,
                 x: 0.0,
                 y: 0.0,
                 z: 0.0,
                 occupancy: 1.0,
-                b_factor: 20.0,
+                temp_factor: 20.0,
                 element: "C".to_string(),
-                charge: None,
             },
             Atom {
                 serial: 2,
@@ -360,63 +359,53 @@ mod tests {
                 residue_name: "GLY".to_string(),
                 chain_id: "A".to_string(),
                 residue_seq: 2,
-                icode: None,
+                ins_code: None,
                 x: 1.0,
                 y: 1.0,
                 z: 1.0,
                 occupancy: 1.0,
-                b_factor: 20.0,
+                temp_factor: 20.0,
                 element: "C".to_string(),
-                charge: None,
             },
         ];
 
         // Add test connectivity
-        structure.connects = vec![
-            Conect {
-                serial: 1,
-                atom1: 1,
-                atom2: 2,
-                atom3: None,
-                atom4: None,
-            },
-        ];
+        structure.connects = vec![Conect {
+            atom1: 1,
+            atom2: 2,
+            atom3: None,
+            atom4: None,
+        }];
 
         // Add test sequence
-        structure.seqres = vec![
-            SeqRes {
-                serial: 1,
-                chain_id: "A".to_string(),
-                num_res: 2,
-                residues: vec!["ALA".to_string(), "GLY".to_string()],
-            },
-        ];
+        structure.seqres = vec![SeqRes {
+            serial: 1,
+            chain_id: "A".to_string(),
+            num_residues: 2,
+            residues: vec!["ALA".to_string(), "GLY".to_string()],
+        }];
 
         // Add test remarks
-        structure.remarks = vec![
-            Remark {
-                number: 2,
-                text: "RESOLUTION. 2.0 ANGSTROMS.".to_string(),
-            },
-        ];
+        structure.remarks = vec![Remark {
+            number: 2,
+            content: "RESOLUTION. 2.0 ANGSTROMS.".to_string(),
+        }];
 
         // Add test SSBOND
-        structure.ssbonds = vec![
-            SSBond {
-                serial: 1,
-                residue1_name: "CYS".to_string(),
-                chain1_id: "A".to_string(),
-                residue1_seq: 1,
-                icode1: None,
-                residue2_name: "CYS".to_string(),
-                chain2_id: "A".to_string(),
-                residue2_seq: 2,
-                icode2: None,
-                sym1: 1,
-                sym2: 1,
-                length: 2.0,
-            },
-        ];
+        structure.ssbonds = vec![SSBond {
+            serial: 1,
+            residue1_name: "CYS".to_string(),
+            chain1_id: "A".to_string(),
+            residue1_seq: 1,
+            icode1: None,
+            residue2_name: "CYS".to_string(),
+            chain2_id: "A".to_string(),
+            residue2_seq: 2,
+            icode2: None,
+            sym1: 1,
+            sym2: 1,
+            length: 2.0,
+        }];
 
         structure
     }
@@ -463,7 +452,7 @@ mod tests {
         let structure = create_test_structure();
         let remarks = structure.get_remarks_by_number(2);
         assert_eq!(remarks.len(), 1);
-        assert!(remarks[0].text.contains("RESOLUTION"));
+        assert!(remarks[0].content.contains("RESOLUTION"));
     }
 
     #[test]
@@ -506,13 +495,13 @@ mod tests {
     fn test_clone() {
         let structure = create_test_structure();
         let cloned = structure.clone();
-        
+
         assert_eq!(structure.atoms.len(), cloned.atoms.len());
         assert_eq!(structure.connects.len(), cloned.connects.len());
         assert_eq!(structure.seqres.len(), cloned.seqres.len());
         assert_eq!(structure.remarks.len(), cloned.remarks.len());
         assert_eq!(structure.ssbonds.len(), cloned.ssbonds.len());
-        
+
         // Test deep clone by modifying the original
         let mut structure = structure;
         structure.atoms[0].x = 100.0;

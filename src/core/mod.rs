@@ -34,22 +34,22 @@
 //! - `pdb`: Enabled by default, provides PDB format support
 //! - `mmcif`: Enabled by default, provides mmCIF format support
 
-mod pdb;
 mod mmcif;
+mod pdb;
 
 // Re-export the public interfaces
-pub use pdb::*;
 pub use mmcif::*;
+pub use pdb::*;
 
 // Common traits and types that are shared between formats could be defined here
 /// Represents a molecular structure, regardless of the source format
 pub trait Structure {
     /// Get the number of atoms in the structure
     fn atom_count(&self) -> usize;
-    
+
     /// Get the number of residues in the structure
     fn residue_count(&self) -> usize;
-    
+
     /// Get the number of chains in the structure
     fn chain_count(&self) -> usize;
 }

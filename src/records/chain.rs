@@ -1,9 +1,9 @@
+use super::atom::Atom;
+use super::residue::Residue;
 /// Represents a single chain within a protein structure.
 ///
 /// A Chain contains multiple residues identified by a unique chain identifier.
 use std::collections::HashMap;
-use super::residue::Residue;
-use super::atom::Atom;
 
 #[derive(Debug, Clone)]
 pub struct Chain {
@@ -76,28 +76,32 @@ impl Chain {
 
     /// Gets all residues in the chain in sequential order.
     pub fn get_residues(&self) -> Vec<&Residue> {
-        self.residue_order.iter()
+        self.residue_order
+            .iter()
             .filter_map(|id| self.residues.get(id))
             .collect()
     }
 
     /// Gets all standard (non-hetero) residues in the chain.
     pub fn get_standard_residues(&self) -> Vec<&Residue> {
-        self.get_residues().into_iter()
+        self.get_residues()
+            .into_iter()
             .filter(|r| !r.is_hetero)
             .collect()
     }
 
     /// Gets all hetero residues in the chain.
     pub fn get_hetero_residues(&self) -> Vec<&Residue> {
-        self.get_residues().into_iter()
+        self.get_residues()
+            .into_iter()
             .filter(|r| r.is_hetero)
             .collect()
     }
 
     /// Gets the sequence of the chain as a vector of residue names.
     pub fn get_sequence(&self) -> Vec<String> {
-        self.get_standard_residues().iter()
+        self.get_standard_residues()
+            .iter()
             .map(|r| r.name.clone())
             .collect()
     }
@@ -162,11 +166,11 @@ mod tests {
     fn test_add_atom() {
         let mut chain = Chain::new("A".to_string());
         let atom = create_test_atom(1, "ALA", 1.0, 2.0, 3.0);
-        
+
         chain.add_atom(atom.clone(), false);
         assert_eq!(chain.residue_count(), 1);
         assert_eq!(chain.atom_count(), 1);
-        
+
         let residue = chain.get_residue("1").unwrap();
         assert_eq!(residue.name, "ALA");
         assert_eq!(residue.atoms.len(), 1);
@@ -175,14 +179,14 @@ mod tests {
     #[test]
     fn test_add_multiple_atoms() {
         let mut chain = Chain::new("A".to_string());
-        
+
         // Add atoms for two residues
         chain.add_atom(create_test_atom(1, "ALA", 1.0, 2.0, 3.0), false);
         chain.add_atom(create_test_atom(2, "GLY", 4.0, 5.0, 6.0), false);
-        
+
         assert_eq!(chain.residue_count(), 2);
         assert_eq!(chain.atom_count(), 2);
-        
+
         let residues = chain.get_residues();
         assert_eq!(residues.len(), 2);
         assert_eq!(residues[0].name, "ALA");
@@ -192,11 +196,11 @@ mod tests {
     #[test]
     fn test_hetero_atoms() {
         let mut chain = Chain::new("A".to_string());
-        
+
         // Add standard and hetero atoms
         chain.add_atom(create_test_atom(1, "ALA", 1.0, 2.0, 3.0), false);
         chain.add_atom(create_test_atom(2, "HOH", 4.0, 5.0, 6.0), true);
-        
+
         assert_eq!(chain.get_standard_residues().len(), 1);
         assert_eq!(chain.get_hetero_residues().len(), 1);
     }
@@ -205,11 +209,11 @@ mod tests {
     fn test_residue_lookup() {
         let mut chain = Chain::new("A".to_string());
         chain.add_atom(create_test_atom(1, "ALA", 1.0, 2.0, 3.0), false);
-        
+
         // Test by ID
         assert!(chain.get_residue("1").is_some());
         assert!(chain.get_residue("2").is_none());
-        
+
         // Test by number
         assert!(chain.get_residue_by_number(1, None).is_some());
         assert!(chain.get_residue_by_number(2, None).is_none());
@@ -218,12 +222,12 @@ mod tests {
     #[test]
     fn test_sequence() {
         let mut chain = Chain::new("A".to_string());
-        
+
         // Add some residues
         chain.add_atom(create_test_atom(1, "ALA", 1.0, 2.0, 3.0), false);
         chain.add_atom(create_test_atom(2, "GLY", 4.0, 5.0, 6.0), false);
         chain.add_atom(create_test_atom(3, "HOH", 7.0, 8.0, 9.0), true);
-        
+
         let sequence = chain.get_sequence();
         assert_eq!(sequence, vec!["ALA", "GLY"]);
     }
@@ -231,11 +235,11 @@ mod tests {
     #[test]
     fn test_center_of_mass() {
         let mut chain = Chain::new("A".to_string());
-        
+
         // Add atoms at known positions
         chain.add_atom(create_test_atom(1, "ALA", 0.0, 0.0, 0.0), false);
         chain.add_atom(create_test_atom(2, "GLY", 2.0, 2.0, 2.0), false);
-        
+
         let (x, y, z) = chain.center_of_mass();
         assert!((x - 1.0).abs() < 1e-10);
         assert!((y - 1.0).abs() < 1e-10);

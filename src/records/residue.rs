@@ -4,8 +4,8 @@
 //! It includes fields for the residue name, sequence number, insertion code, and atoms.
 //! The residue can be either a standard amino acid or a hetero atom.
 
-use std::collections::HashMap;
 use super::Atom;
+use std::collections::HashMap;
 
 /// Represents a residue within a chain.
 #[derive(Debug, Clone)]
@@ -21,7 +21,6 @@ pub struct Residue {
     /// Whether this is a hetero residue (from HETATM records).
     pub is_hetero: bool,
 }
-
 
 impl Residue {
     /// Creates a new empty residue.
@@ -77,7 +76,6 @@ impl Residue {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -86,7 +84,7 @@ mod tests {
     #[test]
     fn test_residue_creation() {
         let residue = Residue::new("ALA".to_string(), 1, None, false);
-        
+
         assert_eq!(residue.name, "ALA");
         assert_eq!(residue.number, 1);
         assert_eq!(residue.ins_code, None);
@@ -97,7 +95,7 @@ mod tests {
     #[test]
     fn test_residue_with_insertion_code() {
         let residue = Residue::new("ALA".to_string(), 1, Some('A'), false);
-        
+
         assert_eq!(residue.name, "ALA");
         assert_eq!(residue.number, 1);
         assert_eq!(residue.ins_code, Some('A'));
@@ -109,7 +107,7 @@ mod tests {
     fn test_residue_id() {
         let residue1 = Residue::new("ALA".to_string(), 1, None, false);
         let residue2 = Residue::new("ALA".to_string(), 1, Some('A'), false);
-        
+
         assert_eq!(residue1.id(), "1");
         assert_eq!(residue2.id(), "1A");
     }
@@ -117,7 +115,7 @@ mod tests {
     #[test]
     fn test_residue_atom_management() {
         let mut residue = Residue::new("ALA".to_string(), 1, None, false);
-        
+
         // Create test atoms
         let ca_atom = Atom::new(
             1,
@@ -134,7 +132,7 @@ mod tests {
             "C".to_string(),
             None,
         );
-        
+
         let cb_atom = Atom::new(
             2,
             "CB".to_string(),
@@ -150,15 +148,15 @@ mod tests {
             "C".to_string(),
             None,
         );
-        
+
         residue.atoms.push(ca_atom.clone());
         residue.atoms.push(cb_atom.clone());
-        
+
         // Test atom retrieval
         assert_eq!(residue.get_atom_by_name("CA"), Some(&ca_atom));
         assert_eq!(residue.get_atom_by_name("CB"), Some(&cb_atom));
         assert_eq!(residue.get_atom_by_name("N"), None);
-        
+
         // Test CA atom retrieval
         assert_eq!(residue.get_ca_atom(), Some(&ca_atom));
     }
@@ -166,7 +164,7 @@ mod tests {
     #[test]
     fn test_residue_center_of_mass() {
         let mut residue = Residue::new("ALA".to_string(), 1, None, false);
-        
+
         // Add atoms at different positions
         residue.atoms.push(Atom::new(
             1,
@@ -183,7 +181,7 @@ mod tests {
             "C".to_string(),
             None,
         ));
-        
+
         residue.atoms.push(Atom::new(
             2,
             "CB".to_string(),
@@ -199,7 +197,7 @@ mod tests {
             "C".to_string(),
             None,
         ));
-        
+
         let (x, y, z) = residue.center_of_mass();
         assert!((x - 0.5).abs() < 1e-6);
         assert!((y - 0.5).abs() < 1e-6);
@@ -216,7 +214,7 @@ mod tests {
     #[test]
     fn test_hetero_residue() {
         let residue = Residue::new("HOH".to_string(), 1, None, true);
-        
+
         assert_eq!(residue.name, "HOH");
         assert!(residue.is_hetero);
     }
@@ -224,7 +222,7 @@ mod tests {
     #[test]
     fn test_residue_with_multiple_atoms() {
         let mut residue = Residue::new("ALA".to_string(), 1, None, false);
-        
+
         // Add multiple atoms
         for i in 0..3 {
             residue.atoms.push(Atom::new(
@@ -243,9 +241,9 @@ mod tests {
                 None,
             ));
         }
-        
+
         assert_eq!(residue.atoms.len(), 3);
-        
+
         // Test center of mass with multiple atoms
         let (x, y, z) = residue.center_of_mass();
         assert!((x - 1.0).abs() < 1e-6);
