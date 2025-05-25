@@ -124,6 +124,44 @@ impl PdbStructure {
         crate::parser::parse_pdb_file(path)
     }
 
+    /// Get number of atoms in the structure.
+    ///
+    /// # Returns
+    /// * `usize` - Number of atoms in the structure
+    ///
+    /// # Examples
+    /// ```rust
+    /// use pdbrust::core::PdbStructure;
+    ///
+    /// let structure = PdbStructure::from_file("example.pdb")?;
+    /// let num_atoms = structure.get_num_atoms();
+    /// println!("Number of atoms: {}", num_atoms);
+    /// ``` 
+    pub fn get_num_atoms(&self) -> usize {
+        self.atoms.len()
+    }
+
+    /// Get number of chains in the structure.
+    ///
+    /// # Returns
+    /// * `usize` - Number of chains in the structure
+    ///
+    /// # Examples
+    /// ```rust 
+    /// use pdbrust::core::PdbStructure;
+    ///
+    /// let structure = PdbStructure::from_file("example.pdb")?;
+    /// let num_chains = structure.get_num_chains();
+    /// println!("Number of chains: {}", num_chains);
+    /// ```
+    pub fn get_num_chains(&self) -> usize {
+        let mut chain_ids = std::collections::HashSet::new();
+        for atom in &self.atoms {
+            chain_ids.insert(atom.chain_id.clone());
+        }
+        chain_ids.len()
+    }   
+
     /// Gets all unique chain IDs in the structure.
     ///
     /// Returns a sorted vector of all unique chain IDs found in the structure's atoms.
@@ -147,6 +185,54 @@ impl PdbStructure {
         let mut chain_ids: Vec<String> = chain_ids.into_iter().collect();
         chain_ids.sort();
         chain_ids
+    }
+
+    /// Get number of residues in the structure.           
+    ///
+    /// # Returns
+    /// * `usize` - Number of residues in the structure
+    ///
+    /// # Examples
+    /// ```rust
+    /// use pdbrust::core::PdbStructure;        
+    ///
+    /// let structure = PdbStructure::from_file("example.pdb")?;
+    /// let num_residues = structure.get_num_residues();
+    /// println!("Number of residues: {}", num_residues);
+    /// ```
+    pub fn get_num_residues(&self) -> usize {
+        let mut residues = std::collections::HashSet::new();
+        for atom in &self.atoms {
+            residues.insert((atom.residue_seq, atom.residue_name.clone()));
+        }
+        residues.len()
+    }
+
+    /// Get all residues in the structure.
+    ///
+    /// Returns a sorted vector of tuples containing residue sequence numbers and residue names.
+    ///
+    /// # Returns
+    /// * `Vec<(i32, String)>` - Sorted list of (sequence number, residue name) tuples
+    ///
+    /// # Examples
+    /// ```rust
+    /// use pdbrust::core::PdbStructure;
+    ///
+    /// let structure = PdbStructure::from_file("example.pdb")?;
+    /// let residues = structure.get_residues();    
+    /// for (seq_num, res_name) in residues {
+    ///     println!("Residue {}: {}", seq_num, res_name);
+    /// }
+    /// ```
+    pub fn get_residues(&self) -> Vec<(i32, String)> {
+        let mut residues = std::collections::HashSet::new();
+        for atom in &self.atoms {
+            residues.insert((atom.residue_seq, atom.residue_name.clone()));
+        }
+        let mut residues: Vec<(i32, String)> = residues.into_iter().collect();
+        residues.sort_by_key(|&(num, _)| num);
+        residues
     }
 
     /// Gets all residues for a specific chain.
@@ -295,6 +381,7 @@ impl PdbStructure {
             atom.z += dz;
         }
     }
+
 
     /// Writes the structure to a file.
     ///
