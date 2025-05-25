@@ -1,14 +1,16 @@
 //! PDBRust: A Rust library for parsing and analyzing Protein Data Bank (PDB) files
 //!
-//! This library provides a robust and efficient way to work with PDB files, supporting various record
-//! types including ATOM, SEQRES, CONECT, SSBOND, and more. It offers functionality for structural
-//! analysis, sequence information retrieval, and connectivity analysis of molecular structures.
+//! This library provides a robust and efficient way to work with both PDB and mmCIF files, 
+//! supporting various record types including ATOM, SEQRES, CONECT, SSBOND, and more. 
+//! It offers functionality for structural analysis, sequence information retrieval, 
+//! and connectivity analysis of molecular structures.
 //!
 //! For detailed documentation, examples, and best practices, see the [guide](guide) module.
 //!
 //! # Features
 //!
-//! - Parse PDB files with comprehensive error handling
+//! - Parse both PDB and mmCIF files with comprehensive error handling
+//! - Automatic format detection
 //! - Support for multiple models in a single structure
 //! - Chain and residue analysis
 //! - Connectivity information through CONECT records
@@ -16,13 +18,32 @@
 //! - Support for disulfide bonds through SSBOND records
 //! - Remark handling for additional structural information
 //!
-//! # Example
+//! # Format Support
+//!
+//! ## PDB Format
+//! Traditional fixed-width text format with support for:
+//! - ATOM/HETATM records
+//! - HEADER, TITLE, REMARK records
+//! - SEQRES, CONECT, SSBOND records
+//! - MODEL/ENDMDL for multi-model structures
+//!
+//! ## mmCIF Format
+//! Modern dictionary-based format with support for:
+//! - _atom_site category (converted to ATOM records)
+//! - _entity_poly_seq category (converted to SEQRES records)
+//! - _struct_disulfid category (converted to SSBOND records)
+//! - Header and metadata information
+//!
+//! # Examples
+//!
+//! ## Basic Usage
 //!
 //! ```rust
-//! use pdbrust::PdbStructure;
+//! use pdbrust::{PdbStructure, parse_structure_file};
 //!
 //! fn main() -> Result<(), Box<dyn std::error::Error>> {
-//!     let structure = PdbStructure::from_file("example.pdb")?;
+//!     // Auto-detect format and parse (works with both .pdb and .cif files)
+//!     let structure = parse_structure_file("example.cif")?;
 //!     
 //!     // Get all chain IDs in the structure
 //!     let chains = structure.get_chain_ids();
@@ -35,6 +56,21 @@
 //!     
 //!     Ok(())
 //! }
+//! ```
+//!
+//! ## Format-Specific Parsing
+//!
+//! ```rust
+//! use pdbrust::{parse_pdb_file, parse_mmcif_file};
+//!
+//! // Parse PDB format explicitly
+//! let pdb_structure = parse_pdb_file("structure.pdb")?;
+//!
+//! // Parse mmCIF format explicitly  
+//! let mmcif_structure = parse_mmcif_file("structure.cif")?;
+//!
+//! // Both produce the same PdbStructure type
+//! assert_eq!(pdb_structure.atoms.len(), mmcif_structure.atoms.len());
 //! ```
 
 // Module exports
@@ -49,6 +85,6 @@ pub mod writer;
 // Re-exports for convenience
 pub use core::PdbStructure;
 pub use error::PdbError;
-pub use parser::parse_pdb_file;
+pub use parser::{parse_pdb_file, parse_mmcif_file, parse_mmcif_string, parse_structure_file};
 pub use records::{Atom, Conect, Model, Remark, Residue, SSBond, SeqRes};
 pub use writer::write_pdb_file;

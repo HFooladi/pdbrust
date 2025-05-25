@@ -16,17 +16,24 @@
 //!   - Provides category-based data access
 //!   - Handles both loop_ and non-loop data structures
 //!
+//! - `mmcif_converter`: Converts mmCIF parsed data into PdbStructure format
+//!   - Unified interface for both PDB and mmCIF data
+//!   - Maintains compatibility with existing code
+//!
 //! # Examples
 //!
 //! ```no_run
-//! use your_crate_name::core::{PdbParser, MmcifParser};
+//! use pdbrust::core::{PdbStructure};
+//! use pdbrust::parser::{parse_pdb_file, parse_mmcif_file, parse_structure_file};
 //!
 //! // Parse a PDB file
-//! let pdb_structure = PdbParser::parse_file("structure.pdb").unwrap();
+//! let pdb_structure = parse_pdb_file("structure.pdb").unwrap();
 //!
 //! // Parse an mmCIF file
-//! let mut mmcif_parser = MmcifParser::new();
-//! mmcif_parser.parse_file("structure.cif").unwrap();
+//! let mmcif_structure = parse_mmcif_file("structure.cif").unwrap();
+//!
+//! // Auto-detect format and parse
+//! let structure = parse_structure_file("structure.ent").unwrap();
 //! ```
 //!
 //! # Feature Flags
@@ -35,10 +42,12 @@
 //! - `mmcif`: Enabled by default, provides mmCIF format support
 
 mod mmcif;
+mod mmcif_converter;
 mod pdb;
 
 // Re-export the public interfaces
 pub use mmcif::*;
+pub use mmcif_converter::*;
 pub use pdb::*;
 
 // Common traits and types that are shared between formats could be defined here
