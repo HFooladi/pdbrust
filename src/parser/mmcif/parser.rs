@@ -278,6 +278,20 @@ ATOM 1 C CA . VAL B 2 1.000 2.000 3.000 0.90 30.00
     fn test_auto_detect_mmcif() {
         let mmcif_data = r#"data_test
 _entry.id TEST
+loop_
+_atom_site.group_PDB
+_atom_site.id
+_atom_site.type_symbol
+_atom_site.label_atom_id
+_atom_site.label_alt_id
+_atom_site.label_comp_id
+_atom_site.label_asym_id
+_atom_site.label_seq_id
+_atom_site.Cartn_x
+_atom_site.Cartn_y
+_atom_site.Cartn_z
+_atom_site.occupancy
+_atom_site.B_iso_or_equiv
 ATOM 1 N N . ALA A 1 0.0 0.0 0.0 1.0 20.0"#;
 
         let mut temp_file = NamedTempFile::with_suffix(".unknown").unwrap();

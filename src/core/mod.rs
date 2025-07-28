@@ -41,8 +41,8 @@
 //! - `pdb`: Enabled by default, provides PDB format support
 //! - `mmcif`: Enabled by default, provides mmCIF format support
 
-mod mmcif;
-mod mmcif_converter;
+pub mod mmcif;
+pub mod mmcif_converter;
 mod pdb;
 
 // Re-export the public interfaces

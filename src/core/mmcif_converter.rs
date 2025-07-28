@@ -46,7 +46,13 @@ fn parse_header_info(parser: &MmcifParser, structure: &mut PdbStructure) -> Resu
     if let Some(struct_category) = parser.get_category("struct") {
         if let Some(row) = struct_category.get_row(0) {
             if let Some(title) = row.get("title") {
-                structure.title = Some(title.to_string());
+                // Remove quotes if present
+                let clean_title = if title.starts_with('"') && title.ends_with('"') && title.len() > 1 {
+                    &title[1..title.len()-1]
+                } else {
+                    title
+                };
+                structure.title = Some(clean_title.to_string());
             }
         }
     }
@@ -83,7 +89,7 @@ fn parse_atoms(parser: &MmcifParser, structure: &mut PdbStructure) -> Result<(),
     // Get column indices for efficient access
     let col_indices = get_atom_column_indices(atom_site)?;
 
-    for (row_idx, row) in atom_site.rows.iter().enumerate() {
+    for (_row_idx, row) in atom_site.rows.iter().enumerate() {
         let atom = parse_atom_row(row, &col_indices)?;
         structure.atoms.push(atom);
     }
@@ -140,17 +146,38 @@ fn get_atom_column_indices(category: &Category) -> Result<AtomColumnIndices, Pdb
 }
 
 fn parse_atom_row(row: &[String], indices: &AtomColumnIndices) -> Result<Atom, PdbError> {
+    // Check row length against required indices
+    let max_required = [
+        indices.id,
+        indices.type_symbol,
+        indices.label_atom_id,
+        indices.label_comp_id,
+        indices.label_asym_id,
+        indices.label_seq_id,
+        indices.cartn_x,
+        indices.cartn_y,
+        indices.cartn_z,
+    ].into_iter().max().unwrap();
+    
+    if row.len() <= max_required {
+        return Err(PdbError::ParseError(format!("Row too short: has {} columns, needs at least {}", row.len(), max_required + 1)));
+    }
+    
     let serial: i32 = row[indices.id].parse()
         .map_err(|_| PdbError::ParseError(format!("Invalid atom serial: {}", row[indices.id])))?;
     
     let name = row[indices.label_atom_id].clone();
     
     let alt_loc = if let Some(idx) = indices.label_alt_id {
-        let alt_str = &row[idx];
-        if alt_str == "." || alt_str == "?" || alt_str.is_empty() {
+        if idx >= row.len() {
             None
         } else {
-            alt_str.chars().next()
+            let alt_str = &row[idx];
+            if alt_str == "." || alt_str == "?" || alt_str.is_empty() {
+                None
+            } else {
+                alt_str.chars().next()
+            }
         }
     } else {
         None
@@ -357,7 +384,7 @@ fn parse_disulfide_row(row: &[String], headers: &[String], serial: i32) -> Resul
 }
 
 /// Parse connectivity information from _struct_conn
-fn parse_connectivity(parser: &MmcifParser, structure: &mut PdbStructure) -> Result<(), PdbError> {
+fn parse_connectivity(parser: &MmcifParser, _structure: &mut PdbStructure) -> Result<(), PdbError> {
     let struct_conn = match parser.get_category("struct_conn") {
         Some(category) => category,
         None => return Ok(()), // No connectivity info, not an error
@@ -369,7 +396,7 @@ fn parse_connectivity(parser: &MmcifParser, structure: &mut PdbStructure) -> Res
 
     // Note: mmCIF connectivity is more complex than PDB CONECT records
     // This is a simplified conversion
-    for row in &struct_conn.rows {
+    for _row in &struct_conn.rows {
         // This would need more sophisticated parsing based on the specific
         // mmCIF connectivity format requirements
         // Left as a placeholder for now as it requires more detailed mmCIF specification knowledge
@@ -382,7 +409,7 @@ fn parse_connectivity(parser: &MmcifParser, structure: &mut PdbStructure) -> Res
 fn parse_remarks(parser: &MmcifParser, structure: &mut PdbStructure) -> Result<(), PdbError> {
     // Parse from various comment categories
     if let Some(audit_conform) = parser.get_category("audit_conform") {
-        for (i, row) in audit_conform.rows.iter().enumerate() {
+        for (i, _row) in audit_conform.rows.iter().enumerate() {
             if let Some(row_map) = audit_conform.get_row(i) {
                 if let Some(dict_name) = row_map.get("dict_name") {
                     let remark = Remark {

@@ -11,9 +11,9 @@ pub struct MmcifParser {
 #[derive(Debug)]
 pub struct Category {
     /// Column names for this category
-    headers: Vec<String>,
+    pub headers: Vec<String>,
     /// Rows of data, where each row is a vector of values
-    rows: Vec<Vec<String>>,
+    pub rows: Vec<Vec<String>>,
 }
 
 impl MmcifParser {
@@ -61,7 +61,7 @@ impl MmcifParser {
                     continue;
                 }
 
-                let category_name = parts[0][1..].to_string();
+                let category_name = parts[0][1..].to_string(); // Remove leading underscore
                 let field_name = parts[1].split_whitespace().next().unwrap_or("").to_string();
 
                 if in_loop {
@@ -71,7 +71,12 @@ impl MmcifParser {
                     current_headers.push(field_name);
                 } else {
                     // Handle non-loop single value items
-                    let value = parts[1].split_whitespace().nth(1).unwrap_or("").to_string();
+                    let remaining = parts[1].trim();
+                    let value = if remaining.starts_with('"') && remaining.ends_with('"') {
+                        remaining[1..remaining.len()-1].to_string()
+                    } else {
+                        remaining.split_whitespace().skip(1).collect::<Vec<&str>>().join(" ")
+                    };
                     let category =
                         self.categories
                             .entry(category_name.clone())
@@ -113,7 +118,12 @@ impl Category {
     /// Get a column of data by header name
     pub fn get_column(&self, header: &str) -> Option<Vec<&str>> {
         let index = self.headers.iter().position(|h| h == header)?;
-        Some(self.rows.iter().map(|row| row[index].as_str()).collect())
+        Some(
+            self.rows
+                .iter()
+                .filter_map(|row| row.get(index).map(|s| s.as_str()))
+                .collect()
+        )
     }
 
     /// Get a row as a map of header name to value
@@ -121,8 +131,10 @@ impl Category {
         self.rows.get(index).map(|row| {
             self.headers
                 .iter()
-                .zip(row.iter())
-                .map(|(h, v)| (h.as_str(), v.as_str()))
+                .enumerate()
+                .filter_map(|(i, h)| {
+                    row.get(i).map(|v| (h.as_str(), v.as_str()))
+                })
                 .collect()
         })
     }
@@ -180,7 +192,7 @@ ATOM 2 N
         let mut parser = MmcifParser::new();
         parser.parse_reader(Cursor::new(data)).unwrap();
 
-        let atom_site = parser.get_category("_atom_site").unwrap();
+        let atom_site = parser.get_category("atom_site").unwrap();
         assert_eq!(atom_site.headers.len(), 3);
         assert_eq!(atom_site.rows.len(), 2);
         assert_eq!(
@@ -201,7 +213,7 @@ _entity.description
         let mut parser = MmcifParser::new();
         parser.parse_reader(Cursor::new(data)).unwrap();
 
-        let entity = parser.get_category("_entity").unwrap();
+        let entity = parser.get_category("entity").unwrap();
         assert_eq!(entity.rows.len(), 2);
         assert_eq!(
             entity.get_column("type").unwrap(),

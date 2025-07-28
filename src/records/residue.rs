@@ -5,7 +5,6 @@
 //! The residue can be either a standard amino acid or a hetero atom.
 
 use super::Atom;
-use std::collections::HashMap;
 
 /// Represents a residue within a chain.
 #[derive(Debug, Clone)]
