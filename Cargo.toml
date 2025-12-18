@@ -18,8 +18,6 @@ keywords = [
 categories = [
     "science",
     "parser-implementations",
-    "bioinformatics",
-    "chemistry",
     "data-structures",
 ]
 readme = "README.md"
