@@ -2,6 +2,7 @@
 name = "pdbrust"
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.70.0"
 authors = ["Hosein Fooaldi <fooladi.hosein@gmail.com>"]
 description = "A comprehensive Rust library for parsing and analyzing Protein Data Bank (PDB) files"
 documentation = "https://docs.rs/pdbrust"
@@ -13,7 +14,6 @@ keywords = [
     "pdb",
     "structural-biology",
     "chemistry",
-    "molecular-biology",
 ]
 categories = [
     "science",
@@ -42,10 +42,10 @@ parallel = ["rayon"]
 geometry = ["nalgebra"]
 
 [package.metadata]
-msrv = "1.70.0"  # Minimum Supported Rust Version
-rust-version = "1.70.0"
 maintenance = { status = "actively-developed" }
-docsrs = { all-features = true }
+
+[package.metadata.docs.rs]
+all-features = true
 
 [[bench]]
 name = "parsing_benchmark"

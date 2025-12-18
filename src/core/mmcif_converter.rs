@@ -89,7 +89,7 @@ fn parse_atoms(parser: &MmcifParser, structure: &mut PdbStructure) -> Result<(),
     // Get column indices for efficient access
     let col_indices = get_atom_column_indices(atom_site)?;
 
-    for (_row_idx, row) in atom_site.rows.iter().enumerate() {
+    for row in atom_site.rows.iter() {
         let atom = parse_atom_row(row, &col_indices)?;
         structure.atoms.push(atom);
     }
@@ -98,6 +98,7 @@ fn parse_atoms(parser: &MmcifParser, structure: &mut PdbStructure) -> Result<(),
 }
 
 /// Helper struct to store column indices for atom parsing
+#[allow(dead_code)]
 struct AtomColumnIndices {
     id: usize,
     type_symbol: usize,
@@ -256,7 +257,7 @@ fn parse_sequences(parser: &MmcifParser, structure: &mut PdbStructure) -> Result
         entity_poly_seq.get_column("num")
     ) {
         for ((entity_id, mon_id), num) in entity_col.iter().zip(mon_id_col.iter()).zip(num_col.iter()) {
-            let seq_entry = sequences.entry(entity_id.to_string()).or_insert_with(Vec::new);
+            let seq_entry = sequences.entry(entity_id.to_string()).or_default();
             
             // Parse the sequence number to ensure proper ordering
             let seq_num: usize = num.parse().unwrap_or(0);

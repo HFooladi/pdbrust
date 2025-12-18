@@ -1,6 +1,5 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use pdbrust::PdbStructure;
-use std::fs::File;
 use std::io::Write;
 use tempfile::NamedTempFile;
 
@@ -10,6 +9,7 @@ fn create_test_pdb(content: &str) -> NamedTempFile {
     file
 }
 
+#[allow(clippy::too_many_arguments)]
 fn generate_atom_record(
     serial: i32,
     name: &str,

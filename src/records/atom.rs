@@ -36,6 +36,7 @@ pub struct Atom {
 
 impl Atom {
     /// Creates a new Atom with the given parameters.
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         serial: i32,
         name: String,

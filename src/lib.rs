@@ -5,7 +5,7 @@
 //! It offers functionality for structural analysis, sequence information retrieval, 
 //! and connectivity analysis of molecular structures.
 //!
-//! For detailed documentation, examples, and best practices, see the [guide](guide) module.
+//! For detailed documentation, examples, and best practices, see the [guide] module.
 //!
 //! # Features
 //!
@@ -38,7 +38,7 @@
 //!
 //! ## Basic Usage
 //!
-//! ```rust
+//! ```rust,no_run
 //! use pdbrust::{PdbStructure, parse_structure_file};
 //!
 //! fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -60,17 +60,20 @@
 //!
 //! ## Format-Specific Parsing
 //!
-//! ```rust
+//! ```rust,no_run
 //! use pdbrust::{parse_pdb_file, parse_mmcif_file};
 //!
-//! // Parse PDB format explicitly
-//! let pdb_structure = parse_pdb_file("structure.pdb")?;
+//! fn main() -> Result<(), Box<dyn std::error::Error>> {
+//!     // Parse PDB format explicitly
+//!     let pdb_structure = parse_pdb_file("structure.pdb")?;
 //!
-//! // Parse mmCIF format explicitly  
-//! let mmcif_structure = parse_mmcif_file("structure.cif")?;
+//!     // Parse mmCIF format explicitly
+//!     let mmcif_structure = parse_mmcif_file("structure.cif")?;
 //!
-//! // Both produce the same PdbStructure type
-//! assert_eq!(pdb_structure.atoms.len(), mmcif_structure.atoms.len());
+//!     // Both produce the same PdbStructure type
+//!     assert_eq!(pdb_structure.atoms.len(), mmcif_structure.atoms.len());
+//!     Ok(())
+//! }
 //! ```
 
 // Module exports

@@ -16,6 +16,12 @@ pub struct Category {
     pub rows: Vec<Vec<String>>,
 }
 
+impl Default for MmcifParser {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MmcifParser {
     pub fn new() -> Self {
         Self {
@@ -51,6 +57,7 @@ impl MmcifParser {
 
             if trimmed.starts_with("loop_") {
                 in_loop = true;
+                current_category = None;
                 current_headers.clear();
                 continue;
             }

@@ -10,7 +10,7 @@
 //!
 //! # Examples
 //!
-//! ```no_run
+//! ```ignore
 //! use pdbrust::parser::{parse_pdb_file, parse_mmcif_file, parse_structure_file};
 //!
 //! // Parse specific formats

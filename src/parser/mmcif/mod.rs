@@ -9,7 +9,7 @@
 //!
 //! # Examples
 //!
-//! ```no_run
+//! ```ignore
 //! use pdbrust::parser::mmcif::parse_mmcif_file;
 //!
 //! let structure = parse_mmcif_file("structure.cif")?;

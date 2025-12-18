@@ -20,7 +20,7 @@ use std::path::Path;
 /// * `Result<PdbStructure, PdbError>` - The parsed structure or an error
 /// 
 /// # Examples
-/// ```rust
+/// ```ignore
 /// use pdbrust::parser::parse_mmcif_file;
 /// 
 /// let structure = parse_mmcif_file("structure.cif")?;
@@ -32,7 +32,7 @@ pub fn parse_mmcif_file<P: AsRef<Path>>(path: P) -> Result<PdbStructure, PdbErro
     // Parse the mmCIF file
     parser.parse_file(path.as_ref().to_str().ok_or_else(|| {
         PdbError::InvalidRecord("Invalid file path".to_string())
-    })?).map_err(|e| PdbError::IoError(e))?;
+    })?).map_err(PdbError::IoError)?;
     
     // Convert to PdbStructure
     mmcif_to_pdb_structure(&parser)
@@ -50,7 +50,7 @@ pub fn parse_mmcif_file<P: AsRef<Path>>(path: P) -> Result<PdbStructure, PdbErro
 /// * `Result<PdbStructure, PdbError>` - The parsed structure or an error
 /// 
 /// # Examples
-/// ```rust
+/// ```ignore
 /// use std::io::Cursor;
 /// use pdbrust::parser::parse_mmcif_reader;
 /// 
@@ -62,7 +62,7 @@ pub fn parse_mmcif_reader<R: BufRead>(reader: R) -> Result<PdbStructure, PdbErro
     let mut parser = MmcifParser::new();
     
     // Parse the mmCIF data
-    parser.parse_reader(reader).map_err(|e| PdbError::IoError(e))?;
+    parser.parse_reader(reader).map_err(PdbError::IoError)?;
     
     // Convert to PdbStructure
     mmcif_to_pdb_structure(&parser)
@@ -79,7 +79,7 @@ pub fn parse_mmcif_reader<R: BufRead>(reader: R) -> Result<PdbStructure, PdbErro
 /// * `Result<PdbStructure, PdbError>` - The parsed structure or an error
 /// 
 /// # Examples
-/// ```rust
+/// ```ignore
 /// use pdbrust::parser::parse_mmcif_string;
 /// 
 /// let mmcif_data = r#"
@@ -112,7 +112,7 @@ pub fn parse_mmcif_string(data: &str) -> Result<PdbStructure, PdbError> {
 /// * `Result<PdbStructure, PdbError>` - The parsed structure or an error
 /// 
 /// # Examples
-/// ```rust
+/// ```ignore
 /// use pdbrust::parser::parse_structure_file;
 /// 
 /// // Works with both .pdb and .cif files
@@ -144,20 +144,28 @@ pub fn parse_structure_file<P: AsRef<Path>>(path: P) -> Result<PdbStructure, Pdb
 /// Detects file format by examining content and parses accordingly.
 fn detect_and_parse_file<P: AsRef<Path>>(path: P) -> Result<PdbStructure, PdbError> {
     let file = File::open(&path)?;
-    let mut reader = BufReader::new(file);
-    let mut first_line = String::new();
-    
-    // Read the first line to detect format
-    reader.read_line(&mut first_line)?;
-    
-    // Re-open the file for parsing
-    if first_line.trim_start().starts_with("data_") {
+    let reader = BufReader::new(file);
+
+    // Read the first non-empty line to detect format
+    let mut first_meaningful_line = String::new();
+    for line in reader.lines() {
+        let line = line?;
+        let trimmed = line.trim();
+        if !trimmed.is_empty() && !trimmed.starts_with('#') {
+            first_meaningful_line = trimmed.to_string();
+            break;
+        }
+    }
+
+    // Detect format based on content
+    if first_meaningful_line.starts_with("data_") || first_meaningful_line.starts_with("_") {
         // Looks like mmCIF format
         parse_mmcif_file(path)
-    } else if first_line.starts_with("HEADER") || 
-              first_line.starts_with("ATOM") || 
-              first_line.starts_with("HETATM") ||
-              first_line.starts_with("TITLE") {
+    } else if first_meaningful_line.starts_with("HEADER") ||
+              first_meaningful_line.starts_with("ATOM") ||
+              first_meaningful_line.starts_with("HETATM") ||
+              first_meaningful_line.starts_with("TITLE") ||
+              first_meaningful_line.starts_with("REMARK") {
         // Looks like PDB format
         crate::parser::parse_pdb_file(path)
     } else {

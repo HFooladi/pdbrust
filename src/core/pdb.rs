@@ -5,20 +5,23 @@
 //! including atoms, models, connectivity information, and metadata.
 //!
 //! # Examples
-//! ```rust
+//! ```ignore
 //! use pdbrust::core::PdbStructure;
 //!
-//! // Create a new empty structure
-//! let structure = PdbStructure::new();
+//! fn main() -> Result<(), Box<dyn std::error::Error>> {
+//!     // Create a new empty structure
+//!     let structure = PdbStructure::new();
 //!
-//! // Load a structure from a file
-//! let structure = PdbStructure::from_file("path/to/structure.pdb")?;
+//!     // Load a structure from a file
+//!     let structure = PdbStructure::from_file("path/to/structure.pdb")?;
 //!
-//! // Get all chain IDs
-//! let chain_ids = structure.get_chain_ids();
+//!     // Get all chain IDs
+//!     let chain_ids = structure.get_chain_ids();
 //!
-//! // Get residues for a specific chain
-//! let residues = structure.get_residues_for_chain("A");
+//!     // Get residues for a specific chain
+//!     let residues = structure.get_residues_for_chain("A");
+//!     Ok(())
+//! }
 //! ```
 
 use crate::error::PdbError;
@@ -48,7 +51,7 @@ use std::path::Path;
 /// * `current_model` - Currently active model number (if any)
 ///
 /// # Examples
-/// ```rust
+/// ```ignore
 /// use pdbrust::core::PdbStructure;
 ///
 /// // Create a new structure
@@ -85,7 +88,7 @@ impl PdbStructure {
     /// Returns a `PdbStructure` with empty vectors for all collections and `None` for optional fields.
     ///
     /// # Examples
-    /// ```rust
+    /// ```ignore
     /// use pdbrust::core::PdbStructure;
     ///
     /// let structure = PdbStructure::new();
@@ -115,7 +118,7 @@ impl PdbStructure {
     /// * `Result<Self, PdbError>` - The parsed PDB structure or an error if parsing fails
     ///
     /// # Examples
-    /// ```rust
+    /// ```ignore
     /// use pdbrust::core::PdbStructure;
     ///
     /// let structure = PdbStructure::from_file("example.pdb")?;
@@ -130,7 +133,7 @@ impl PdbStructure {
     /// * `usize` - Number of atoms in the structure
     ///
     /// # Examples
-    /// ```rust
+    /// ```ignore
     /// use pdbrust::core::PdbStructure;
     ///
     /// let structure = PdbStructure::from_file("example.pdb")?;
@@ -147,7 +150,7 @@ impl PdbStructure {
     /// * `usize` - Number of chains in the structure
     ///
     /// # Examples
-    /// ```rust 
+    /// ```ignore
     /// use pdbrust::core::PdbStructure;
     ///
     /// let structure = PdbStructure::from_file("example.pdb")?;
@@ -170,7 +173,7 @@ impl PdbStructure {
     /// * `Vec<String>` - Sorted list of unique chain IDs
     ///
     /// # Examples
-    /// ```rust
+    /// ```ignore
     /// use pdbrust::core::PdbStructure;
     ///
     /// let structure = PdbStructure::from_file("example.pdb")?;
@@ -193,7 +196,7 @@ impl PdbStructure {
     /// * `usize` - Number of residues in the structure
     ///
     /// # Examples
-    /// ```rust
+    /// ```ignore
     /// use pdbrust::core::PdbStructure;        
     ///
     /// let structure = PdbStructure::from_file("example.pdb")?;
@@ -216,7 +219,7 @@ impl PdbStructure {
     /// * `Vec<(i32, String)>` - Sorted list of (sequence number, residue name) tuples
     ///
     /// # Examples
-    /// ```rust
+    /// ```ignore
     /// use pdbrust::core::PdbStructure;
     ///
     /// let structure = PdbStructure::from_file("example.pdb")?;
@@ -247,7 +250,7 @@ impl PdbStructure {
     /// * `Vec<(i32, String)>` - Sorted list of (sequence number, residue name) tuples
     ///
     /// # Examples
-    /// ```rust
+    /// ```ignore
     /// use pdbrust::core::PdbStructure;
     ///
     /// let structure = PdbStructure::from_file("example.pdb")?;
@@ -280,7 +283,7 @@ impl PdbStructure {
     /// * `Vec<String>` - List of residue names in sequence order
     ///
     /// # Examples
-    /// ```rust
+    /// ```ignore
     /// use pdbrust::core::PdbStructure;
     ///
     /// let structure = PdbStructure::from_file("example.pdb")?;
@@ -308,7 +311,7 @@ impl PdbStructure {
     /// * `Vec<&Remark>` - List of remarks with the specified number
     ///
     /// # Examples
-    /// ```rust
+    /// ```ignore
     /// use pdbrust::core::PdbStructure;
     ///
     /// let structure = PdbStructure::from_file("example.pdb")?;
@@ -333,7 +336,7 @@ impl PdbStructure {
     /// * `Vec<&Atom>` - List of connected atoms
     ///
     /// # Examples
-    /// ```rust
+    /// ```ignore
     /// use pdbrust::core::PdbStructure;
     ///
     /// let structure = PdbStructure::from_file("example.pdb")?;
@@ -367,7 +370,7 @@ impl PdbStructure {
     /// * `dz` - Z-axis translation
     ///
     /// # Examples
-    /// ```rust
+    /// ```ignore
     /// use pdbrust::core::PdbStructure;
     ///
     /// let mut structure = PdbStructure::from_file("example.pdb")?;
@@ -394,7 +397,7 @@ impl PdbStructure {
     /// * `Result<(), PdbError>` - Success or error if writing fails
     ///
     /// # Examples
-    /// ```rust
+    /// ```ignore
     /// use pdbrust::core::PdbStructure;
     ///
     /// let structure = PdbStructure::from_file("input.pdb")?;

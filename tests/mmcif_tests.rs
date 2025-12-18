@@ -1,7 +1,6 @@
 //! Comprehensive tests for mmCIF parsing functionality
 
-use pdbrust::{parse_mmcif_file, parse_mmcif_string, parse_structure_file, PdbStructure};
-use std::fs::File;
+use pdbrust::{parse_mmcif_file, parse_mmcif_string, parse_structure_file};
 use std::io::Write;
 use tempfile::NamedTempFile;
 

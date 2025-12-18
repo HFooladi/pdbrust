@@ -1,5 +1,4 @@
-use pdbrust::{parse_pdb_file, Atom, Conect, PdbStructure, SSBond, SeqRes};
-use std::fs::File;
+use pdbrust::parse_pdb_file;
 use std::io::Write;
 use tempfile::NamedTempFile;
 

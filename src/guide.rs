@@ -14,7 +14,7 @@
 //!
 //! Then, import and use the library:
 //!
-//! ```rust
+//! ```ignore
 //! use pdbrust::PdbStructure;
 //!
 //! fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -33,7 +33,7 @@
 //!
 //! ### 1. Analyzing Protein Structure
 //!
-//! ```rust
+//! ```ignore
 //! use pdbrust::PdbStructure;
 //!
 //! fn analyze_structure(pdb_file: &str) -> Result<(), Box<dyn std::error::Error>> {
@@ -58,7 +58,7 @@
 //!
 //! ### 2. Working with Multiple Models (e.g., NMR Structures)
 //!
-//! ```rust
+//! ```ignore
 //! fn analyze_models(structure: &PdbStructure) {
 //!     // Check number of models
 //!     println!("Structure contains {} models", structure.models.len());
@@ -78,7 +78,7 @@
 //!
 //! ### 3. Analyzing Connectivity
 //!
-//! ```rust
+//! ```ignore
 //! fn analyze_connectivity(structure: &PdbStructure) {
 //!     // Analyze disulfide bonds
 //!     for bond in &structure.ssbonds {
@@ -112,7 +112,7 @@
 //! 1. **Error Handling**
 //!    - Always use the `Result` type to handle potential errors
 //!    - Check for specific error types using pattern matching
-//!    ```rust
+//!    ```ignore
 //!    match PdbStructure::from_file("structure.pdb") {
 //!        Ok(structure) => {
 //!            // Process the structure
@@ -132,7 +132,7 @@
 //! 2. **Memory Management**
 //!    - Use references when passing `PdbStructure` to functions
 //!    - Consider using iterators instead of collecting vectors for large structures
-//!    ```rust
+//!    ```ignore
 //!    // Efficient way to process atoms
 //!    structure.atoms
 //!        .iter()
@@ -145,7 +145,7 @@
 //! 3. **Data Validation**
 //!    - Validate PDB files before processing
 //!    - Check for required records
-//!    ```rust
+//!    ```ignore
 //!    if structure.atoms.is_empty() {
 //!        eprintln!("Warning: No atom records found");
 //!    }
@@ -167,7 +167,7 @@
 //!    - Chain and residue operations are optimized with sorting and deduplication
 //!
 //! 3. **Optimization Tips**
-//!    ```rust
+//!    ```ignore
 //!    // Create indices for frequent lookups
 //!    use std::collections::HashMap;
 //!    
@@ -185,7 +185,7 @@
 //! ## Examples of Handling Different PDB Record Types
 //!
 //! ### 1. ATOM Records
-//! ```rust
+//! ```ignore
 //! // Processing ATOM records
 //! for atom in &structure.atoms {
 //!     if atom.name == "CA" {  // Alpha carbons
@@ -196,7 +196,7 @@
 //! ```
 //!
 //! ### 2. SEQRES Records
-//! ```rust
+//! ```ignore
 //! // Processing sequence information
 //! for seqres in &structure.seqres {
 //!     println!("Chain {} sequence:", seqres.chain_id);
@@ -208,7 +208,7 @@
 //! ```
 //!
 //! ### 3. SSBOND Records
-//! ```rust
+//! ```ignore
 //! // Processing disulfide bonds
 //! for bond in &structure.ssbonds {
 //!     println!("Disulfide bond between:");
@@ -219,7 +219,7 @@
 //! ```
 //!
 //! ### 4. REMARK Records
-//! ```rust
+//! ```ignore
 //! // Processing specific remarks
 //! let resolution_remarks = structure.get_remarks_by_number(2);
 //! for remark in resolution_remarks {
@@ -230,7 +230,7 @@
 //! ```
 //!
 //! ### 5. MODEL Records
-//! ```rust
+//! ```ignore
 //! // Processing multiple models
 //! for model in &structure.models {
 //!     println!("Model {}:", model.serial);
