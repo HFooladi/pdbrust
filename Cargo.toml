@@ -23,13 +23,13 @@ categories = [
 readme = "README.md"
 
 [dependencies]
-thiserror = "1.0"
+thiserror = "2.0"
 rayon = { version = "1.8", optional = true }
-nalgebra = { version = "0.32", optional = true }
-itertools = "0.12"
+nalgebra = { version = "0.34", optional = true }
+itertools = "0.14"
 
 [dev-dependencies]
-criterion = "0.5"
+criterion = "0.8"
 proptest = "1.4"
 tempfile = "3.9"
 codecov = "0.4"
