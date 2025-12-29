@@ -1,8 +1,8 @@
 [package]
 name = "pdbrust"
-version = "0.1.0"
-edition = "2021"
-rust-version = "1.70.0"
+version = "0.2.0"
+edition = "2024"
+rust-version = "1.85.0"
 authors = ["Hosein Fooaldi <fooladi.hosein@gmail.com>"]
 description = "A comprehensive Rust library for parsing and analyzing Protein Data Bank (PDB) files"
 documentation = "https://docs.rs/pdbrust"

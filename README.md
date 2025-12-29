@@ -11,14 +11,14 @@ A fast Rust library for parsing and analyzing PDB and mmCIF protein structure fi
 
 ```toml
 [dependencies]
-pdbrust = "0.1"
+pdbrust = "0.2"
 ```
 
 With optional features:
 
 ```toml
 [dependencies]
-pdbrust = { version = "0.1", features = ["filter", "descriptors", "rcsb"] }
+pdbrust = { version = "0.2", features = ["filter", "descriptors", "rcsb"] }
 ```
 
 ## Quick Start
