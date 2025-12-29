@@ -119,7 +119,7 @@ If you use PDBRust in your research, please cite:
 @software{pdbrust,
   author = {Fooladi, Hosein},
   title = {PDBRust: A High-Performance Rust Library for PDB/mmCIF Parsing and Analysis},
-  year = {2024},
+  year = {2025},
   url = {https://github.com/HFooladi/pdbrust},
   version = {0.2.0}
 }
@@ -127,7 +127,7 @@ If you use PDBRust in your research, please cite:
 
 Or in text format:
 
-> Fooladi, H. (2024). PDBRust: A High-Performance Rust Library for PDB/mmCIF Parsing and Analysis. https://github.com/HFooladi/pdbrust
+> Fooladi, H. (2025). PDBRust: A High-Performance Rust Library for PDB/mmCIF Parsing and Analysis. https://github.com/HFooladi/pdbrust
 
 ## License
 
