@@ -85,9 +85,25 @@ pub mod records;
 mod utils;
 pub mod writer;
 
+// Conditional modules
+#[cfg(feature = "filter")]
+pub mod filter;
+
+#[cfg(feature = "descriptors")]
+pub mod descriptors;
+
+#[cfg(feature = "quality")]
+pub mod quality;
+
+#[cfg(feature = "summary")]
+pub mod summary;
+
+#[cfg(feature = "rcsb")]
+pub mod rcsb;
+
 // Re-exports for convenience
 pub use core::PdbStructure;
 pub use error::PdbError;
-pub use parser::{parse_pdb_file, parse_mmcif_file, parse_mmcif_string, parse_structure_file};
+pub use parser::{parse_pdb_file, parse_pdb_string, parse_mmcif_file, parse_mmcif_string, parse_structure_file};
 pub use records::{Atom, Conect, Model, Remark, Residue, SSBond, SeqRes};
 pub use writer::write_pdb_file;

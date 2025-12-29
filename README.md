@@ -1,213 +1,116 @@
-
-[![Rust CI/CD](https://github.com/hfooladi/pdbrust/actions/workflows/rust.yml/badge.svg)](https://github.com/hfooladi/pdbrust/actions/workflows/rust.yml)
-[![codecov](https://codecov.io/gh/hfooladi/pdbrust/branch/main/graph/badge.svg)](https://codecov.io/gh/hfooladi/pdbrust)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Crates.io](https://img.shields.io/crates/v/pdbrust.svg)](https://crates.io/crates/pdbrust)
 [![Documentation](https://docs.rs/pdbrust/badge.svg)](https://docs.rs/pdbrust)
-
-<p align="center">
-  <img src="assets/banner.png" alt="PDBRust Banner" style="max-width:100%;">
-</p>
+[![Rust CI/CD](https://github.com/hfooladi/pdbrust/actions/workflows/rust.yml/badge.svg)](https://github.com/hfooladi/pdbrust/actions/workflows/rust.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 # PDBRust
 
-A comprehensive Rust library for parsing and analyzing PDB (Protein Data Bank) files. This library provides a robust and efficient way to work with protein structure data in PDB format.
-
-## Features
-
-- **Complete Record Support**
-  - ATOM/HETATM records with full coordinate and metadata support
-  - MODEL/ENDMDL for multi-model structures
-  - SEQRES records for sequence information
-  - CONECT records for connectivity data
-  - SSBOND records for disulfide bonds
-  - REMARK records with categorization
-  - HEADER and TITLE metadata
-
-- **Robust Error Handling**
-  - Custom error types for different parsing scenarios
-  - Detailed error messages for debugging
-  - Safe handling of malformed PDB files
-
-- **Utility Functions**
-  - Chain identification and analysis
-  - Residue sequence extraction
-  - Connectivity analysis
-  - Model-based structure organization
-  - Disulfide bond analysis
+A fast Rust library for parsing and analyzing PDB and mmCIF protein structure files.
 
 ## Installation
 
-Add this to your `Cargo.toml`:
+```toml
+[dependencies]
+pdbrust = "0.1"
+```
+
+With optional features:
 
 ```toml
 [dependencies]
-pdbrust = "0.1.0"
+pdbrust = { version = "0.1", features = ["filter", "descriptors", "rcsb"] }
 ```
 
-## Usage
-
-### Basic Structure Loading
+## Quick Start
 
 ```rust
-use pdbrust::PdbStructure;
+use pdbrust::{parse_pdb_file, PdbStructure};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Load a PDB file
-    let structure = PdbStructure::from_file("protein.pdb")?;
-    
-    // Access basic information
-    if let Some(header) = &structure.header {
-        println!("Structure header: {}", header);
-    }
-    
-    println!("Number of atoms: {}", structure.atoms.len());
-    println!("Number of models: {}", structure.models.len());
-    
+    let structure = parse_pdb_file("protein.pdb")?;
+
+    println!("Atoms: {}", structure.atoms.len());
+    println!("Chains: {:?}", structure.get_chain_ids());
+
     Ok(())
 }
 ```
 
-### Chain and Residue Analysis
-
-```rust
-use pdbrust::PdbStructure;
-
-fn analyze_chains(structure: &PdbStructure) {
-    // Get all chain IDs
-    let chain_ids = structure.get_chain_ids();
-    
-    for chain_id in chain_ids {
-        // Get residues in this chain
-        let residues = structure.get_residues_for_chain(&chain_id);
-        println!("Chain {} has {} residues", chain_id, residues.len());
-        
-        // Get sequence if available
-        let sequence = structure.get_sequence(&chain_id);
-        if !sequence.is_empty() {
-            println!("Sequence: {}", sequence.join("-"));
-        }
-    }
-}
-```
-
-### Connectivity Analysis
-
-```rust
-use pdbrust::PdbStructure;
-
-fn analyze_connectivity(structure: &PdbStructure) {
-    // Analyze disulfide bonds
-    for bond in &structure.ssbonds {
-        println!("Disulfide bond between:");
-        println!("  Residue 1: {} {} {}", bond.residue1_name, bond.chain1_id, bond.residue1_seq);
-        println!("  Residue 2: {} {} {}", bond.residue2_name, bond.chain2_id, bond.residue2_seq);
-        println!("  Distance: {:.2} Å", bond.length);
-    }
-}
-```
-
-### Parallel Processing
-
-```rust
-use pdbrust::PdbStructure;
-use pdbrust::features::parallel;
-
-#[cfg(feature = "parallel")]
-fn process_structures_parallel(structures: Vec<PdbStructure>) {
-    use rayon::prelude::*;
-    
-    let results: Vec<_> = structures.par_iter()
-        .map(|structure| {
-            // Process each structure in parallel
-            structure.atoms.len()
-        })
-        .collect();
-    
-    println!("Total atoms across all structures: {}", results.iter().sum::<usize>());
-}
-```
-
-### Geometric Analysis
-
-```rust
-use pdbrust::PdbStructure;
-use pdbrust::features::geometry;
-
-#[cfg(feature = "geometry")]
-fn analyze_structure_geometry(structure: &PdbStructure) {
-    use nalgebra::Vector3;
-    
-    // Calculate center of mass
-    let com = structure.calculate_center_of_mass();
-    println!("Center of mass: {:?}", com);
-    
-    // Calculate radius of gyration
-    let rg = structure.calculate_radius_of_gyration();
-    println!("Radius of gyration: {:.2} Å", rg);
-}
-```
-
 ## Features
 
-PDBRust supports several optional features that can be enabled in your `Cargo.toml`:
+| Feature | Description |
+|---------|-------------|
+| `filter` | Filter atoms, extract chains, remove ligands, clean structures |
+| `descriptors` | Radius of gyration, amino acid composition, geometric metrics |
+| `quality` | Structure quality assessment (altlocs, missing residues, etc.) |
+| `summary` | Combined quality + descriptors in one call |
+| `rcsb` | Search and download structures from RCSB PDB |
 
-```toml
-[dependencies]
-pdbrust = { version = "0.1.0", features = ["parallel", "geometry"] }
+## Examples
+
+### Filter and Clean Structures
+
+```rust
+use pdbrust::parse_pdb_file;
+
+let structure = parse_pdb_file("protein.pdb")?;
+
+// Extract CA coordinates
+let ca_coords = structure.get_ca_coords(None);
+
+// Chain operations with fluent API
+let chain_a = structure
+    .remove_ligands()
+    .keep_only_chain("A")
+    .keep_only_ca();
 ```
 
-- `parallel`: Enables parallel processing capabilities using Rayon
-- `geometry`: Adds geometric analysis functions using nalgebra
+### Compute Structural Descriptors
 
-## Contributing
+```rust
+let structure = parse_pdb_file("protein.pdb")?;
 
-We welcome contributions! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+let rg = structure.radius_of_gyration();
+let max_dist = structure.max_ca_distance();
+let composition = structure.aa_composition();
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+// Or get everything at once
+let descriptors = structure.structure_descriptors();
+```
 
-### Development Setup
+### Download from RCSB PDB
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/hfooladi/pdbrust.git
-   cd pdbrust
-   ```
+```rust
+use pdbrust::rcsb::{download_structure, rcsb_search, SearchQuery, FileFormat};
 
-2. Install dependencies:
-   ```bash
-   cargo build
-   ```
+// Download a structure
+let structure = download_structure("1UBQ", FileFormat::Pdb)?;
 
-3. Run tests:
-   ```bash
-   cargo test
-   ```
+// Search RCSB
+let query = SearchQuery::new()
+    .with_text("kinase")
+    .with_organism("Homo sapiens")
+    .with_resolution_max(2.0);
 
-4. Run benchmarks:
-   ```bash
-   cargo bench
-   ```
+let results = rcsb_search(&query, 10)?;
+```
 
-### Code Style
+## Performance
 
-- Follow the Rust standard style guide
-- Run `cargo fmt` before committing
-- Run `cargo clippy` to check for linting issues
-- Ensure all tests pass with `cargo test`
-- Add tests for new functionality
-- Update documentation as needed
+Benchmarks against equivalent Python code show **40-260x speedups** for in-memory operations:
+
+| Operation | Speedup |
+|-----------|---------|
+| Parsing | 2-3x |
+| get_ca_coords | 240x |
+| max_ca_distance | 260x |
+| radius_of_gyration | 100x |
+
+## Documentation
+
+- [API Documentation](https://docs.rs/pdbrust)
+- [Examples](examples/)
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-- The Protein Data Bank (PDB) for providing the standard format
-- The Rust community for excellent tools and libraries
-- All contributors to this project 
+MIT

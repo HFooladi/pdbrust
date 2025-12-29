@@ -10,6 +10,17 @@ use std::path::Path;
 pub fn parse_pdb_file<P: AsRef<Path>>(path: P) -> Result<PdbStructure, PdbError> {
     let file = File::open(path)?;
     let reader = BufReader::new(file);
+    parse_pdb_reader(reader)
+}
+
+/// Parses PDB data from a string and returns a PdbStructure.
+pub fn parse_pdb_string(content: &str) -> Result<PdbStructure, PdbError> {
+    let reader = BufReader::new(content.as_bytes());
+    parse_pdb_reader(reader)
+}
+
+/// Internal function to parse PDB from any reader.
+fn parse_pdb_reader<R: BufRead>(reader: R) -> Result<PdbStructure, PdbError> {
     let mut structure = PdbStructure::new();
 
     // Track current model if parsing multi-model file
