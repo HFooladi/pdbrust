@@ -1,0 +1,196 @@
+\documentclass[11pt,a4paper]{article}
+
+% Modern packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{authblk}
+\usepackage[numbers,sort&compress]{natbib}
+
+% Colors
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.97,0.97,0.97}
+\definecolor{linkblue}{rgb}{0.0,0.4,0.7}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=linkblue,
+    citecolor=linkblue,
+    urlcolor=linkblue
+}
+
+% Code listing style
+\lstdefinestyle{rustcode}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{codepurple}\bfseries,
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codegreen},
+    basicstyle=\ttfamily\small,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=none,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2,
+    frame=single,
+    framerule=0.5pt,
+    rulecolor=\color{codegray}
+}
+
+\lstset{style=rustcode}
+
+% Title
+\title{\textbf{PDBRust: A High-Performance Rust Library for Protein Structure File Parsing and Analysis}}
+
+\author[1]{Hosein Fooladi}
+\affil[1]{Department of Computer Science, KU Leuven, Belgium}
+
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+We present PDBRust, an open-source Rust library for parsing and analyzing Protein Data Bank (PDB) and mmCIF structure files. PDBRust provides a unified interface for both file formats with automatic format detection, comprehensive structural analysis capabilities, and seamless integration with the RCSB PDB database. Benchmarks demonstrate 40--260$\times$ speedups compared to equivalent Python implementations for common operations. The library is designed for high-throughput structural bioinformatics pipelines and machine learning applications requiring efficient processing of large protein structure datasets. PDBRust is available at \url{https://github.com/HFooladi/pdbrust} and through the Rust package registry at \url{https://crates.io/crates/pdbrust}.
+\end{abstract}
+
+\section{Introduction}
+
+Protein structure analysis is fundamental to computational biology, drug discovery, and machine learning applications in structural bioinformatics. The Protein Data Bank (PDB) \cite{berman2000protein} contains over 200,000 experimentally determined structures, with data available in both the legacy PDB format and the modern mmCIF format. Processing these structures efficiently is essential for large-scale analyses, yet existing tools often sacrifice performance for ease of use.
+
+Python libraries such as Biopython \cite{cock2009biopython} and MDAnalysis \cite{michaud2011mdanalysis} provide comprehensive functionality but face inherent performance limitations due to interpreter overhead and memory management. For applications requiring processing of thousands of structures---such as training machine learning models on structural data or genome-wide structural analysis---these limitations become significant bottlenecks.
+
+We developed PDBRust to address this gap, providing a Rust library that combines the safety and performance characteristics of systems programming with an ergonomic API suitable for scientific computing. Rust's zero-cost abstractions, memory safety guarantees, and lack of garbage collection overhead make it well-suited for computationally intensive structural biology applications.
+
+\section{Features and Implementation}
+
+\subsection{Core Parsing}
+
+PDBRust supports both PDB and mmCIF file formats through a unified \texttt{PdbStructure} data model. The parser automatically detects file format based on content and handles:
+
+\begin{itemize}
+    \item ATOM/HETATM coordinate records with full metadata
+    \item SEQRES sequence information
+    \item SSBOND disulfide bond definitions
+    \item CONECT connectivity records
+    \item Multi-model structures (NMR ensembles)
+    \item Alternate conformations (altlocs)
+\end{itemize}
+
+\subsection{Modular Feature System}
+
+PDBRust employs Rust's feature flag system to provide optional functionality while keeping the core library lightweight. Available modules include:
+
+\begin{itemize}
+    \item \textbf{filter}: Structure filtering, chain extraction, ligand removal, and coordinate transformations
+    \item \textbf{descriptors}: Structural metrics including radius of gyration, amino acid composition, and geometric properties
+    \item \textbf{quality}: Structure quality assessment for analysis readiness
+    \item \textbf{rcsb}: Direct integration with RCSB PDB search API and file download
+\end{itemize}
+
+\subsection{API Design}
+
+The library provides a fluent API for method chaining, enabling concise expression of complex operations:
+
+\begin{lstlisting}[language=Python,caption={Example: Structure cleaning and analysis}]
+let structure = parse_pdb_file("protein.pdb")?;
+
+// Fluent API for structure manipulation
+let cleaned = structure
+    .remove_ligands()
+    .keep_only_chain("A")
+    .keep_only_backbone();
+
+// Compute structural descriptors
+let rg = cleaned.radius_of_gyration();
+let composition = cleaned.aa_composition();
+\end{lstlisting}
+
+\section{Performance}
+
+We benchmarked PDBRust against equivalent Python implementations using the \texttt{libraryPDB} package on a representative protein structure (PDB: 1A2B, 4,728 atoms). Table~\ref{tab:benchmarks} summarizes the results.
+
+\begin{table}[h]
+\centering
+\caption{Performance comparison between PDBRust and Python (libraryPDB)}
+\label{tab:benchmarks}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Operation} & \textbf{Python (ms)} & \textbf{Rust (ms)} & \textbf{Speedup} \\
+\midrule
+Parse PDB file & 15.2 & 0.36 & 42$\times$ \\
+Remove ligands & 8.0 & 0.03 & 267$\times$ \\
+Get CA coordinates & 7.2 & 0.03 & 240$\times$ \\
+Radius of gyration & 2.0 & 0.05 & 40$\times$ \\
+Max CA distance & 70.4 & 0.27 & 261$\times$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The substantial speedups (40--260$\times$) arise from several factors: (1) PDBRust parses the structure once and reuses it across operations, whereas Python libraries often re-parse for each call; (2) Rust's zero-cost abstractions eliminate runtime overhead; (3) efficient memory layout improves CPU cache utilization for coordinate-heavy operations.
+
+\section{Use Cases}
+
+PDBRust is designed for:
+
+\begin{itemize}
+    \item \textbf{Machine learning pipelines}: Efficient feature extraction from large structure datasets for training geometric deep learning models
+    \item \textbf{High-throughput screening}: Rapid processing of structure libraries for virtual screening campaigns
+    \item \textbf{Structural bioinformatics}: Genome-wide analysis of protein structures and structure-function relationships
+    \item \textbf{Web services}: Backend processing for structure analysis web applications requiring low latency
+\end{itemize}
+
+\section{Availability}
+
+PDBRust is open-source software released under the MIT license. The source code is available at \url{https://github.com/HFooladi/pdbrust}. The library can be installed via the Rust package manager:
+
+\begin{lstlisting}[language=bash]
+cargo add pdbrust --features "filter,descriptors,rcsb"
+\end{lstlisting}
+
+Documentation is available at \url{https://docs.rs/pdbrust}.
+
+\section{Conclusion}
+
+PDBRust provides a high-performance, memory-safe library for protein structure file parsing and analysis. By leveraging Rust's systems programming capabilities, it achieves 40--260$\times$ speedups over Python alternatives while maintaining an ergonomic API. The modular design allows users to include only the functionality they need, and the RCSB integration enables seamless access to the Protein Data Bank. PDBRust is suitable for large-scale structural bioinformatics applications where performance is critical.
+
+\section*{Acknowledgments}
+
+We thank the Rust and structural biology communities for valuable feedback during development.
+
+\bibliographystyle{unsrtnat}
+\begin{thebibliography}{9}
+
+\bibitem{berman2000protein}
+Berman, H.M., Westbrook, J., Feng, Z., Gilliland, G., Bhat, T.N., Weissig, H., Shindyalov, I.N. and Bourne, P.E. (2000).
+The Protein Data Bank.
+\textit{Nucleic Acids Research}, 28(1), 235--242.
+
+\bibitem{cock2009biopython}
+Cock, P.J., Antao, T., Chang, J.T., Chapman, B.A., Cox, C.J., Dalke, A., Friedberg, I., Hamelryck, T., Kauff, F., Wilczynski, B. and de Hoon, M.J. (2009).
+Biopython: freely available Python tools for computational molecular biology and bioinformatics.
+\textit{Bioinformatics}, 25(11), 1422--1423.
+
+\bibitem{michaud2011mdanalysis}
+Michaud-Agrawal, N., Denning, E.J., Woolf, T.B. and Beckstein, O. (2011).
+MDAnalysis: a toolkit for the analysis of molecular dynamics simulations.
+\textit{Journal of Computational Chemistry}, 32(10), 2319--2327.
+
+\end{thebibliography}
+
+\end{document}
