@@ -111,6 +111,24 @@ Benchmarks against equivalent Python code show **40-260x speedups** for in-memor
 - [API Documentation](https://docs.rs/pdbrust)
 - [Examples](examples/)
 
+## Citation
+
+If you use PDBRust in your research, please cite:
+
+```bibtex
+@software{pdbrust,
+  author = {Fooladi, Hosein},
+  title = {PDBRust: A High-Performance Rust Library for PDB/mmCIF Parsing and Analysis},
+  year = {2024},
+  url = {https://github.com/HFooladi/pdbrust},
+  version = {0.2.0}
+}
+```
+
+Or in text format:
+
+> Fooladi, H. (2024). PDBRust: A High-Performance Rust Library for PDB/mmCIF Parsing and Analysis. https://github.com/HFooladi/pdbrust
+
 ## License
 
 MIT
