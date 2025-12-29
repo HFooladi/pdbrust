@@ -39,7 +39,7 @@ fn test_aa_composition_real_structure() {
     // All fractions should be between 0 and 1
     for (aa, &fraction) in &composition {
         assert!(
-            fraction >= 0.0 && fraction <= 1.0,
+            (0.0..=1.0).contains(&fraction),
             "Fraction for {} should be 0-1, got {}",
             aa,
             fraction
@@ -178,7 +178,7 @@ fn test_secondary_structure_ratio_real_structure() {
     // Well-folded proteins typically have high ordered content
     // This is a heuristic, so we just check it's reasonable
     assert!(
-        ss_ratio >= 0.0 && ss_ratio <= 1.0,
+        (0.0..=1.0).contains(&ss_ratio),
         "SS ratio should be 0-1, got {}",
         ss_ratio
     );

@@ -289,10 +289,12 @@ fn test_quality_report_default() {
 
 #[test]
 fn test_quality_report_is_clean() {
-    let mut report = pdbrust::quality::QualityReport::default();
-    report.num_atoms = 100;
-    report.has_ca_only = false;
-    report.has_altlocs = false;
+    let mut report = pdbrust::quality::QualityReport {
+        num_atoms: 100,
+        has_ca_only: false,
+        has_altlocs: false,
+        ..Default::default()
+    };
 
     assert!(report.is_clean());
 

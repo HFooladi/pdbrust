@@ -37,10 +37,6 @@ fn benchmark<T, F: FnMut() -> T>(name: &str, mut f: F, iterations: usize) -> T {
 
 fn main() {
     use pdbrust::parse_pdb_file;
-    #[cfg(feature = "filter")]
-    use pdbrust::filter;
-    #[cfg(feature = "descriptors")]
-    use pdbrust::descriptors;
 
     println!("{}", "=".repeat(70));
     println!("Rust pdbrust Benchmark");

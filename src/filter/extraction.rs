@@ -39,7 +39,7 @@ impl PdbStructure {
             .iter()
             .filter(|atom| {
                 atom.name.trim() == "CA"
-                    && chain_id.map_or(true, |c| atom.chain_id == c)
+                    && chain_id.is_none_or(|c| atom.chain_id == c)
             })
             .map(|atom| (atom.x, atom.y, atom.z))
             .collect()
@@ -61,7 +61,7 @@ impl PdbStructure {
             .iter()
             .filter(|atom| {
                 atom.name.trim() == "CA"
-                    && chain_id.map_or(true, |c| atom.chain_id == c)
+                    && chain_id.is_none_or(|c| atom.chain_id == c)
             })
             .collect()
     }

@@ -335,6 +335,7 @@ mod tests {
         structure
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn create_atom(
         serial: i32,
         name: &str,
