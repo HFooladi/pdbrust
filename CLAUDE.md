@@ -25,11 +25,23 @@ src/
 ├── records/        # Record types (Atom, Residue, Chain, Model, SSBond, etc.)
 ├── writer/         # PDB file output
 ├── error.rs        # Error handling with thiserror
+├── guide.rs        # Comprehensive user guide (accessible via cargo doc)
 ├── filter/         # [feature: filter] Filtering and cleaning operations
 ├── descriptors/    # [feature: descriptors] Structural descriptors
 ├── quality/        # [feature: quality] Quality assessment
 ├── summary/        # [feature: summary] Unified structure summaries
 └── rcsb/           # [feature: rcsb] RCSB PDB search and download
+
+docs/
+└── GETTING_STARTED.md  # Quick start guide for new users
+
+examples/
+├── pdb_files/          # Sample PDB files for testing
+├── analysis_workflow.rs
+├── filtering_demo.rs
+├── rcsb_workflow.rs
+├── batch_processing.rs
+└── ...                 # Additional examples
 ```
 
 ### Feature Flags
@@ -183,9 +195,45 @@ let results = rcsb_search(&query, 10)?;
 let structure = download_structure("1UBQ", FileFormat::Pdb)?;
 ```
 
+## Examples
+
+The `examples/` directory contains runnable examples demonstrating common workflows:
+
+| Example | Features Required | Description |
+|---------|-------------------|-------------|
+| `analysis_workflow.rs` | filter, descriptors, quality, summary | Complete pipeline: load → clean → analyze → export |
+| `filtering_demo.rs` | filter | Fluent filtering API, method chaining, in-place modifications |
+| `rcsb_workflow.rs` | rcsb, descriptors | RCSB search queries, download, analyze (requires network) |
+| `batch_processing.rs` | descriptors, summary | Process multiple files, compute summaries, export CSV |
+| `read_pdb.rs` | (none) | Basic PDB file reading and structure inspection |
+| `write_pdb.rs` | (none) | Creating and writing PDB files |
+| `basic_usage.rs` | (none) | Creating structures programmatically |
+| `atom_interactive.rs` | (none) | Atom operations, distances, angles |
+| `rust_benchmark.rs` | filter, descriptors | Performance benchmarking |
+
+### Running Examples
+```bash
+# Complete analysis workflow
+cargo run --example analysis_workflow --features "filter,descriptors,quality,summary"
+
+# Filtering operations
+cargo run --example filtering_demo --features "filter"
+
+# RCSB search and download
+cargo run --example rcsb_workflow --features "rcsb,descriptors"
+
+# Batch processing
+cargo run --example batch_processing --features "descriptors,summary"
+
+# Basic file reading
+cargo run --example read_pdb -- examples/pdb_files/1UBQ.pdb
+```
+
 ## File Structure Notes
 
 - Test PDB files: `examples/pdb_files/`
+- Examples: `examples/`
+- Documentation: `docs/GETTING_STARTED.md`
 - Benchmarks: `benchmarks/`
 - MSRV: 1.70.0
 - CI: Ubuntu, Windows, macOS + stable, MSRV

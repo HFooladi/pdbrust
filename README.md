@@ -95,6 +95,28 @@ let query = SearchQuery::new()
 let results = rcsb_search(&query, 10)?;
 ```
 
+## Common Workflows
+
+See the [examples/](examples/) directory for complete working code:
+
+| Workflow | Example | Features Used |
+|----------|---------|---------------|
+| Load, clean, analyze, export | [analysis_workflow.rs](examples/analysis_workflow.rs) | filter, descriptors, quality, summary |
+| Filter and clean structures | [filtering_demo.rs](examples/filtering_demo.rs) | filter |
+| Search and download from RCSB | [rcsb_workflow.rs](examples/rcsb_workflow.rs) | rcsb, descriptors |
+| Process multiple files | [batch_processing.rs](examples/batch_processing.rs) | descriptors, summary |
+
+Run examples with:
+
+```bash
+cargo run --example analysis_workflow --features "filter,descriptors,quality,summary"
+cargo run --example filtering_demo --features "filter"
+cargo run --example rcsb_workflow --features "rcsb,descriptors"
+cargo run --example batch_processing --features "descriptors,summary"
+```
+
+For a complete getting started guide, see [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md).
+
 ## Performance
 
 Benchmarks against equivalent Python code show **40-260x speedups** for in-memory operations:
