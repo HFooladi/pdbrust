@@ -3,6 +3,26 @@
 //! This guide provides comprehensive documentation for using the PDBRust library
 //! to work with Protein Data Bank (PDB) and mmCIF files.
 //!
+//! For a quick start guide, see [`docs/GETTING_STARTED.md`](https://github.com/HFooladi/pdbrust/blob/main/docs/GETTING_STARTED.md).
+//!
+//! ## Runnable Examples
+//!
+//! The [`examples/`](https://github.com/HFooladi/pdbrust/tree/main/examples) directory contains
+//! complete, runnable examples:
+//!
+//! | Example | Features | Description |
+//! |---------|----------|-------------|
+//! | `analysis_workflow.rs` | filter, descriptors, quality, summary | Complete load→clean→analyze→export pipeline |
+//! | `filtering_demo.rs` | filter | Fluent filtering API demonstration |
+//! | `rcsb_workflow.rs` | rcsb, descriptors | RCSB search and download workflows |
+//! | `batch_processing.rs` | descriptors, summary | Multi-file processing with CSV export |
+//!
+//! Run examples with:
+//! ```bash
+//! cargo run --example analysis_workflow --features "filter,descriptors,quality,summary"
+//! cargo run --example filtering_demo --features "filter"
+//! ```
+//!
 //! ## Getting Started
 //!
 //! Add PDBRust to your `Cargo.toml`:
@@ -374,6 +394,105 @@
 //! }
 //! ```
 //!
+//! ## Common Workflows
+//!
+//! ### Workflow 1: Structure Cleaning for MD Simulations
+//!
+//! ```ignore
+//! use pdbrust::{parse_pdb_file, write_pdb_file};
+//!
+//! let structure = parse_pdb_file("raw_structure.pdb")?;
+//!
+//! // Clean: remove ligands, waters, hydrogens
+//! let mut cleaned = structure
+//!     .remove_ligands()
+//!     .remove_hydrogens()
+//!     .keep_only_chain("A");
+//!
+//! // Prepare for simulation
+//! cleaned.center_structure();
+//! cleaned.renumber_atoms();
+//! cleaned.reindex_residues();
+//!
+//! write_pdb_file(&cleaned, "cleaned_for_md.pdb")?;
+//! ```
+//!
+//! ### Workflow 2: Dataset Characterization
+//!
+//! ```ignore
+//! use pdbrust::{parse_structure_file, PdbStructure};
+//! use pdbrust::summary::{batch_summarize, summaries_to_csv};
+//! use std::fs;
+//!
+//! // Load multiple structures
+//! let mut structures: Vec<PdbStructure> = Vec::new();
+//! for entry in fs::read_dir("pdb_files")? {
+//!     let path = entry?.path();
+//!     if let Ok(s) = parse_structure_file(&path) {
+//!         structures.push(s);
+//!     }
+//! }
+//!
+//! // Compute summaries and export
+//! let summaries = batch_summarize(&structures);
+//! let csv = summaries_to_csv(&summaries, true);
+//! fs::write("dataset_summary.csv", csv)?;
+//! ```
+//!
+//! ### Workflow 3: RCSB Search and Analysis Pipeline
+//!
+//! ```ignore
+//! use pdbrust::rcsb::{rcsb_search, download_structure, SearchQuery, FileFormat};
+//!
+//! // Search for structures
+//! let query = SearchQuery::new()
+//!     .with_text("kinase")
+//!     .with_organism("Homo sapiens")
+//!     .with_resolution_max(2.0);
+//!
+//! let results = rcsb_search(&query, 10)?;
+//!
+//! // Download and analyze each
+//! for pdb_id in &results.pdb_ids {
+//!     let structure = download_structure(pdb_id, FileFormat::Pdb)?;
+//!     let rg = structure.radius_of_gyration();
+//!     let composition = structure.aa_composition();
+//!     println!("{}: Rg={:.1}Å, {} residues", pdb_id, rg, structure.count_ca_residues());
+//! }
+//! ```
+//!
+//! ### Workflow 4: Quality Filtering
+//!
+//! ```ignore
+//! use pdbrust::parse_pdb_file;
+//!
+//! let structure = parse_pdb_file("structure.pdb")?;
+//!
+//! // Check quality before analysis
+//! let report = structure.quality_report();
+//!
+//! if !report.is_analysis_ready() {
+//!     println!("Warning: Structure may need preprocessing");
+//!     if report.has_multiple_models {
+//!         println!("  - Multiple models (NMR ensemble)");
+//!     }
+//!     if report.has_altlocs {
+//!         println!("  - Alternate conformations present");
+//!     }
+//!     if report.has_ca_only {
+//!         println!("  - CA-only structure");
+//!     }
+//! }
+//!
+//! // Get unified summary for clean structures
+//! if report.is_clean() {
+//!     let summary = structure.summary();
+//!     println!("Rg: {:.2}Å, Hydrophobic: {:.1}%",
+//!         summary.radius_of_gyration,
+//!         summary.hydrophobic_ratio * 100.0);
+//! }
+//! ```
+//!
 //! ## Performance Tips
 //!
 //! 1. **Parse once, reuse**: Parse the structure once and perform multiple analyses
@@ -391,3 +510,9 @@
 //!     .filter(|a| a.name.trim() == "CA")
 //!     .count();
 //! ```
+//!
+//! ## See Also
+//!
+//! - [Getting Started Guide](https://github.com/HFooladi/pdbrust/blob/main/docs/GETTING_STARTED.md)
+//! - [Examples Directory](https://github.com/HFooladi/pdbrust/tree/main/examples)
+//! - [API Documentation](https://docs.rs/pdbrust)
