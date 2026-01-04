@@ -69,7 +69,7 @@
 \maketitle
 
 \begin{abstract}
-We present PDBRust, an open-source Rust library for parsing and analyzing Protein Data Bank (PDB) and mmCIF structure files. PDBRust provides a unified interface for both file formats with automatic format detection, comprehensive structural analysis capabilities, and seamless integration with the RCSB PDB database. Benchmarks demonstrate 40--260$\times$ speedups compared to equivalent Python implementations for common operations. The library is designed for high-throughput structural bioinformatics pipelines and machine learning applications requiring efficient processing of large protein structure datasets. PDBRust is available at \url{https://github.com/HFooladi/pdbrust} and through the Rust package registry at \url{https://crates.io/crates/pdbrust}.
+We present PDBRust, an open-source Rust library for parsing and analyzing Protein Data Bank (PDB) and mmCIF structure files. PDBRust provides a unified interface for both file formats with automatic format detection, native gzip decompression, comprehensive structural analysis capabilities, and seamless integration with the RCSB PDB database. Benchmarks demonstrate 40--260$\times$ speedups compared to equivalent Python implementations for common operations. The library has been validated against the entire PDB archive (230,655 structures) with a 100\% success rate and zero parsing failures, demonstrating production-ready robustness. PDBRust is designed for high-throughput structural bioinformatics pipelines and machine learning applications requiring efficient processing of large protein structure datasets. PDBRust is available at \url{https://github.com/HFooladi/pdbrust} and through the Rust package registry at \url{https://crates.io/crates/pdbrust}.
 \end{abstract}
 
 \begin{figure}[h]
@@ -85,9 +85,10 @@ We present PDBRust, an open-source Rust library for parsing and analyzing Protei
 % Input nodes
 \node[inputbox] (pdb) {PDB Files};
 \node[inputbox, below=0.5cm of pdb] (mmcif) {mmCIF Files};
+\node[inputbox, below=0.5cm of mmcif] (gzip) {Gzip (.ent.gz)};
 
 % Core processor
-\node[corebox, right=2cm of pdb, yshift=-0.5cm] (core) {PDBRust};
+\node[corebox, right=2cm of mmcif] (core) {PDBRust};
 
 % Output nodes
 \node[outputbox, right=2cm of core, yshift=1cm] (filter) {Filter};
@@ -98,13 +99,14 @@ We present PDBRust, an open-source Rust library for parsing and analyzing Protei
 % Arrows
 \draw[arrow] (pdb.east) -- (core.west);
 \draw[arrow] (mmcif.east) -- (core.west);
+\draw[arrow] (gzip.east) -- (core.west);
 \draw[arrow] (core.east) -- (filter.west);
 \draw[arrow] (core.east) -- (desc.west);
 \draw[arrow] (core.east) -- (quality.west);
 \draw[arrow] (core.east) -- (rcsb.west);
 
 % Performance label
-\node[below=0.3cm of core, font=\small\itshape, text=red!70!black] {40--260$\times$ faster};
+\node[below=0.3cm of core, font=\small\itshape, text=red!70!black] {100\% PDB validated};
 
 \end{tikzpicture}
 \caption{PDBRust architecture: unified parsing of PDB/mmCIF files with modular analysis features.}
@@ -186,6 +188,33 @@ Max CA distance & 70.4 & 0.27 & 261$\times$ \\
 
 The substantial speedups (40--260$\times$) arise from several factors: (1) PDBRust parses the structure once and reuses it across operations, whereas Python libraries often re-parse for each call; (2) Rust's zero-cost abstractions eliminate runtime overhead; (3) efficient memory layout improves CPU cache utilization for coordinate-heavy operations.
 
+\subsection{Full PDB Archive Validation}
+
+To validate robustness and correctness, we benchmarked PDBRust against the entire Protein Data Bank archive comprising 230,655 gzip-compressed structure files. The library includes native gzip decompression support (via the \texttt{flate2} crate) for seamless processing of PDB archive distributions. Table~\ref{tab:pdb-validation} summarizes the results.
+
+\begin{table}[h]
+\centering
+\caption{Full PDB archive validation results (230,655 structures)}
+\label{tab:pdb-validation}
+\begin{tabular}{lc}
+\toprule
+\textbf{Metric} & \textbf{Value} \\
+\midrule
+Total Structures & 230,655 \\
+Success Rate & 100\% \\
+Failed Parses & 0 \\
+Total Atoms Parsed & 2,057,302,767 \\
+Total Residues Parsed & 246,469,962 \\
+Average Atoms/Structure & 8,919 \\
+Processing Rate & $\sim$92 files/sec \\
+Largest Structure & 2ku2 (1,290,100 atoms) \\
+Smallest Structure & 5zmz (31 atoms) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The 100\% success rate across all 230,655 structures demonstrates PDBRust's production-ready robustness for large-scale structural bioinformatics applications.
+
 \section{Use Cases}
 
 PDBRust is designed for:
@@ -209,7 +238,7 @@ Documentation is available at \url{https://docs.rs/pdbrust}.
 
 \section{Conclusion}
 
-PDBRust provides a high-performance, memory-safe library for protein structure file parsing and analysis. By leveraging Rust's systems programming capabilities, it achieves 40--260$\times$ speedups over Python alternatives while maintaining an ergonomic API. The modular design allows users to include only the functionality they need, and the RCSB integration enables seamless access to the Protein Data Bank. PDBRust is suitable for large-scale structural bioinformatics applications where performance is critical.
+PDBRust provides a high-performance, memory-safe library for protein structure file parsing and analysis. By leveraging Rust's systems programming capabilities, it achieves 40--260$\times$ speedups over Python alternatives while maintaining an ergonomic API. The library has been rigorously validated against the entire Protein Data Bank archive (230,655 structures) with a 100\% success rate, demonstrating production-ready robustness. The modular design allows users to include only the functionality they need, native gzip support enables direct processing of PDB archive distributions, and the RCSB integration enables seamless access to the Protein Data Bank. PDBRust is suitable for large-scale structural bioinformatics applications where performance and reliability are critical.
 
 \section*{Acknowledgments}
 

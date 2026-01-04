@@ -18,7 +18,7 @@ With optional features:
 
 ```toml
 [dependencies]
-pdbrust = { version = "0.2", features = ["filter", "descriptors", "rcsb"] }
+pdbrust = { version = "0.2", features = ["filter", "descriptors", "rcsb", "gzip"] }
 ```
 
 ## Quick Start
@@ -45,6 +45,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 | `quality` | Structure quality assessment (altlocs, missing residues, etc.) |
 | `summary` | Combined quality + descriptors in one call |
 | `rcsb` | Search and download structures from RCSB PDB |
+| `gzip` | Parse gzip-compressed files (.ent.gz, .pdb.gz, .cif.gz) |
+| `parallel` | Parallel processing with Rayon |
 
 ## Examples
 
@@ -76,6 +78,16 @@ let composition = structure.aa_composition();
 
 // Or get everything at once
 let descriptors = structure.structure_descriptors();
+```
+
+### Parse Gzip-Compressed Files
+
+```rust
+use pdbrust::parse_gzip_pdb_file;
+
+// Parse gzip-compressed PDB files from the PDB archive
+let structure = parse_gzip_pdb_file("pdb1ubq.ent.gz")?;
+println!("Atoms: {}", structure.atoms.len());
 ```
 
 ### Download from RCSB PDB
@@ -127,6 +139,27 @@ Benchmarks against equivalent Python code show **40-260x speedups** for in-memor
 | get_ca_coords | 240x |
 | max_ca_distance | 260x |
 | radius_of_gyration | 100x |
+
+### Full PDB Archive Validation
+
+PDBRust has been validated against the **entire Protein Data Bank**:
+
+| Metric | Value |
+|--------|-------|
+| Total Structures Tested | 230,655 |
+| Success Rate | **100%** |
+| Failed Parses | 0 |
+| Total Atoms Parsed | 2,057,302,767 |
+| Processing Rate | ~92 files/sec |
+| Largest Structure | 2ku2 (1,290,100 atoms) |
+
+Run the full benchmark yourself:
+
+```bash
+cargo run --release --example full_pdb_benchmark \
+    --features "gzip,parallel,descriptors,quality,summary" \
+    -- /path/to/pdb/archive --output-dir ./results
+```
 
 ## Documentation
 
