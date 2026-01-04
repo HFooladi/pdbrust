@@ -8,9 +8,9 @@ use std::fs::File;
 use std::io::Write;
 use std::path::Path;
 
+use crate::PdbError;
 use crate::core::PdbStructure;
 use crate::parser::{parse_mmcif_string, parse_pdb_string};
-use crate::PdbError;
 
 use super::RCSB_DOWNLOAD_URL;
 
@@ -170,10 +170,7 @@ pub fn download_pdb_string(pdb_id: &str, format: FileFormat) -> Result<String, D
 /// let structure = download_structure("1UBQ", FileFormat::Pdb)?;
 /// println!("Downloaded {} atoms", structure.atoms.len());
 /// ```
-pub fn download_structure(
-    pdb_id: &str,
-    format: FileFormat,
-) -> Result<PdbStructure, DownloadError> {
+pub fn download_structure(pdb_id: &str, format: FileFormat) -> Result<PdbStructure, DownloadError> {
     let content = download_pdb_string(pdb_id, format)?;
 
     let structure = match format {

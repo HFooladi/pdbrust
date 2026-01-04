@@ -284,7 +284,9 @@ mod tests {
                 chain_id: "X".to_string(),
                 residue_seq: 10,
                 ins_code: None,
-                x: 0.0, y: 0.0, z: 0.0,
+                x: 0.0,
+                y: 0.0,
+                z: 0.0,
                 occupancy: 1.0,
                 temp_factor: 20.0,
                 element: "C".to_string(),
@@ -297,7 +299,9 @@ mod tests {
                 chain_id: "X".to_string(),
                 residue_seq: 10,
                 ins_code: None,
-                x: 1.0, y: 0.0, z: 0.0,
+                x: 1.0,
+                y: 0.0,
+                z: 0.0,
                 occupancy: 1.0,
                 temp_factor: 20.0,
                 element: "N".to_string(),
@@ -311,7 +315,9 @@ mod tests {
                 chain_id: "X".to_string(),
                 residue_seq: 20,
                 ins_code: None,
-                x: 4.0, y: 0.0, z: 0.0,
+                x: 4.0,
+                y: 0.0,
+                z: 0.0,
                 occupancy: 1.0,
                 temp_factor: 20.0,
                 element: "C".to_string(),
@@ -325,7 +331,9 @@ mod tests {
                 chain_id: "Y".to_string(),
                 residue_seq: 5,
                 ins_code: None,
-                x: 10.0, y: 10.0, z: 10.0,
+                x: 10.0,
+                y: 10.0,
+                z: 10.0,
                 occupancy: 1.0,
                 temp_factor: 20.0,
                 element: "C".to_string(),
@@ -362,7 +370,9 @@ mod tests {
         structure.reindex_residues();
 
         // After reindexing, chain X should have residues 1, 2 and chain Y should have residue 1
-        let chain_x_atoms: Vec<_> = structure.atoms.iter()
+        let chain_x_atoms: Vec<_> = structure
+            .atoms
+            .iter()
             .filter(|a| a.chain_id == "X")
             .collect();
 
@@ -370,7 +380,9 @@ mod tests {
         assert_eq!(chain_x_atoms[1].residue_seq, 1); // Same residue as first
         assert_eq!(chain_x_atoms[2].residue_seq, 2);
 
-        let chain_y_atoms: Vec<_> = structure.atoms.iter()
+        let chain_y_atoms: Vec<_> = structure
+            .atoms
+            .iter()
             .filter(|a| a.chain_id == "Y")
             .collect();
         assert_eq!(chain_y_atoms[0].residue_seq, 1);

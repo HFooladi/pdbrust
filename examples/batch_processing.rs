@@ -12,7 +12,7 @@
 //! ```
 
 use pdbrust::parse_structure_file;
-use pdbrust::summary::{batch_summarize, summaries_to_csv, StructureSummary};
+use pdbrust::summary::{StructureSummary, batch_summarize, summaries_to_csv};
 use std::error::Error;
 use std::fs;
 
@@ -29,7 +29,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .map(|entry| entry.path())
         .filter(|path| {
             path.extension()
-                .map_or(false, |ext| ext == "pdb" || ext == "cif")
+                .is_some_and(|ext| ext == "pdb" || ext == "cif")
         })
         .collect();
 
@@ -73,7 +73,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     let summaries = batch_summarize(&structures);
 
     // Print summary table
-    println!("\n{:<15} {:>8} {:>8} {:>8} {:>10}", "File", "Atoms", "Residues", "Chains", "Rg (A)");
+    println!(
+        "\n{:<15} {:>8} {:>8} {:>8} {:>10}",
+        "File", "Atoms", "Residues", "Chains", "Rg (A)"
+    );
     println!("{}", "-".repeat(55));
 
     for (filename, summary) in filenames.iter().zip(summaries.iter()) {
@@ -147,7 +150,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         println!("  Total atoms: {}", total_atoms);
         println!("  Total residues: {}", total_residues);
         println!("  Average Rg: {:.2} A", avg_rg);
-        println!("  Average hydrophobic ratio: {:.1}%", avg_hydrophobic * 100.0);
+        println!(
+            "  Average hydrophobic ratio: {:.1}%",
+            avg_hydrophobic * 100.0
+        );
 
         // Size distribution
         let sizes: Vec<usize> = summaries.iter().map(|s| s.num_residues).collect();

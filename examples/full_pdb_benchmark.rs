@@ -22,13 +22,13 @@ use std::collections::HashMap;
 use std::fs::{self, File};
 use std::io::{BufWriter, Write};
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Mutex;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::{Duration, Instant};
 
 use rayon::prelude::*;
 
-use pdbrust::{parse_gzip_pdb_file, PdbError, PdbStructure};
+use pdbrust::{PdbError, PdbStructure, parse_gzip_pdb_file};
 
 // ============== Error Classification ==============
 
@@ -217,7 +217,10 @@ impl BenchmarkRunner {
         println!("  Found {} files to process\n", total_files);
 
         if total_files == 0 {
-            eprintln!("ERROR: No .ent.gz files found in {}", self.input_dir.display());
+            eprintln!(
+                "ERROR: No .ent.gz files found in {}",
+                self.input_dir.display()
+            );
             return BenchmarkStats::default();
         }
 
@@ -292,7 +295,7 @@ impl BenchmarkRunner {
                         let examples = s
                             .error_examples
                             .entry(ErrorCategory::EmptyStructure)
-                            .or_insert_with(Vec::new);
+                            .or_default();
                         if examples.len() < 10 {
                             examples.push(pdb_id.clone());
                         }
@@ -349,7 +352,7 @@ impl BenchmarkRunner {
                     let examples = s
                         .error_examples
                         .entry(category.clone())
-                        .or_insert_with(Vec::new);
+                        .or_default();
                     if examples.len() < 10 {
                         examples.push(format!("{}: {}", pdb_id, message.lines().next().unwrap_or("")));
                     }
@@ -394,7 +397,7 @@ impl BenchmarkRunner {
         writeln!(writer, "pdb_id\terror_category\terror_message").unwrap();
         for (pdb_id, category, message) in failures {
             // Escape tabs and newlines in error message
-            let clean_message = message.replace('\t', " ").replace('\n', " ");
+            let clean_message = message.replace(['\t', '\n'], " ");
             writeln!(writer, "{}\t{}\t{}", pdb_id, category, clean_message).unwrap();
         }
 
@@ -408,17 +411,37 @@ impl BenchmarkRunner {
 
         let parse_timing = TimingStats::from_microseconds(&stats.parse_times_us);
 
-        writeln!(w, "╔══════════════════════════════════════════════════════════════╗").unwrap();
-        writeln!(w, "║           PDBRust Full Archive Benchmark Report              ║").unwrap();
-        writeln!(w, "╚══════════════════════════════════════════════════════════════╝").unwrap();
+        writeln!(
+            w,
+            "╔══════════════════════════════════════════════════════════════╗"
+        )
+        .unwrap();
+        writeln!(
+            w,
+            "║           PDBRust Full Archive Benchmark Report              ║"
+        )
+        .unwrap();
+        writeln!(
+            w,
+            "╚══════════════════════════════════════════════════════════════╝"
+        )
+        .unwrap();
         writeln!(w).unwrap();
         writeln!(w, "Total Execution Time: {:.2}s", total_time.as_secs_f64()).unwrap();
         writeln!(w).unwrap();
 
         // File Processing Summary
-        writeln!(w, "══════════════════════════════════════════════════════════════").unwrap();
+        writeln!(
+            w,
+            "══════════════════════════════════════════════════════════════"
+        )
+        .unwrap();
         writeln!(w, "FILE PROCESSING SUMMARY").unwrap();
-        writeln!(w, "══════════════════════════════════════════════════════════════").unwrap();
+        writeln!(
+            w,
+            "══════════════════════════════════════════════════════════════"
+        )
+        .unwrap();
         writeln!(w, "Total Files:        {:>12}", stats.total_files).unwrap();
         writeln!(
             w,
@@ -437,10 +460,23 @@ impl BenchmarkRunner {
         writeln!(w).unwrap();
 
         // Parsing Timing
-        writeln!(w, "══════════════════════════════════════════════════════════════").unwrap();
+        writeln!(
+            w,
+            "══════════════════════════════════════════════════════════════"
+        )
+        .unwrap();
         writeln!(w, "PARSING TIMING STATISTICS").unwrap();
-        writeln!(w, "══════════════════════════════════════════════════════════════").unwrap();
-        writeln!(w, "Total Parse Time:   {:>12.2}s", parse_timing.total_seconds).unwrap();
+        writeln!(
+            w,
+            "══════════════════════════════════════════════════════════════"
+        )
+        .unwrap();
+        writeln!(
+            w,
+            "Total Parse Time:   {:>12.2}s",
+            parse_timing.total_seconds
+        )
+        .unwrap();
         writeln!(w, "Mean:               {:>12.3}ms", parse_timing.mean_ms).unwrap();
         writeln!(w, "Median:             {:>12.3}ms", parse_timing.median_ms).unwrap();
         writeln!(w, "P95:                {:>12.3}ms", parse_timing.p95_ms).unwrap();
@@ -463,22 +499,53 @@ impl BenchmarkRunner {
         {
             let analysis_timing = TimingStats::from_microseconds(&stats.analysis_times_us);
             if analysis_timing.count > 0 {
-                writeln!(w, "══════════════════════════════════════════════════════════════").unwrap();
+                writeln!(
+                    w,
+                    "══════════════════════════════════════════════════════════════"
+                )
+                .unwrap();
                 writeln!(w, "ANALYSIS TIMING STATISTICS").unwrap();
-                writeln!(w, "══════════════════════════════════════════════════════════════").unwrap();
+                writeln!(
+                    w,
+                    "══════════════════════════════════════════════════════════════"
+                )
+                .unwrap();
                 writeln!(w, "Structures Analyzed: {:>11}", stats.successful_analyses).unwrap();
-                writeln!(w, "Total Analysis Time: {:>11.2}s", analysis_timing.total_seconds).unwrap();
-                writeln!(w, "Mean:                {:>11.3}ms", analysis_timing.mean_ms).unwrap();
-                writeln!(w, "Median:              {:>11.3}ms", analysis_timing.median_ms).unwrap();
+                writeln!(
+                    w,
+                    "Total Analysis Time: {:>11.2}s",
+                    analysis_timing.total_seconds
+                )
+                .unwrap();
+                writeln!(
+                    w,
+                    "Mean:                {:>11.3}ms",
+                    analysis_timing.mean_ms
+                )
+                .unwrap();
+                writeln!(
+                    w,
+                    "Median:              {:>11.3}ms",
+                    analysis_timing.median_ms
+                )
+                .unwrap();
                 writeln!(w, "P99:                 {:>11.3}ms", analysis_timing.p99_ms).unwrap();
                 writeln!(w).unwrap();
             }
         }
 
         // Error Breakdown
-        writeln!(w, "══════════════════════════════════════════════════════════════").unwrap();
+        writeln!(
+            w,
+            "══════════════════════════════════════════════════════════════"
+        )
+        .unwrap();
         writeln!(w, "ERROR BREAKDOWN").unwrap();
-        writeln!(w, "══════════════════════════════════════════════════════════════").unwrap();
+        writeln!(
+            w,
+            "══════════════════════════════════════════════════════════════"
+        )
+        .unwrap();
         if stats.error_counts.is_empty() {
             writeln!(w, "No errors encountered!").unwrap();
         } else {
@@ -504,9 +571,17 @@ impl BenchmarkRunner {
         writeln!(w).unwrap();
 
         // Structure Statistics
-        writeln!(w, "══════════════════════════════════════════════════════════════").unwrap();
+        writeln!(
+            w,
+            "══════════════════════════════════════════════════════════════"
+        )
+        .unwrap();
         writeln!(w, "STRUCTURE STATISTICS").unwrap();
-        writeln!(w, "══════════════════════════════════════════════════════════════").unwrap();
+        writeln!(
+            w,
+            "══════════════════════════════════════════════════════════════"
+        )
+        .unwrap();
         writeln!(w, "Total Atoms Parsed:     {:>15}", stats.total_atoms).unwrap();
         writeln!(w, "Total Residues Parsed:  {:>15}", stats.total_residues).unwrap();
         if stats.successful_parses > 0 {
@@ -540,23 +615,34 @@ impl BenchmarkRunner {
         writeln!(w).unwrap();
 
         // Memory Estimates
-        writeln!(w, "══════════════════════════════════════════════════════════════").unwrap();
-        writeln!(w, "MEMORY ESTIMATES").unwrap();
-        writeln!(w, "══════════════════════════════════════════════════════════════").unwrap();
-        let bytes_per_atom = 200; // Rough estimate for Atom struct + overhead
-        let peak_memory_mb = (stats.largest_structure.1 * bytes_per_atom) as f64 / 1e6;
         writeln!(
             w,
-            "Est. Peak Memory (largest): {:>8.1} MB",
-            peak_memory_mb
+            "══════════════════════════════════════════════════════════════"
         )
         .unwrap();
+        writeln!(w, "MEMORY ESTIMATES").unwrap();
+        writeln!(
+            w,
+            "══════════════════════════════════════════════════════════════"
+        )
+        .unwrap();
+        let bytes_per_atom = 200; // Rough estimate for Atom struct + overhead
+        let peak_memory_mb = (stats.largest_structure.1 * bytes_per_atom) as f64 / 1e6;
+        writeln!(w, "Est. Peak Memory (largest): {:>8.1} MB", peak_memory_mb).unwrap();
         writeln!(w).unwrap();
 
         // Version Info
-        writeln!(w, "══════════════════════════════════════════════════════════════").unwrap();
+        writeln!(
+            w,
+            "══════════════════════════════════════════════════════════════"
+        )
+        .unwrap();
         writeln!(w, "ENVIRONMENT").unwrap();
-        writeln!(w, "══════════════════════════════════════════════════════════════").unwrap();
+        writeln!(
+            w,
+            "══════════════════════════════════════════════════════════════"
+        )
+        .unwrap();
         writeln!(w, "PDBRust Version: {}", env!("CARGO_PKG_VERSION")).unwrap();
         writeln!(w, "Rayon Threads:   {}", rayon::current_num_threads()).unwrap();
 
@@ -576,12 +662,17 @@ impl BenchmarkRunner {
         writeln!(w, "========================================").unwrap();
 
         // Create histogram buckets (log scale)
-        let buckets = [0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0, 1000.0];
+        let buckets = [
+            0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0, 1000.0,
+        ];
         let mut counts = vec![0usize; buckets.len() + 1];
 
         for &time_us in &stats.parse_times_us {
             let time_ms = time_us as f64 / 1000.0;
-            let bucket_idx = buckets.iter().position(|&b| time_ms < b).unwrap_or(buckets.len());
+            let bucket_idx = buckets
+                .iter()
+                .position(|&b| time_ms < b)
+                .unwrap_or(buckets.len());
             counts[bucket_idx] += 1;
         }
 
@@ -635,16 +726,15 @@ fn main() {
         println!("  <pdb_archive_dir>    Path to PDB archive directory containing .ent.gz files");
         println!();
         println!("Options:");
-        println!("  --output-dir <dir>   Output directory for results (default: ./benchmark_results)");
+        println!(
+            "  --output-dir <dir>   Output directory for results (default: ./benchmark_results)"
+        );
         println!("  --help, -h           Show this help message");
         println!();
         println!("Example:");
-        println!(
-            "  cargo run --release --example full_pdb_benchmark \\");
-        println!(
-            "      --features \"gzip,parallel,descriptors,quality,summary\" \\");
-        println!(
-            "      -- /data/shared/comp3d/databases/pdb_data/pdb/ --output-dir ./results");
+        println!("  cargo run --release --example full_pdb_benchmark \\");
+        println!("      --features \"gzip,parallel,descriptors,quality,summary\" \\");
+        println!("      -- /data/shared/comp3d/databases/pdb_data/pdb/ --output-dir ./results");
         std::process::exit(0);
     }
 
@@ -657,7 +747,10 @@ fn main() {
         .unwrap_or_else(|| PathBuf::from("./benchmark_results"));
 
     if !input_dir.exists() {
-        eprintln!("ERROR: Input directory does not exist: {}", input_dir.display());
+        eprintln!(
+            "ERROR: Input directory does not exist: {}",
+            input_dir.display()
+        );
         std::process::exit(1);
     }
 

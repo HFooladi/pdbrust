@@ -133,10 +133,7 @@ impl StructureSummary {
     /// - Has no alternate locations
     /// - Is not CA-only
     pub fn is_analysis_ready(&self) -> bool {
-        self.num_atoms > 0
-            && !self.has_multiple_models
-            && !self.has_altlocs
-            && !self.has_ca_only
+        self.num_atoms > 0 && !self.has_multiple_models && !self.has_altlocs && !self.has_ca_only
     }
 
     /// Check if the structure passes basic quality criteria.
@@ -436,10 +433,7 @@ mod tests {
 
     #[test]
     fn test_batch_summarize() {
-        let structures = vec![
-            create_test_structure(),
-            create_test_structure(),
-        ];
+        let structures = vec![create_test_structure(), create_test_structure()];
 
         let summaries = batch_summarize(&structures);
 

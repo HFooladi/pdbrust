@@ -76,8 +76,14 @@ fn main() {
     println!("Is heavy atom: {}", atom1.is_heavy_atom());
 
     // Distance calculations
-    println!("\nDistance between atom1 and atom2: {:.3}", atom1.calculate_distance_to(&atom2));
-    println!("Squared distance: {:.3}", atom1.calculate_distance_squared_to(&atom2));
+    println!(
+        "\nDistance between atom1 and atom2: {:.3}",
+        atom1.calculate_distance_to(&atom2)
+    );
+    println!(
+        "Squared distance: {:.3}",
+        atom1.calculate_distance_squared_to(&atom2)
+    );
 
     // Angle calculations
     let angle = atom1.calculate_angle_between(&atom2, &atom3);
@@ -88,5 +94,8 @@ fn main() {
     println!("Angle between atom3-atom2-atom1: {:.2}°", angle2);
 
     println!("\nHydrogen atom: {}", hydrogen.is_hydrogen());
-    println!("Distance to hydrogen: {:.3}", atom1.calculate_distance_to(&hydrogen));
-} 
+    println!(
+        "Distance to hydrogen: {:.3}",
+        atom1.calculate_distance_to(&hydrogen)
+    );
+}

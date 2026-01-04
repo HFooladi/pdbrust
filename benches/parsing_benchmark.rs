@@ -1,4 +1,4 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use pdbrust::PdbStructure;
 use std::io::Write;
 use tempfile::NamedTempFile;

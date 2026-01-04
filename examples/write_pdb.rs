@@ -1,4 +1,4 @@
-use pdbrust::{write_pdb_file, Atom, Conect, PdbStructure, Remark, SSBond, SeqRes};
+use pdbrust::{Atom, Conect, PdbStructure, Remark, SSBond, SeqRes, write_pdb_file};
 use std::error::Error;
 
 fn main() -> Result<(), Box<dyn Error>> {

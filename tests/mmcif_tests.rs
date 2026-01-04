@@ -93,7 +93,7 @@ A 1
     let structure = parse_mmcif_string(mmcif_content).unwrap();
 
     assert_eq!(structure.seqres.len(), 1);
-    
+
     let seqres = &structure.seqres[0];
     assert_eq!(seqres.chain_id, "A");
     assert_eq!(seqres.num_residues, 5);
@@ -121,7 +121,7 @@ disulf2 CYS B 15 CYS B 28
     let structure = parse_mmcif_string(mmcif_content).unwrap();
 
     assert_eq!(structure.ssbonds.len(), 2);
-    
+
     let bond1 = &structure.ssbonds[0];
     assert_eq!(bond1.serial, 1);
     assert_eq!(bond1.residue1_name, "CYS");
@@ -169,13 +169,13 @@ ATOM 3 C CA B ALA A 1 1.100 0.100 0.100 0.40 20.00
     let structure = parse_mmcif_string(mmcif_content).unwrap();
 
     assert_eq!(structure.atoms.len(), 3);
-    
+
     let atom1 = &structure.atoms[0];
     assert_eq!(atom1.alt_loc, None);
-    
+
     let atom2 = &structure.atoms[1];
     assert_eq!(atom2.alt_loc, Some('A'));
-    
+
     let atom3 = &structure.atoms[2];
     assert_eq!(atom3.alt_loc, Some('B'));
 }
@@ -208,10 +208,10 @@ ATOM 2 N N . ALA A 1 A 1.000 0.000 0.000 1.00 20.00
     let structure = parse_mmcif_string(mmcif_content).unwrap();
 
     assert_eq!(structure.atoms.len(), 2);
-    
+
     let atom1 = &structure.atoms[0];
     assert_eq!(atom1.ins_code, None);
-    
+
     let atom2 = &structure.atoms[1];
     assert_eq!(atom2.ins_code, Some('A'));
 }
@@ -231,14 +231,18 @@ _refine.ls_d_res_high 1.50
     let structure = parse_mmcif_string(mmcif_content).unwrap();
 
     assert!(!structure.remarks.is_empty());
-    
+
     // Should have at least one remark about dictionary conformance
-    let dict_remark = structure.remarks.iter()
+    let dict_remark = structure
+        .remarks
+        .iter()
         .find(|r| r.content.contains("mmcif_pdbx.dic"));
     assert!(dict_remark.is_some());
-    
+
     // Should have a resolution remark
-    let res_remark = structure.remarks.iter()
+    let res_remark = structure
+        .remarks
+        .iter()
         .find(|r| r.content.contains("1.50") && r.number == 2);
     assert!(res_remark.is_some());
 }
@@ -285,16 +289,16 @@ B 2
     let structure = parse_mmcif_string(mmcif_content).unwrap();
 
     assert_eq!(structure.atoms.len(), 4);
-    
+
     let chain_ids = structure.get_chain_ids();
     assert_eq!(chain_ids.len(), 2);
     assert!(chain_ids.contains(&"A".to_string()));
     assert!(chain_ids.contains(&"B".to_string()));
-    
+
     let chain_a_residues = structure.get_residues_for_chain("A");
     assert_eq!(chain_a_residues.len(), 1);
     assert_eq!(chain_a_residues[0].1, "MET");
-    
+
     let chain_b_residues = structure.get_residues_for_chain("B");
     assert_eq!(chain_b_residues.len(), 1);
     assert_eq!(chain_b_residues[0].1, "VAL");
@@ -332,7 +336,7 @@ ATOM 1 N N . ALA A 1 0.000 0.000 0.000 1.00 20.00
 
     let file = create_test_mmcif(mmcif_content);
     let structure = parse_mmcif_file(file.path()).unwrap();
-    
+
     assert_eq!(structure.atoms.len(), 1);
     assert_eq!(structure.atoms[0].residue_name, "ALA");
 }
@@ -422,11 +426,11 @@ HETATM 2 O O . HOH W 101 10.000 10.000 10.000 1.00 30.00
     let structure = parse_mmcif_string(mmcif_content).unwrap();
 
     assert_eq!(structure.atoms.len(), 2);
-    
+
     let protein_atom = &structure.atoms[0];
     assert_eq!(protein_atom.residue_name, "ALA");
     assert_eq!(protein_atom.chain_id, "A");
-    
+
     let water_atom = &structure.atoms[1];
     assert_eq!(water_atom.residue_name, "HOH");
     assert_eq!(water_atom.chain_id, "W");
@@ -459,7 +463,7 @@ ATOM 1 N N . ALA A 1 123.456789 -987.654321 0.123456 0.567 89.123
     let structure = parse_mmcif_string(mmcif_content).unwrap();
 
     assert_eq!(structure.atoms.len(), 1);
-    
+
     let atom = &structure.atoms[0];
     assert!((atom.x - 123.456789).abs() < 1e-6);
     assert!((atom.y - (-987.654321)).abs() < 1e-6);

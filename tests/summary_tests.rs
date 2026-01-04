@@ -4,8 +4,8 @@
 
 #![cfg(feature = "summary")]
 
-use pdbrust::{parse_pdb_file, PdbStructure};
 use pdbrust::summary::{StructureSummary, batch_summarize, summaries_to_csv};
+use pdbrust::{PdbStructure, parse_pdb_file};
 use std::path::PathBuf;
 
 fn get_test_file(name: &str) -> PathBuf {
@@ -54,8 +54,14 @@ fn test_summary_descriptor_fields() {
 
     // 1UBQ should have valid descriptors
     assert!(summary.radius_of_gyration > 0.0, "Rg should be positive");
-    assert!(summary.max_ca_distance > 0.0, "Max distance should be positive");
-    assert!(summary.compactness_index > 0.0, "Compactness should be positive");
+    assert!(
+        summary.max_ca_distance > 0.0,
+        "Max distance should be positive"
+    );
+    assert!(
+        summary.compactness_index > 0.0,
+        "Compactness should be positive"
+    );
 
     // Composition should be valid
     assert!(summary.hydrophobic_ratio >= 0.0 && summary.hydrophobic_ratio <= 1.0);
@@ -287,7 +293,9 @@ fn test_from_parts() {
     // Both methods should produce equivalent results
     assert_eq!(summary_from_parts.num_atoms, summary_direct.num_atoms);
     assert_eq!(summary_from_parts.has_ca_only, summary_direct.has_ca_only);
-    assert!((summary_from_parts.radius_of_gyration - summary_direct.radius_of_gyration).abs() < 1e-10);
+    assert!(
+        (summary_from_parts.radius_of_gyration - summary_direct.radius_of_gyration).abs() < 1e-10
+    );
 }
 
 // ============================================================================

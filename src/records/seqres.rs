@@ -146,7 +146,8 @@ mod tests {
 
     #[test]
     fn test_seqres_from_pdb_line() {
-        let line = "SEQRES   1 A   21  ALA GLY SER THR VAL LEU ILE PRO PHE MET TRP CYS             ";
+        let line =
+            "SEQRES   1 A   21  ALA GLY SER THR VAL LEU ILE PRO PHE MET TRP CYS             ";
         let seqres = SeqRes::from_pdb_line(line).unwrap();
 
         assert_eq!(seqres.serial, 1);

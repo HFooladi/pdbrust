@@ -4,7 +4,7 @@
 //! Search API v2.
 
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use std::fmt;
 
 use super::RCSB_SEARCH_URL;
@@ -477,10 +477,7 @@ pub fn rcsb_search(query: &SearchQuery, max_results: usize) -> Result<SearchResu
     if !response.status().is_success() {
         let status = response.status();
         let body = response.text().unwrap_or_default();
-        return Err(SearchError::ApiError(format!(
-            "HTTP {}: {}",
-            status, body
-        )));
+        return Err(SearchError::ApiError(format!("HTTP {}: {}", status, body)));
     }
 
     let body: Value = response.json()?;

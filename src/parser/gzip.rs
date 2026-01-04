@@ -130,9 +130,8 @@ pub fn parse_gzip_structure_file<P: AsRef<Path>>(path: P) -> Result<PdbStructure
         !trimmed.is_empty() && !trimmed.starts_with('#')
     });
 
-    let is_mmcif = first_line.map_or(false, |line| {
-        line.starts_with("data_") || line.starts_with('_')
-    });
+    let is_mmcif =
+        first_line.is_some_and(|line| line.starts_with("data_") || line.starts_with('_'));
 
     if is_mmcif {
         parse_gzip_mmcif_file(path)
@@ -174,8 +173,8 @@ pub fn parse_gzip_mmcif_reader<R: Read>(reader: R) -> Result<PdbStructure, PdbEr
 #[cfg(test)]
 mod tests {
     use super::*;
-    use flate2::write::GzEncoder;
     use flate2::Compression;
+    use flate2::write::GzEncoder;
     use std::io::Write;
     use tempfile::NamedTempFile;
 

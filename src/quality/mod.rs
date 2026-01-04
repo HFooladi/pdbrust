@@ -193,10 +193,7 @@ impl PdbStructure {
     ///
     /// A sorted vector of alternate location characters (e.g., ['A', 'B']).
     pub fn get_altloc_ids(&self) -> Vec<char> {
-        let mut altlocs: Vec<char> = self.atoms
-            .iter()
-            .filter_map(|atom| atom.alt_loc)
-            .collect();
+        let mut altlocs: Vec<char> = self.atoms.iter().filter_map(|atom| atom.alt_loc).collect();
 
         altlocs.sort();
         altlocs.dedup();
@@ -216,16 +213,18 @@ impl PdbStructure {
         #[cfg(feature = "filter")]
         {
             use crate::filter::is_standard_residue;
-            self.atoms.iter().any(|atom| !is_standard_residue(&atom.residue_name))
+            self.atoms
+                .iter()
+                .any(|atom| !is_standard_residue(&atom.residue_name))
         }
 
         #[cfg(not(feature = "filter"))]
         {
             // Fallback: check for common HETATM residue names
             const NON_STANDARD: &[&str] = &["HOH", "WAT", "DOD", "H2O", "TIP"];
-            self.atoms.iter().any(|atom| {
-                NON_STANDARD.contains(&atom.residue_name.trim())
-            })
+            self.atoms
+                .iter()
+                .any(|atom| NON_STANDARD.contains(&atom.residue_name.trim()))
         }
     }
 
@@ -262,7 +261,10 @@ impl PdbStructure {
     ///
     /// The number of atoms that have alternate location indicators.
     pub fn count_altloc_atoms(&self) -> usize {
-        self.atoms.iter().filter(|atom| atom.alt_loc.is_some()).count()
+        self.atoms
+            .iter()
+            .filter(|atom| atom.alt_loc.is_some())
+            .count()
     }
 
     /// Count the number of hydrogen atoms.
@@ -356,7 +358,13 @@ mod tests {
     use super::*;
     use crate::records::{Atom, Model, Remark};
 
-    fn create_atom(serial: i32, name: &str, residue_name: &str, chain_id: &str, alt_loc: Option<char>) -> Atom {
+    fn create_atom(
+        serial: i32,
+        name: &str,
+        residue_name: &str,
+        chain_id: &str,
+        alt_loc: Option<char>,
+    ) -> Atom {
         Atom {
             serial,
             name: name.to_string(),
@@ -370,7 +378,11 @@ mod tests {
             z: 0.0,
             occupancy: 1.0,
             temp_factor: 20.0,
-            element: if name.trim().starts_with('H') { "H".to_string() } else { "C".to_string() },
+            element: if name.trim().starts_with('H') {
+                "H".to_string()
+            } else {
+                "C".to_string()
+            },
         }
     }
 
@@ -408,8 +420,16 @@ mod tests {
     fn test_has_multiple_models_true() {
         let mut structure = PdbStructure::new();
         structure.models = vec![
-            Model { serial: 1, atoms: vec![], remarks: vec![] },
-            Model { serial: 2, atoms: vec![], remarks: vec![] },
+            Model {
+                serial: 1,
+                atoms: vec![],
+                remarks: vec![],
+            },
+            Model {
+                serial: 2,
+                atoms: vec![],
+                remarks: vec![],
+            },
         ];
 
         assert!(structure.has_multiple_models());
@@ -471,7 +491,9 @@ mod tests {
                 chain_id: "A".to_string(),
                 residue_seq: 1,
                 ins_code: None,
-                x: 0.0, y: 0.0, z: 0.0,
+                x: 0.0,
+                y: 0.0,
+                z: 0.0,
                 occupancy: 1.0,
                 temp_factor: 20.0,
                 element: "H".to_string(),
@@ -576,12 +598,10 @@ mod tests {
     #[test]
     fn test_get_resolution() {
         let mut structure = PdbStructure::new();
-        structure.remarks = vec![
-            Remark {
-                number: 2,
-                content: "RESOLUTION.    2.50 ANGSTROMS.".to_string(),
-            },
-        ];
+        structure.remarks = vec![Remark {
+            number: 2,
+            content: "RESOLUTION.    2.50 ANGSTROMS.".to_string(),
+        }];
 
         let resolution = structure.get_resolution();
         assert!(resolution.is_some());

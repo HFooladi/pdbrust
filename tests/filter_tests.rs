@@ -5,7 +5,7 @@
 
 #![cfg(feature = "filter")]
 
-use pdbrust::{parse_pdb_file, PdbStructure};
+use pdbrust::{PdbStructure, parse_pdb_file};
 use std::path::PathBuf;
 use tempfile::NamedTempFile;
 
@@ -29,7 +29,11 @@ fn test_get_ca_coords_real_structure() {
 
     // 1UBQ has 76 residues, so should have 76 CA atoms
     assert!(!ca_coords.is_empty(), "Should have CA coordinates");
-    assert!(ca_coords.len() > 70, "1UBQ should have ~76 CA atoms, got {}", ca_coords.len());
+    assert!(
+        ca_coords.len() > 70,
+        "1UBQ should have ~76 CA atoms, got {}",
+        ca_coords.len()
+    );
 
     // All coordinates should be valid (not NaN or Inf)
     for (x, y, z) in &ca_coords {
@@ -185,7 +189,10 @@ fn test_reindex_residues() {
     for chain_id in structure.get_chain_ids() {
         let residues = structure.get_residues_for_chain(&chain_id);
         if !residues.is_empty() {
-            assert_eq!(residues[0].0, 1, "First residue should be 1 after reindexing");
+            assert_eq!(
+                residues[0].0, 1,
+                "First residue should be 1 after reindexing"
+            );
         }
     }
 
@@ -220,21 +227,9 @@ fn test_center_structure() {
 
     // After centering, centroid should be at origin
     let (cx, cy, cz) = structure.get_ca_centroid();
-    assert!(
-        cx.abs() < 1e-10,
-        "Centered cx should be ~0, got {}",
-        cx
-    );
-    assert!(
-        cy.abs() < 1e-10,
-        "Centered cy should be ~0, got {}",
-        cy
-    );
-    assert!(
-        cz.abs() < 1e-10,
-        "Centered cz should be ~0, got {}",
-        cz
-    );
+    assert!(cx.abs() < 1e-10, "Centered cx should be ~0, got {}", cx);
+    assert!(cy.abs() < 1e-10, "Centered cy should be ~0, got {}", cy);
+    assert!(cz.abs() < 1e-10, "Centered cz should be ~0, got {}", cz);
 }
 
 #[test]

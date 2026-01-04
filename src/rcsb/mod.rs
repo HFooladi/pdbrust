@@ -50,8 +50,13 @@
 mod download;
 mod search;
 
-pub use download::{download_structure, download_to_file, download_pdb_string, download_multiple, download_multiple_to_files, FileFormat, DownloadError};
-pub use search::{rcsb_search, SearchQuery, SearchResult, SearchError, ExperimentalMethod, PolymerType};
+pub use download::{
+    DownloadError, FileFormat, download_multiple, download_multiple_to_files, download_pdb_string,
+    download_structure, download_to_file,
+};
+pub use search::{
+    ExperimentalMethod, PolymerType, SearchError, SearchQuery, SearchResult, rcsb_search,
+};
 
 /// RCSB PDB base URLs
 pub const RCSB_DOWNLOAD_URL: &str = "https://files.rcsb.org/download";
@@ -82,8 +87,7 @@ mod tests {
 
     #[test]
     fn test_search_query_to_json() {
-        let query = SearchQuery::new()
-            .with_text("ubiquitin");
+        let query = SearchQuery::new().with_text("ubiquitin");
 
         let json = query.to_json();
         assert!(json.contains("ubiquitin"));

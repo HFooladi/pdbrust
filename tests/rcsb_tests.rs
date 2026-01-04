@@ -7,8 +7,8 @@
 #![cfg(feature = "rcsb")]
 
 use pdbrust::rcsb::{
-    download_pdb_string, download_structure, download_to_file,
-    rcsb_search, ExperimentalMethod, FileFormat, PolymerType, SearchQuery,
+    ExperimentalMethod, FileFormat, PolymerType, SearchQuery, download_pdb_string,
+    download_structure, download_to_file, rcsb_search,
 };
 use tempfile::tempdir;
 
@@ -172,8 +172,8 @@ fn test_polymer_type_api_values() {
 #[test]
 #[ignore = "requires network access"]
 fn test_download_pdb_string_pdb_format() {
-    let content = download_pdb_string("1UBQ", FileFormat::Pdb)
-        .expect("Failed to download 1UBQ.pdb");
+    let content =
+        download_pdb_string("1UBQ", FileFormat::Pdb).expect("Failed to download 1UBQ.pdb");
 
     // Check that it looks like a PDB file
     assert!(content.contains("HEADER"));
@@ -184,8 +184,8 @@ fn test_download_pdb_string_pdb_format() {
 #[test]
 #[ignore = "requires network access"]
 fn test_download_pdb_string_cif_format() {
-    let content = download_pdb_string("1UBQ", FileFormat::Cif)
-        .expect("Failed to download 1UBQ.cif");
+    let content =
+        download_pdb_string("1UBQ", FileFormat::Cif).expect("Failed to download 1UBQ.cif");
 
     // Check that it looks like an mmCIF file
     assert!(content.contains("_atom_site"));
@@ -195,8 +195,8 @@ fn test_download_pdb_string_cif_format() {
 #[test]
 #[ignore = "requires network access"]
 fn test_download_structure_pdb_format() {
-    let structure = download_structure("1UBQ", FileFormat::Pdb)
-        .expect("Failed to download and parse 1UBQ.pdb");
+    let structure =
+        download_structure("1UBQ", FileFormat::Pdb).expect("Failed to download and parse 1UBQ.pdb");
 
     // 1UBQ (ubiquitin) has 76 residues and ~600 atoms
     assert!(structure.atoms.len() > 500);
@@ -206,8 +206,8 @@ fn test_download_structure_pdb_format() {
 #[test]
 #[ignore = "requires network access"]
 fn test_download_structure_cif_format() {
-    let structure = download_structure("1UBQ", FileFormat::Cif)
-        .expect("Failed to download and parse 1UBQ.cif");
+    let structure =
+        download_structure("1UBQ", FileFormat::Cif).expect("Failed to download and parse 1UBQ.cif");
 
     // Should have similar atom count as PDB format
     assert!(structure.atoms.len() > 500);
@@ -219,8 +219,7 @@ fn test_download_to_file() {
     let dir = tempdir().expect("Failed to create temp dir");
     let path = dir.path().join("1UBQ.pdb");
 
-    download_to_file("1UBQ", &path, FileFormat::Pdb)
-        .expect("Failed to download 1UBQ to file");
+    download_to_file("1UBQ", &path, FileFormat::Pdb).expect("Failed to download 1UBQ to file");
 
     // Verify file exists and has content
     assert!(path.exists());
@@ -299,8 +298,8 @@ fn test_search_and_download_workflow() {
 
     // Download the first result
     let pdb_id = &result.pdb_ids[0];
-    let structure = download_structure(pdb_id, FileFormat::Pdb)
-        .expect("Failed to download structure");
+    let structure =
+        download_structure(pdb_id, FileFormat::Pdb).expect("Failed to download structure");
 
     // Verify we got a valid structure
     assert!(structure.atoms.len() > 100);

@@ -111,10 +111,7 @@ impl PdbStructure {
     ///
     /// The fraction of glycine residues (0.0 to 1.0).
     pub fn glycine_ratio(&self) -> f64 {
-        self.aa_composition()
-            .get("GLY")
-            .copied()
-            .unwrap_or(0.0)
+        self.aa_composition().get("GLY").copied().unwrap_or(0.0)
     }
 
     /// Calculate the fraction of hydrophobic residues.
@@ -425,7 +422,9 @@ mod tests {
                 chain_id: "A".to_string(),
                 residue_seq: 1,
                 ins_code: None,
-                x: 0.0, y: 0.0, z: 0.0,
+                x: 0.0,
+                y: 0.0,
+                z: 0.0,
                 occupancy: 1.0,
                 temp_factor: 20.0,
                 element: "N".to_string(),

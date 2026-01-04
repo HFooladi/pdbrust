@@ -4,7 +4,7 @@
 
 #![cfg(feature = "descriptors")]
 
-use pdbrust::{parse_pdb_file, PdbStructure};
+use pdbrust::{PdbStructure, parse_pdb_file};
 use std::path::PathBuf;
 
 fn get_test_file(name: &str) -> PathBuf {
@@ -214,11 +214,7 @@ fn test_ca_density_real_structure() {
     let density = structure.ca_density();
 
     // Density should be positive
-    assert!(
-        density > 0.0,
-        "Density should be positive, got {}",
-        density
-    );
+    assert!(density > 0.0, "Density should be positive, got {}", density);
 
     // Typical protein densities are in the range 0.001-0.01 atoms/Å³
     assert!(

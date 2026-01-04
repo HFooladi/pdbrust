@@ -4,7 +4,7 @@
 
 #![cfg(feature = "quality")]
 
-use pdbrust::{parse_pdb_file, PdbStructure};
+use pdbrust::{PdbStructure, parse_pdb_file};
 use std::path::PathBuf;
 
 fn get_test_file(name: &str) -> PathBuf {
@@ -24,10 +24,7 @@ fn test_has_ca_only_real_structure() {
     let structure = parse_pdb_file(&path).expect("Failed to parse 1UBQ.pdb");
 
     // 1UBQ is a full-atom structure, not CA-only
-    assert!(
-        !structure.has_ca_only(),
-        "1UBQ should not be CA-only"
-    );
+    assert!(!structure.has_ca_only(), "1UBQ should not be CA-only");
 }
 
 #[test]

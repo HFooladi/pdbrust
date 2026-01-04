@@ -146,11 +146,7 @@ fn parse_atom_record(line: &str) -> Result<Atom, PdbError> {
 
     let alt_loc = if line.len() > 16 {
         let c = line.chars().nth(16).unwrap_or(' ');
-        if c == ' ' {
-            None
-        } else {
-            Some(c)
-        }
+        if c == ' ' { None } else { Some(c) }
     } else {
         None
     };
@@ -161,11 +157,7 @@ fn parse_atom_record(line: &str) -> Result<Atom, PdbError> {
 
     let ins_code = if line.len() > 26 {
         let c = line.chars().nth(26).unwrap_or(' ');
-        if c == ' ' {
-            None
-        } else {
-            Some(c)
-        }
+        if c == ' ' { None } else { Some(c) }
     } else {
         None
     };
@@ -298,11 +290,7 @@ fn parse_ssbond_record(line: &str) -> Result<SSBond, PdbError> {
 
     let icode1 = if line.len() > 21 {
         let c = line.chars().nth(21).unwrap_or(' ');
-        if c == ' ' {
-            None
-        } else {
-            Some(c)
-        }
+        if c == ' ' { None } else { Some(c) }
     } else {
         None
     };
@@ -313,11 +301,7 @@ fn parse_ssbond_record(line: &str) -> Result<SSBond, PdbError> {
 
     let icode2 = if line.len() > 35 {
         let c = line.chars().nth(35).unwrap_or(' ');
-        if c == ' ' {
-            None
-        } else {
-            Some(c)
-        }
+        if c == ' ' { None } else { Some(c) }
     } else {
         None
     };

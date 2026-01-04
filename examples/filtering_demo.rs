@@ -38,7 +38,10 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // Backbone atoms (N, CA, C, O) - useful for secondary structure
     let backbone = structure.keep_only_backbone();
-    println!("Backbone only (N, CA, C, O): {} atoms", backbone.atoms.len());
+    println!(
+        "Backbone only (N, CA, C, O): {} atoms",
+        backbone.atoms.len()
+    );
 
     // Extract CA coordinates as vectors
     let ca_coords = structure.get_ca_coords(None);
@@ -77,14 +80,15 @@ fn main() -> Result<(), Box<dyn Error>> {
         .keep_only_chain("A")
         .keep_only_backbone();
 
-    println!(
-        "Chained: remove_ligands -> remove_hydrogens -> chain A -> backbone"
-    );
+    println!("Chained: remove_ligands -> remove_hydrogens -> chain A -> backbone");
     println!("Result: {} atoms", cleaned.atoms.len());
 
     // Another common workflow: CA-only representation
     let ca_repr = structure.remove_ligands().keep_only_ca();
-    println!("\nCA representation (no ligands): {} atoms", ca_repr.atoms.len());
+    println!(
+        "\nCA representation (no ligands): {} atoms",
+        ca_repr.atoms.len()
+    );
 
     // ========== In-Place Modifications ==========
     println!("\n--- In-Place Modifications ---");

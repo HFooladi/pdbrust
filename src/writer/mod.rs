@@ -1,5 +1,5 @@
-use crate::error::PdbError;
 use crate::PdbStructure;
+use crate::error::PdbError;
 use std::fs::File;
 use std::io::{self, Write};
 use std::path::Path;

@@ -139,7 +139,7 @@ impl PdbStructure {
     /// let structure = PdbStructure::from_file("example.pdb")?;
     /// let num_atoms = structure.get_num_atoms();
     /// println!("Number of atoms: {}", num_atoms);
-    /// ``` 
+    /// ```
     pub fn get_num_atoms(&self) -> usize {
         self.atoms.len()
     }
@@ -163,7 +163,7 @@ impl PdbStructure {
             chain_ids.insert(atom.chain_id.clone());
         }
         chain_ids.len()
-    }   
+    }
 
     /// Gets all unique chain IDs in the structure.
     ///
@@ -384,7 +384,6 @@ impl PdbStructure {
             atom.z += dz;
         }
     }
-
 
     /// Writes the structure to a file.
     ///

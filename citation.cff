@@ -7,7 +7,7 @@ authors:
     family-names: "Fooladi"
     orcid: "https://orcid.org/0000-0002-3124-2761"
 title: "PDBRust: A Rust library for parsing and analyzing PDB files"
-version: 0.2.0
+version: 0.3.0
 date-released: "2025-03-25"
 repository-code: "https://github.com/hfooladi/pdbrust"
 repository-artifact: "https://github.com/hfooladi/pdbrust/releases"

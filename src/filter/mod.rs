@@ -44,14 +44,13 @@ mod extraction;
 
 /// Standard amino acid residue names (3-letter codes).
 pub const STANDARD_AMINO_ACIDS: &[&str] = &[
-    "ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY",
-    "HIS", "ILE", "LEU", "LYS", "MET", "PHE", "PRO", "SER",
-    "THR", "TRP", "TYR", "VAL",
+    "ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS", "ILE", "LEU", "LYS", "MET",
+    "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL",
 ];
 
 /// Standard nucleotide residue names.
 pub const STANDARD_NUCLEOTIDES: &[&str] = &[
-    "A", "C", "G", "U",     // RNA
+    "A", "C", "G", "U", // RNA
     "DA", "DC", "DG", "DT", // DNA
 ];
 

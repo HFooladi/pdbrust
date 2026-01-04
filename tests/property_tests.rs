@@ -12,21 +12,7 @@ fn create_test_pdb(content: &str) -> NamedTempFile {
 fn generate_atom_record(serial: i32, x: f64, y: f64, z: f64) -> String {
     format!(
         "ATOM  {:>5} {:>4}{}{:>3} {}{:>4}{}   {:>8.3}{:>8.3}{:>8.3}{:>6.2}{:>6.2}      {:>4}{:>2}{:>2}",
-        serial,
-        "N",
-        " ",
-        "ALA",
-        "A",
-        serial,
-        " ",
-        x,
-        y,
-        z,
-        1.00,
-        13.79,
-        "",
-        "N",
-        ""
+        serial, "N", " ", "ALA", "A", serial, " ", x, y, z, 1.00, 13.79, "", "N", ""
     )
 }
 

@@ -3,8 +3,8 @@
 //! Functions for extracting specific subsets of atoms or creating
 //! filtered versions of structures.
 
-use crate::core::PdbStructure;
 use super::is_standard_residue;
+use crate::core::PdbStructure;
 
 impl PdbStructure {
     /// Extract Cα (alpha-carbon) coordinates from the structure.
@@ -37,10 +37,7 @@ impl PdbStructure {
     pub fn get_ca_coords(&self, chain_id: Option<&str>) -> Vec<(f64, f64, f64)> {
         self.atoms
             .iter()
-            .filter(|atom| {
-                atom.name.trim() == "CA"
-                    && chain_id.is_none_or(|c| atom.chain_id == c)
-            })
+            .filter(|atom| atom.name.trim() == "CA" && chain_id.is_none_or(|c| atom.chain_id == c))
             .map(|atom| (atom.x, atom.y, atom.z))
             .collect()
     }
@@ -59,10 +56,7 @@ impl PdbStructure {
     pub fn get_ca_atoms(&self, chain_id: Option<&str>) -> Vec<&crate::records::Atom> {
         self.atoms
             .iter()
-            .filter(|atom| {
-                atom.name.trim() == "CA"
-                    && chain_id.is_none_or(|c| atom.chain_id == c)
-            })
+            .filter(|atom| atom.name.trim() == "CA" && chain_id.is_none_or(|c| atom.chain_id == c))
             .collect()
     }
 
@@ -87,7 +81,8 @@ impl PdbStructure {
     /// protein_only.to_file("protein_only.pdb")?;
     /// ```
     pub fn remove_ligands(&self) -> Self {
-        let filtered_atoms: Vec<_> = self.atoms
+        let filtered_atoms: Vec<_> = self
+            .atoms
             .iter()
             .filter(|atom| is_standard_residue(&atom.residue_name))
             .cloned()
@@ -129,21 +124,24 @@ impl PdbStructure {
     /// println!("Chain A has {} atoms", chain_a.get_num_atoms());
     /// ```
     pub fn keep_only_chain(&self, chain_id: &str) -> Self {
-        let filtered_atoms: Vec<_> = self.atoms
+        let filtered_atoms: Vec<_> = self
+            .atoms
             .iter()
             .filter(|atom| atom.chain_id == chain_id)
             .cloned()
             .collect();
 
         // Filter SEQRES to only include the specified chain
-        let filtered_seqres: Vec<_> = self.seqres
+        let filtered_seqres: Vec<_> = self
+            .seqres
             .iter()
             .filter(|s| s.chain_id == chain_id)
             .cloned()
             .collect();
 
         // Filter SSBONDs that involve this chain
-        let filtered_ssbonds: Vec<_> = self.ssbonds
+        let filtered_ssbonds: Vec<_> = self
+            .ssbonds
             .iter()
             .filter(|s| s.chain1_id == chain_id || s.chain2_id == chain_id)
             .cloned()
@@ -183,7 +181,8 @@ impl PdbStructure {
     /// assert!(ca_only.get_num_atoms() < structure.get_num_atoms());
     /// ```
     pub fn keep_only_ca(&self) -> Self {
-        let filtered_atoms: Vec<_> = self.atoms
+        let filtered_atoms: Vec<_> = self
+            .atoms
             .iter()
             .filter(|atom| atom.name.trim() == "CA")
             .cloned()
@@ -212,7 +211,8 @@ impl PdbStructure {
     pub fn keep_only_backbone(&self) -> Self {
         let backbone_names = ["N", "CA", "C", "O"];
 
-        let filtered_atoms: Vec<_> = self.atoms
+        let filtered_atoms: Vec<_> = self
+            .atoms
             .iter()
             .filter(|atom| backbone_names.contains(&atom.name.trim()))
             .cloned()
@@ -240,7 +240,8 @@ impl PdbStructure {
     ///
     /// A new `PdbStructure` without hydrogen atoms.
     pub fn remove_hydrogens(&self) -> Self {
-        let filtered_atoms: Vec<_> = self.atoms
+        let filtered_atoms: Vec<_> = self
+            .atoms
             .iter()
             .filter(|atom| !atom.is_hydrogen())
             .cloned()
@@ -287,7 +288,8 @@ impl PdbStructure {
     where
         F: Fn(&crate::records::Atom) -> bool,
     {
-        let filtered_atoms: Vec<_> = self.atoms
+        let filtered_atoms: Vec<_> = self
+            .atoms
             .iter()
             .filter(|atom| predicate(atom))
             .cloned()
@@ -325,7 +327,9 @@ mod tests {
                 chain_id: "A".to_string(),
                 residue_seq: 1,
                 ins_code: None,
-                x: 0.0, y: 0.0, z: 0.0,
+                x: 0.0,
+                y: 0.0,
+                z: 0.0,
                 occupancy: 1.0,
                 temp_factor: 20.0,
                 element: "N".to_string(),
@@ -338,7 +342,9 @@ mod tests {
                 chain_id: "A".to_string(),
                 residue_seq: 1,
                 ins_code: None,
-                x: 1.0, y: 1.0, z: 1.0,
+                x: 1.0,
+                y: 1.0,
+                z: 1.0,
                 occupancy: 1.0,
                 temp_factor: 20.0,
                 element: "C".to_string(),
@@ -351,7 +357,9 @@ mod tests {
                 chain_id: "A".to_string(),
                 residue_seq: 1,
                 ins_code: None,
-                x: 2.0, y: 2.0, z: 2.0,
+                x: 2.0,
+                y: 2.0,
+                z: 2.0,
                 occupancy: 1.0,
                 temp_factor: 20.0,
                 element: "C".to_string(),
@@ -365,7 +373,9 @@ mod tests {
                 chain_id: "A".to_string(),
                 residue_seq: 2,
                 ins_code: None,
-                x: 3.0, y: 3.0, z: 3.0,
+                x: 3.0,
+                y: 3.0,
+                z: 3.0,
                 occupancy: 1.0,
                 temp_factor: 25.0,
                 element: "C".to_string(),
@@ -379,7 +389,9 @@ mod tests {
                 chain_id: "B".to_string(),
                 residue_seq: 1,
                 ins_code: None,
-                x: 10.0, y: 10.0, z: 10.0,
+                x: 10.0,
+                y: 10.0,
+                z: 10.0,
                 occupancy: 1.0,
                 temp_factor: 30.0,
                 element: "C".to_string(),
@@ -393,7 +405,9 @@ mod tests {
                 chain_id: "A".to_string(),
                 residue_seq: 100,
                 ins_code: None,
-                x: 5.0, y: 5.0, z: 5.0,
+                x: 5.0,
+                y: 5.0,
+                z: 5.0,
                 occupancy: 1.0,
                 temp_factor: 50.0,
                 element: "O".to_string(),
@@ -407,7 +421,9 @@ mod tests {
                 chain_id: "A".to_string(),
                 residue_seq: 101,
                 ins_code: None,
-                x: 6.0, y: 6.0, z: 6.0,
+                x: 6.0,
+                y: 6.0,
+                z: 6.0,
                 occupancy: 1.0,
                 temp_factor: 40.0,
                 element: "C".to_string(),

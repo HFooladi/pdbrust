@@ -80,9 +80,13 @@ impl MmcifParser {
                     // Handle non-loop single value items
                     let remaining = parts[1].trim();
                     let value = if remaining.starts_with('"') && remaining.ends_with('"') {
-                        remaining[1..remaining.len()-1].to_string()
+                        remaining[1..remaining.len() - 1].to_string()
                     } else {
-                        remaining.split_whitespace().skip(1).collect::<Vec<&str>>().join(" ")
+                        remaining
+                            .split_whitespace()
+                            .skip(1)
+                            .collect::<Vec<&str>>()
+                            .join(" ")
                     };
                     let category =
                         self.categories
@@ -129,7 +133,7 @@ impl Category {
             self.rows
                 .iter()
                 .filter_map(|row| row.get(index).map(|s| s.as_str()))
-                .collect()
+                .collect(),
         )
     }
 
@@ -139,9 +143,7 @@ impl Category {
             self.headers
                 .iter()
                 .enumerate()
-                .filter_map(|(i, h)| {
-                    row.get(i).map(|v| (h.as_str(), v.as_str()))
-                })
+                .filter_map(|(i, h)| row.get(i).map(|v| (h.as_str(), v.as_str())))
                 .collect()
         })
     }

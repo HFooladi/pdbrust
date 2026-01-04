@@ -13,8 +13,8 @@
 //! ```
 
 use pdbrust::rcsb::{
-    download_structure, download_to_file, rcsb_search, ExperimentalMethod, FileFormat,
-    PolymerType, SearchQuery,
+    ExperimentalMethod, FileFormat, PolymerType, SearchQuery, download_structure, download_to_file,
+    rcsb_search,
 };
 use std::error::Error;
 
@@ -163,7 +163,10 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     match rcsb_search(&query, 3) {
         Ok(result) => {
-            println!("Found {} structures, analyzing top 3:\n", result.total_count);
+            println!(
+                "Found {} structures, analyzing top 3:\n",
+                result.total_count
+            );
 
             for pdb_id in result.pdb_ids.iter().take(3) {
                 print!("  {}: ", pdb_id);

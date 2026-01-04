@@ -47,7 +47,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! pdbrust = { version = "0.2", features = ["filter", "descriptors"] }
+//! pdbrust = { version = "0.3", features = ["filter", "descriptors"] }
 //! ```
 //!
 //! ## Core Features

@@ -29,14 +29,14 @@
 //!
 //! ```toml
 //! [dependencies]
-//! pdbrust = "0.2"
+//! pdbrust = "0.3"
 //! ```
 //!
 //! For additional features, enable them explicitly:
 //!
 //! ```toml
 //! [dependencies]
-//! pdbrust = { version = "0.2", features = ["filter", "descriptors", "quality", "summary", "rcsb"] }
+//! pdbrust = { version = "0.3", features = ["filter", "descriptors", "quality", "summary", "rcsb"] }
 //! ```
 //!
 //! ## Feature Flags

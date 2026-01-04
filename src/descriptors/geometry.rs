@@ -3,8 +3,8 @@
 //! Functions for computing geometric properties of protein structures
 //! based on Cα atom positions.
 
-use crate::core::PdbStructure;
 use super::StructureDescriptors;
+use crate::core::PdbStructure;
 
 /// Threshold distance for consecutive Cα-Cα atoms in ordered structures.
 /// Typical Cα-Cα distance in regular secondary structures is ~3.8 Å.
@@ -36,7 +36,8 @@ impl PdbStructure {
     /// println!("Radius of gyration: {:.2} Å", rg);
     /// ```
     pub fn radius_of_gyration(&self) -> f64 {
-        let ca_coords: Vec<(f64, f64, f64)> = self.atoms
+        let ca_coords: Vec<(f64, f64, f64)> = self
+            .atoms
             .iter()
             .filter(|atom| atom.name.trim() == "CA")
             .map(|atom| (atom.x, atom.y, atom.z))
@@ -56,10 +57,9 @@ impl PdbStructure {
         // Calculate sum of squared distances from centroid
         let rg_squared: f64 = ca_coords
             .iter()
-            .map(|(x, y, z)| {
-                (x - cx).powi(2) + (y - cy).powi(2) + (z - cz).powi(2)
-            })
-            .sum::<f64>() / n;
+            .map(|(x, y, z)| (x - cx).powi(2) + (y - cy).powi(2) + (z - cz).powi(2))
+            .sum::<f64>()
+            / n;
 
         rg_squared.sqrt()
     }
@@ -89,7 +89,8 @@ impl PdbStructure {
     /// println!("Maximum extent: {:.2} Å", max_dist);
     /// ```
     pub fn max_ca_distance(&self) -> f64 {
-        let ca_coords: Vec<(f64, f64, f64)> = self.atoms
+        let ca_coords: Vec<(f64, f64, f64)> = self
+            .atoms
             .iter()
             .filter(|atom| atom.name.trim() == "CA")
             .map(|atom| (atom.x, atom.y, atom.z))
@@ -141,7 +142,8 @@ impl PdbStructure {
     /// structural analysis.
     pub fn secondary_structure_ratio(&self) -> f64 {
         // Get CA atoms sorted by chain and residue number
-        let mut ca_atoms: Vec<_> = self.atoms
+        let mut ca_atoms: Vec<_> = self
+            .atoms
             .iter()
             .filter(|atom| atom.name.trim() == "CA")
             .collect();
@@ -151,11 +153,9 @@ impl PdbStructure {
         }
 
         // Sort by chain, then by residue number
-        ca_atoms.sort_by(|a, b| {
-            match a.chain_id.cmp(&b.chain_id) {
-                std::cmp::Ordering::Equal => a.residue_seq.cmp(&b.residue_seq),
-                other => other,
-            }
+        ca_atoms.sort_by(|a, b| match a.chain_id.cmp(&b.chain_id) {
+            std::cmp::Ordering::Equal => a.residue_seq.cmp(&b.residue_seq),
+            other => other,
         });
 
         let mut ordered_count = 0usize;
@@ -250,7 +250,8 @@ impl PdbStructure {
     /// println!("Cα density: {:.4} atoms/Å³", density);
     /// ```
     pub fn ca_density(&self) -> f64 {
-        let ca_coords: Vec<(f64, f64, f64)> = self.atoms
+        let ca_coords: Vec<(f64, f64, f64)> = self
+            .atoms
             .iter()
             .filter(|atom| atom.name.trim() == "CA")
             .map(|atom| (atom.x, atom.y, atom.z))
@@ -289,7 +290,8 @@ impl PdbStructure {
     /// A tuple of ((x_min, x_max), (y_min, y_max), (z_min, z_max)).
     /// Returns ((0,0), (0,0), (0,0)) for empty structures.
     pub fn ca_bounding_box(&self) -> ((f64, f64), (f64, f64), (f64, f64)) {
-        let ca_coords: Vec<(f64, f64, f64)> = self.atoms
+        let ca_coords: Vec<(f64, f64, f64)> = self
+            .atoms
             .iter()
             .filter(|atom| atom.name.trim() == "CA")
             .map(|atom| (atom.x, atom.y, atom.z))
@@ -357,7 +359,15 @@ mod tests {
     use super::*;
     use crate::records::Atom;
 
-    fn create_ca_atom(serial: i32, residue_name: &str, chain_id: &str, residue_seq: i32, x: f64, y: f64, z: f64) -> Atom {
+    fn create_ca_atom(
+        serial: i32,
+        residue_name: &str,
+        chain_id: &str,
+        residue_seq: i32,
+        x: f64,
+        y: f64,
+        z: f64,
+    ) -> Atom {
         Atom {
             serial,
             name: " CA ".to_string(),
@@ -445,15 +455,17 @@ mod tests {
 
         // Maximum distance is the space diagonal of the cube: sqrt(10² + 10² + 10²) = sqrt(300) ≈ 17.32
         let expected = (300.0f64).sqrt();
-        assert!((max_dist - expected).abs() < 0.01, "max_dist = {}", max_dist);
+        assert!(
+            (max_dist - expected).abs() < 0.01,
+            "max_dist = {}",
+            max_dist
+        );
     }
 
     #[test]
     fn test_max_ca_distance_single_atom() {
         let mut structure = PdbStructure::new();
-        structure.atoms = vec![
-            create_ca_atom(1, "ALA", "A", 1, 0.0, 0.0, 0.0),
-        ];
+        structure.atoms = vec![create_ca_atom(1, "ALA", "A", 1, 0.0, 0.0, 0.0)];
 
         assert_eq!(structure.max_ca_distance(), 0.0);
     }
@@ -496,7 +508,11 @@ mod tests {
         // Compactness = 5.374 / 5^(1/3) = 5.374 / 1.71 ≈ 3.14
         let n = 5.0f64;
         let expected = 5.374 / n.powf(1.0 / 3.0);
-        assert!((compactness - expected).abs() < 0.1, "compactness = {}", compactness);
+        assert!(
+            (compactness - expected).abs() < 0.1,
+            "compactness = {}",
+            compactness
+        );
     }
 
     #[test]

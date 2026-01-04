@@ -1,9 +1,9 @@
 //! Converts parsed mmCIF data into PdbStructure format
 
-use crate::core::mmcif::{MmcifParser, Category};
 use crate::core::PdbStructure;
-use crate::records::{Atom, SeqRes, SSBond, Remark};
+use crate::core::mmcif::{Category, MmcifParser};
 use crate::error::PdbError;
+use crate::records::{Atom, Remark, SSBond, SeqRes};
 use std::collections::HashMap;
 
 /// Converts mmCIF data to PdbStructure
@@ -12,16 +12,16 @@ pub fn mmcif_to_pdb_structure(parser: &MmcifParser) -> Result<PdbStructure, PdbE
 
     // Parse header and title information
     parse_header_info(parser, &mut structure)?;
-    
+
     // Parse atoms from _atom_site category
     parse_atoms(parser, &mut structure)?;
-    
+
     // Parse sequence information from _entity_poly_seq
     parse_sequences(parser, &mut structure)?;
-    
+
     // Parse disulfide bonds from _struct_disulfid
     parse_disulfide_bonds(parser, &mut structure)?;
-    
+
     // Parse connectivity from _struct_conn
     parse_connectivity(parser, &mut structure)?;
 
@@ -47,11 +47,12 @@ fn parse_header_info(parser: &MmcifParser, structure: &mut PdbStructure) -> Resu
         if let Some(row) = struct_category.get_row(0) {
             if let Some(title) = row.get("title") {
                 // Remove quotes if present
-                let clean_title = if title.starts_with('"') && title.ends_with('"') && title.len() > 1 {
-                    &title[1..title.len()-1]
-                } else {
-                    title
-                };
+                let clean_title =
+                    if title.starts_with('"') && title.ends_with('"') && title.len() > 1 {
+                        &title[1..title.len() - 1]
+                    } else {
+                        title
+                    };
                 structure.title = Some(clean_title.to_string());
             }
         }
@@ -61,17 +62,18 @@ fn parse_header_info(parser: &MmcifParser, structure: &mut PdbStructure) -> Resu
     if let Some(database_category) = parser.get_category("database_PDB_rev") {
         if let Some(row) = database_category.get_row(0) {
             let mut header_parts = Vec::new();
-            
+
             if let Some(date) = row.get("date_original") {
                 header_parts.push(format!("Original date: {}", date));
             }
             if let Some(id) = row.get("pdb_id") {
                 header_parts.push(format!("PDB ID: {}", id));
             }
-            
+
             if !header_parts.is_empty() {
                 let existing_header = structure.header.as_deref().unwrap_or("");
-                structure.header = Some(format!("{} | {}", existing_header, header_parts.join(", ")));
+                structure.header =
+                    Some(format!("{} | {}", existing_header, header_parts.join(", ")));
             }
         }
     }
@@ -118,15 +120,17 @@ struct AtomColumnIndices {
 
 fn get_atom_column_indices(category: &Category) -> Result<AtomColumnIndices, PdbError> {
     let headers = &category.headers;
-    
+
     let find_required = |name: &str| -> Result<usize, PdbError> {
-        headers.iter().position(|h| h == name)
-            .ok_or_else(|| PdbError::InvalidRecord(format!("Required column '{}' not found in _atom_site", name)))
+        headers.iter().position(|h| h == name).ok_or_else(|| {
+            PdbError::InvalidRecord(format!(
+                "Required column '{}' not found in _atom_site",
+                name
+            ))
+        })
     };
-    
-    let find_optional = |name: &str| -> Option<usize> {
-        headers.iter().position(|h| h == name)
-    };
+
+    let find_optional = |name: &str| -> Option<usize> { headers.iter().position(|h| h == name) };
 
     Ok(AtomColumnIndices {
         id: find_required("id")?,
@@ -158,17 +162,25 @@ fn parse_atom_row(row: &[String], indices: &AtomColumnIndices) -> Result<Atom, P
         indices.cartn_x,
         indices.cartn_y,
         indices.cartn_z,
-    ].into_iter().max().unwrap();
-    
+    ]
+    .into_iter()
+    .max()
+    .unwrap();
+
     if row.len() <= max_required {
-        return Err(PdbError::ParseError(format!("Row too short: has {} columns, needs at least {}", row.len(), max_required + 1)));
+        return Err(PdbError::ParseError(format!(
+            "Row too short: has {} columns, needs at least {}",
+            row.len(),
+            max_required + 1
+        )));
     }
-    
-    let serial: i32 = row[indices.id].parse()
+
+    let serial: i32 = row[indices.id]
+        .parse()
         .map_err(|_| PdbError::ParseError(format!("Invalid atom serial: {}", row[indices.id])))?;
-    
+
     let name = row[indices.label_atom_id].clone();
-    
+
     let alt_loc = if let Some(idx) = indices.label_alt_id {
         if idx >= row.len() {
             None
@@ -183,13 +195,17 @@ fn parse_atom_row(row: &[String], indices: &AtomColumnIndices) -> Result<Atom, P
     } else {
         None
     };
-    
+
     let residue_name = row[indices.label_comp_id].clone();
     let chain_id = row[indices.label_asym_id].clone();
-    
-    let residue_seq: i32 = row[indices.label_seq_id].parse()
-        .map_err(|_| PdbError::ParseError(format!("Invalid residue sequence: {}", row[indices.label_seq_id])))?;
-    
+
+    let residue_seq: i32 = row[indices.label_seq_id].parse().map_err(|_| {
+        PdbError::ParseError(format!(
+            "Invalid residue sequence: {}",
+            row[indices.label_seq_id]
+        ))
+    })?;
+
     let ins_code = if let Some(idx) = indices.pdbx_pdb_ins_code {
         let ins_str = &row[idx];
         if ins_str == "." || ins_str == "?" || ins_str.is_empty() {
@@ -200,28 +216,31 @@ fn parse_atom_row(row: &[String], indices: &AtomColumnIndices) -> Result<Atom, P
     } else {
         None
     };
-    
-    let x: f64 = row[indices.cartn_x].parse()
-        .map_err(|_| PdbError::ParseError(format!("Invalid x coordinate: {}", row[indices.cartn_x])))?;
-    
-    let y: f64 = row[indices.cartn_y].parse()
-        .map_err(|_| PdbError::ParseError(format!("Invalid y coordinate: {}", row[indices.cartn_y])))?;
-    
-    let z: f64 = row[indices.cartn_z].parse()
-        .map_err(|_| PdbError::ParseError(format!("Invalid z coordinate: {}", row[indices.cartn_z])))?;
-    
+
+    let x: f64 = row[indices.cartn_x].parse().map_err(|_| {
+        PdbError::ParseError(format!("Invalid x coordinate: {}", row[indices.cartn_x]))
+    })?;
+
+    let y: f64 = row[indices.cartn_y].parse().map_err(|_| {
+        PdbError::ParseError(format!("Invalid y coordinate: {}", row[indices.cartn_y]))
+    })?;
+
+    let z: f64 = row[indices.cartn_z].parse().map_err(|_| {
+        PdbError::ParseError(format!("Invalid z coordinate: {}", row[indices.cartn_z]))
+    })?;
+
     let occupancy = if let Some(idx) = indices.occupancy {
         row[idx].parse().unwrap_or(1.0)
     } else {
         1.0
     };
-    
+
     let temp_factor = if let Some(idx) = indices.b_iso_or_equiv {
         row[idx].parse().unwrap_or(0.0)
     } else {
         0.0
     };
-    
+
     let element = row[indices.type_symbol].clone();
 
     Ok(Atom {
@@ -250,23 +269,25 @@ fn parse_sequences(parser: &MmcifParser, structure: &mut PdbStructure) -> Result
 
     // Group sequences by entity_id and build SEQRES records
     let mut sequences: HashMap<String, Vec<String>> = HashMap::new();
-    
+
     if let (Some(entity_col), Some(mon_id_col), Some(num_col)) = (
         entity_poly_seq.get_column("entity_id"),
         entity_poly_seq.get_column("mon_id"),
-        entity_poly_seq.get_column("num")
+        entity_poly_seq.get_column("num"),
     ) {
-        for ((entity_id, mon_id), num) in entity_col.iter().zip(mon_id_col.iter()).zip(num_col.iter()) {
+        for ((entity_id, mon_id), num) in
+            entity_col.iter().zip(mon_id_col.iter()).zip(num_col.iter())
+        {
             let seq_entry = sequences.entry(entity_id.to_string()).or_default();
-            
+
             // Parse the sequence number to ensure proper ordering
             let seq_num: usize = num.parse().unwrap_or(0);
-            
+
             // Extend vector if necessary
             if seq_entry.len() <= seq_num {
                 seq_entry.resize(seq_num + 1, String::new());
             }
-            
+
             if seq_num > 0 {
                 seq_entry[seq_num - 1] = mon_id.to_string(); // Convert to 0-based indexing
             }
@@ -276,17 +297,18 @@ fn parse_sequences(parser: &MmcifParser, structure: &mut PdbStructure) -> Result
     // Convert to SEQRES records
     // Map entity IDs to chain IDs using _struct_asym if available
     let chain_mapping = get_entity_to_chain_mapping(parser);
-    
+
     let mut serial = 1;
     for (entity_id, residues) in sequences {
         let residues: Vec<String> = residues.into_iter().filter(|r| !r.is_empty()).collect();
-        
+
         if residues.is_empty() {
             continue;
         }
 
         // Try to find the corresponding chain ID
-        let chain_id = chain_mapping.get(&entity_id)
+        let chain_id = chain_mapping
+            .get(&entity_id)
             .cloned()
             .unwrap_or_else(|| entity_id.clone());
 
@@ -296,7 +318,7 @@ fn parse_sequences(parser: &MmcifParser, structure: &mut PdbStructure) -> Result
             num_residues: residues.len() as i32,
             residues,
         };
-        
+
         structure.seqres.push(seqres);
         serial += 1;
     }
@@ -307,30 +329,34 @@ fn parse_sequences(parser: &MmcifParser, structure: &mut PdbStructure) -> Result
 /// Get mapping from entity ID to chain ID using _struct_asym
 fn get_entity_to_chain_mapping(parser: &MmcifParser) -> HashMap<String, String> {
     let mut mapping = HashMap::new();
-    
+
     if let Some(struct_asym) = parser.get_category("struct_asym") {
         if let (Some(entity_col), Some(id_col)) = (
             struct_asym.get_column("entity_id"),
-            struct_asym.get_column("id")
+            struct_asym.get_column("id"),
         ) {
             for (entity_id, chain_id) in entity_col.iter().zip(id_col.iter()) {
                 mapping.insert(entity_id.to_string(), chain_id.to_string());
             }
         }
     }
-    
+
     mapping
 }
 
 /// Parse disulfide bonds from _struct_disulfid
-fn parse_disulfide_bonds(parser: &MmcifParser, structure: &mut PdbStructure) -> Result<(), PdbError> {
+fn parse_disulfide_bonds(
+    parser: &MmcifParser,
+    structure: &mut PdbStructure,
+) -> Result<(), PdbError> {
     let struct_disulfid = match parser.get_category("struct_disulfid") {
         Some(category) => category,
         None => return Ok(()), // No disulfide bonds, not an error
     };
 
     for (serial, row) in struct_disulfid.rows.iter().enumerate() {
-        if let Some(ssbond) = parse_disulfide_row(row, &struct_disulfid.headers, serial as i32 + 1)? {
+        if let Some(ssbond) = parse_disulfide_row(row, &struct_disulfid.headers, serial as i32 + 1)?
+        {
             structure.ssbonds.push(ssbond);
         }
     }
@@ -338,26 +364,42 @@ fn parse_disulfide_bonds(parser: &MmcifParser, structure: &mut PdbStructure) -> 
     Ok(())
 }
 
-fn parse_disulfide_row(row: &[String], headers: &[String], serial: i32) -> Result<Option<SSBond>, PdbError> {
+fn parse_disulfide_row(
+    row: &[String],
+    headers: &[String],
+    serial: i32,
+) -> Result<Option<SSBond>, PdbError> {
     let find_col = |name: &str| headers.iter().position(|h| h == name);
-    
+
     let ptnr1_auth_asym_id = find_col("ptnr1_auth_asym_id").and_then(|i| row.get(i));
     let ptnr1_auth_comp_id = find_col("ptnr1_auth_comp_id").and_then(|i| row.get(i));
     let ptnr1_auth_seq_id = find_col("ptnr1_auth_seq_id").and_then(|i| row.get(i));
-    
+
     let ptnr2_auth_asym_id = find_col("ptnr2_auth_asym_id").and_then(|i| row.get(i));
     let ptnr2_auth_comp_id = find_col("ptnr2_auth_comp_id").and_then(|i| row.get(i));
     let ptnr2_auth_seq_id = find_col("ptnr2_auth_seq_id").and_then(|i| row.get(i));
 
-    if let (Some(chain1), Some(res1_name), Some(res1_seq), 
-            Some(chain2), Some(res2_name), Some(res2_seq)) = 
-        (ptnr1_auth_asym_id, ptnr1_auth_comp_id, ptnr1_auth_seq_id,
-         ptnr2_auth_asym_id, ptnr2_auth_comp_id, ptnr2_auth_seq_id) {
-        
-        let residue1_seq: i32 = res1_seq.parse().map_err(|_| 
-            PdbError::ParseError(format!("Invalid residue sequence: {}", res1_seq)))?;
-        let residue2_seq: i32 = res2_seq.parse().map_err(|_| 
-            PdbError::ParseError(format!("Invalid residue sequence: {}", res2_seq)))?;
+    if let (
+        Some(chain1),
+        Some(res1_name),
+        Some(res1_seq),
+        Some(chain2),
+        Some(res2_name),
+        Some(res2_seq),
+    ) = (
+        ptnr1_auth_asym_id,
+        ptnr1_auth_comp_id,
+        ptnr1_auth_seq_id,
+        ptnr2_auth_asym_id,
+        ptnr2_auth_comp_id,
+        ptnr2_auth_seq_id,
+    ) {
+        let residue1_seq: i32 = res1_seq
+            .parse()
+            .map_err(|_| PdbError::ParseError(format!("Invalid residue sequence: {}", res1_seq)))?;
+        let residue2_seq: i32 = res2_seq
+            .parse()
+            .map_err(|_| PdbError::ParseError(format!("Invalid residue sequence: {}", res2_seq)))?;
 
         // Try to get distance if available
         let length = find_col("ptnr1_symmetry")
@@ -469,11 +511,11 @@ ATOM 2 C CA . MET A 1 21.500 10.500 5.500 1.00 24.50
 
         let mut parser = MmcifParser::new();
         parser.parse_reader(Cursor::new(mmcif_data)).unwrap();
-        
+
         let structure = mmcif_to_pdb_structure(&parser).unwrap();
-        
+
         assert_eq!(structure.atoms.len(), 2);
-        
+
         let atom1 = &structure.atoms[0];
         assert_eq!(atom1.serial, 1);
         assert_eq!(atom1.name, "N");
@@ -500,11 +542,11 @@ _entity_poly_seq.mon_id
 
         let mut parser = MmcifParser::new();
         parser.parse_reader(Cursor::new(mmcif_data)).unwrap();
-        
+
         let structure = mmcif_to_pdb_structure(&parser).unwrap();
-        
+
         assert_eq!(structure.seqres.len(), 1);
-        
+
         let seqres = &structure.seqres[0];
         assert_eq!(seqres.residues, vec!["MET", "ALA", "GLY"]);
         assert_eq!(seqres.num_residues, 3);

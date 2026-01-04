@@ -1,6 +1,6 @@
 [package]
 name = "pdbrust"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 rust-version = "1.85.0"
 authors = ["Hosein Fooladi <fooladi.hosein@gmail.com>"]

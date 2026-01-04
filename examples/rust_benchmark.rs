@@ -59,7 +59,11 @@ fn main() {
         // Parsing benchmarks
         println!("\n[Parsing Operations]");
 
-        let structure = benchmark("parse_pdb_file:", || parse_pdb_file(&path).unwrap(), iterations);
+        let structure = benchmark(
+            "parse_pdb_file:",
+            || parse_pdb_file(&path).unwrap(),
+            iterations,
+        );
         println!("  ({} atoms)", structure.atoms.len());
 
         let chains = benchmark("get_chain_ids:", || structure.get_chain_ids(), iterations);
@@ -70,7 +74,11 @@ fn main() {
 
         #[cfg(feature = "filter")]
         {
-            let ca_coords = benchmark("get_ca_coords:", || structure.get_ca_coords(None), iterations);
+            let ca_coords = benchmark(
+                "get_ca_coords:",
+                || structure.get_ca_coords(None),
+                iterations,
+            );
             println!("  ({} CA atoms)", ca_coords.len());
         }
 
@@ -87,7 +95,11 @@ fn main() {
             let num_atoms = benchmark("num_atoms:", || structure.atoms.len(), iterations);
             println!("  ({})", num_atoms);
 
-            let num_residues = benchmark("num_residues:", || structure.count_ca_residues(), iterations);
+            let num_residues = benchmark(
+                "num_residues:",
+                || structure.count_ca_residues(),
+                iterations,
+            );
             println!("  ({})", num_residues);
 
             let _aa_comp = benchmark("aa_composition:", || structure.aa_composition(), iterations);
@@ -96,22 +108,46 @@ fn main() {
             let gly_ratio = benchmark("glycine_ratio:", || structure.glycine_ratio(), iterations);
             println!("  ({:.4})", gly_ratio);
 
-            let hydro_ratio = benchmark("hydrophobic_ratio:", || structure.hydrophobic_ratio(), iterations);
+            let hydro_ratio = benchmark(
+                "hydrophobic_ratio:",
+                || structure.hydrophobic_ratio(),
+                iterations,
+            );
             println!("  ({:.4})", hydro_ratio);
 
-            let rg = benchmark("radius_of_gyration:", || structure.radius_of_gyration(), iterations);
+            let rg = benchmark(
+                "radius_of_gyration:",
+                || structure.radius_of_gyration(),
+                iterations,
+            );
             println!("  ({:.4} Å)", rg);
 
-            let max_dist = benchmark("max_ca_distance:", || structure.max_ca_distance(), iterations);
+            let max_dist = benchmark(
+                "max_ca_distance:",
+                || structure.max_ca_distance(),
+                iterations,
+            );
             println!("  ({:.4} Å)", max_dist);
 
-            let missing = benchmark("missing_res_ratio:", || structure.missing_residue_ratio(), iterations);
+            let missing = benchmark(
+                "missing_res_ratio:",
+                || structure.missing_residue_ratio(),
+                iterations,
+            );
             println!("  ({:.4})", missing);
 
-            let ss_ratio = benchmark("ss_ratio:", || structure.secondary_structure_ratio(), iterations);
+            let ss_ratio = benchmark(
+                "ss_ratio:",
+                || structure.secondary_structure_ratio(),
+                iterations,
+            );
             println!("  ({:.4})", ss_ratio);
 
-            let compact = benchmark("compactness_index:", || structure.compactness_index(), iterations);
+            let compact = benchmark(
+                "compactness_index:",
+                || structure.compactness_index(),
+                iterations,
+            );
             println!("  ({:.4})", compact);
 
             let density = benchmark("ca_density:", || structure.ca_density(), iterations);
