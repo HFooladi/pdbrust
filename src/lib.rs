@@ -195,7 +195,7 @@
 //!
 //! match parse_pdb_file("structure.pdb") {
 //!     Ok(structure) => println!("Loaded {} atoms", structure.atoms.len()),
-//!     Err(PdbError::Io(e)) => eprintln!("File error: {}", e),
+//!     Err(PdbError::IoError(e)) => eprintln!("File error: {}", e),
 //!     Err(e) => eprintln!("Parse error: {}", e),
 //! }
 //! ```
@@ -228,6 +228,16 @@ pub mod rcsb;
 // Re-exports for convenience
 pub use core::PdbStructure;
 pub use error::PdbError;
-pub use parser::{parse_pdb_file, parse_pdb_string, parse_mmcif_file, parse_mmcif_string, parse_structure_file};
+pub use parser::{
+    parse_mmcif_file, parse_mmcif_string, parse_pdb_file, parse_pdb_reader, parse_pdb_string,
+    parse_structure_file,
+};
 pub use records::{Atom, Conect, Model, Remark, Residue, SSBond, SeqRes};
 pub use writer::write_pdb_file;
+
+// Gzip parsing functions (requires "gzip" feature)
+#[cfg(feature = "gzip")]
+pub use parser::{
+    parse_gzip_mmcif_file, parse_gzip_mmcif_reader, parse_gzip_pdb_file, parse_gzip_pdb_reader,
+    parse_gzip_structure_file,
+};

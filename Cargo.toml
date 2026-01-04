@@ -30,6 +30,7 @@ itertools = "0.12"
 reqwest = { version = "0.12", features = ["json", "blocking"], optional = true }
 serde = { version = "1.0", features = ["derive"], optional = true }
 serde_json = { version = "1.0", optional = true }
+flate2 = { version = "1.0", optional = true }
 
 [dev-dependencies]
 criterion = "0.5"
@@ -46,10 +47,11 @@ descriptors = []
 quality = []
 summary = ["descriptors", "quality"]
 rcsb = ["reqwest", "serde", "serde_json"]
+gzip = ["flate2"]
 # Convenience feature for all analysis features
 analysis = ["filter", "descriptors", "quality", "summary"]
 # Full feature set
-full = ["parallel", "geometry", "analysis", "rcsb"]
+full = ["parallel", "geometry", "analysis", "rcsb", "gzip"]
 
 [package.metadata]
 maintenance = { status = "actively-developed" }

@@ -19,8 +19,17 @@ pub fn parse_pdb_string(content: &str) -> Result<PdbStructure, PdbError> {
     parse_pdb_reader(reader)
 }
 
-/// Internal function to parse PDB from any reader.
-fn parse_pdb_reader<R: BufRead>(reader: R) -> Result<PdbStructure, PdbError> {
+/// Parses PDB data from any reader implementing BufRead.
+///
+/// This function is useful for parsing PDB data from sources other than files,
+/// such as network streams, compressed files, or embedded data.
+///
+/// # Arguments
+/// * `reader` - Any type implementing BufRead containing PDB data
+///
+/// # Returns
+/// * `Result<PdbStructure, PdbError>` - The parsed structure or an error
+pub fn parse_pdb_reader<R: BufRead>(reader: R) -> Result<PdbStructure, PdbError> {
     let mut structure = PdbStructure::new();
 
     // Track current model if parsing multi-model file
