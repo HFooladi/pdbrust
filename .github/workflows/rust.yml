@@ -40,10 +40,10 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ matrix.rust }}-${{ hashFiles('**/Cargo.lock') }}
       
       - name: Run tests
-        run: cargo test --verbose --exclude pdbrust-python
+        run: cargo test --verbose --package pdbrust
 
       - name: Run tests with all features
-        run: cargo test --all-features --verbose --exclude pdbrust-python
+        run: cargo test --all-features --verbose --package pdbrust
 
   lint:
     name: Lint
@@ -66,7 +66,7 @@ jobs:
           key: ${{ runner.os }}-cargo-lint-${{ hashFiles('**/Cargo.lock') }}
       
       - name: Clippy check
-        run: cargo clippy --all-targets --all-features --exclude pdbrust-python
+        run: cargo clippy --all-targets --all-features --package pdbrust
       
       - name: Check formatting
         run: cargo fmt --all -- --check
@@ -86,7 +86,7 @@ jobs:
         uses: taiki-e/install-action@cargo-llvm-cov
       
       - name: Generate code coverage
-        run: cargo llvm-cov --all-features --exclude pdbrust-python --lcov --output-path lcov.info
+        run: cargo llvm-cov --all-features --package pdbrust --lcov --output-path lcov.info
       
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -107,7 +107,7 @@ jobs:
       - name: Check documentation
         env:
           RUSTDOCFLAGS: "-D warnings"
-        run: cargo doc --no-deps --all-features --exclude pdbrust-python
+        run: cargo doc --no-deps --all-features --package pdbrust
 
   security:
     name: Security
