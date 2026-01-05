@@ -1,3 +1,7 @@
+[workspace]
+members = [".", "pdbrust-python"]
+resolver = "2"
+
 [package]
 name = "pdbrust"
 version = "0.3.0"

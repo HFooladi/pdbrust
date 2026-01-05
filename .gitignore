@@ -6,3 +6,12 @@ Cargo.lock
 *.swp
 *.swo
 libraryPDB/
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+dist/
+build/
+.eggs/
