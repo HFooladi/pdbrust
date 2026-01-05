@@ -40,7 +40,7 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ matrix.rust }}-${{ hashFiles('**/Cargo.lock') }}
       
       - name: Run tests
-        run: cargo test --verbose --package pdbrust
+        run: cargo test --lib --tests --verbose --package pdbrust
 
       - name: Run tests with all features
         run: cargo test --all-features --verbose --package pdbrust
