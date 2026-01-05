@@ -132,7 +132,8 @@ impl PyAtom {
     /// Returns:
     ///     Angle in degrees
     fn angle_to(&self, atom2: &PyAtom, atom3: &PyAtom) -> f64 {
-        self.inner.calculate_angle_between(&atom2.inner, &atom3.inner)
+        self.inner
+            .calculate_angle_between(&atom2.inner, &atom3.inner)
     }
 
     /// Check if this is a backbone atom (N, CA, C, O)

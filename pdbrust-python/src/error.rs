@@ -18,9 +18,7 @@ pub fn convert_error(err: PdbError) -> PyErr {
 pub fn convert_download_error(err: pdbrust::rcsb::DownloadError) -> PyErr {
     use pdbrust::rcsb::DownloadError;
     match err {
-        DownloadError::NotFound(id) => {
-            PyValueError::new_err(format!("PDB ID not found: {}", id))
-        }
+        DownloadError::NotFound(id) => PyValueError::new_err(format!("PDB ID not found: {}", id)),
         DownloadError::RequestFailed(msg) => PyRuntimeError::new_err(msg),
         DownloadError::ParseError(e) => convert_error(e),
         DownloadError::IoError(e) => PyIOError::new_err(e.to_string()),
@@ -33,9 +31,7 @@ pub fn convert_search_error(err: pdbrust::rcsb::SearchError) -> PyErr {
     use pdbrust::rcsb::SearchError;
     match err {
         SearchError::RequestFailed(msg) => PyRuntimeError::new_err(msg),
-        SearchError::ParseError(msg) => {
-            PyValueError::new_err(format!("Parse error: {}", msg))
-        }
+        SearchError::ParseError(msg) => PyValueError::new_err(format!("Parse error: {}", msg)),
         SearchError::ApiError(msg) => PyRuntimeError::new_err(format!("API error: {}", msg)),
         SearchError::InvalidQuery(msg) => PyValueError::new_err(format!("Invalid query: {}", msg)),
     }

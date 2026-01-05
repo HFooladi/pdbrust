@@ -5,7 +5,10 @@ use pdbrust::PdbStructure;
 use pyo3::prelude::*;
 
 /// Get all atom coordinates as a numpy array (N x 3)
-pub fn get_coords_array<'py>(py: Python<'py>, structure: &PdbStructure) -> Bound<'py, PyArray2<f64>> {
+pub fn get_coords_array<'py>(
+    py: Python<'py>,
+    structure: &PdbStructure,
+) -> Bound<'py, PyArray2<f64>> {
     let atoms = &structure.atoms;
     let n = atoms.len();
 

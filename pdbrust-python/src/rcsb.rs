@@ -176,14 +176,20 @@ impl PySearchQuery {
     /// Filter by experimental method
     fn with_experimental_method(&self, method: &PyExperimentalMethod) -> PySearchQuery {
         PySearchQuery {
-            inner: self.inner.clone().with_experimental_method(method.inner.clone()),
+            inner: self
+                .inner
+                .clone()
+                .with_experimental_method(method.inner.clone()),
         }
     }
 
     /// Filter by polymer type
     fn with_polymer_type(&self, polymer_type: &PyPolymerType) -> PySearchQuery {
         PySearchQuery {
-            inner: self.inner.clone().with_polymer_type(polymer_type.inner.clone()),
+            inner: self
+                .inner
+                .clone()
+                .with_polymer_type(polymer_type.inner.clone()),
         }
     }
 

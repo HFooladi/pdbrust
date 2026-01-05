@@ -233,7 +233,10 @@ impl PyRemark {
         } else {
             self.inner.content.clone()
         };
-        format!("Remark(number={}, content='{}')", self.inner.number, content_preview)
+        format!(
+            "Remark(number={}, content='{}')",
+            self.inner.number, content_preview
+        )
     }
 }
 

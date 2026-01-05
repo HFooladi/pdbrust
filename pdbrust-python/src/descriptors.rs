@@ -95,15 +95,39 @@ impl PyStructureDescriptors {
     fn to_dict(&self) -> HashMap<String, PyObject> {
         Python::with_gil(|py| {
             let mut dict = HashMap::new();
-            dict.insert("num_residues".to_string(), self.inner.num_residues.into_py(py));
+            dict.insert(
+                "num_residues".to_string(),
+                self.inner.num_residues.into_py(py),
+            );
             dict.insert("num_atoms".to_string(), self.inner.num_atoms.into_py(py));
-            dict.insert("radius_of_gyration".to_string(), self.inner.radius_of_gyration.into_py(py));
-            dict.insert("max_ca_distance".to_string(), self.inner.max_ca_distance.into_py(py));
-            dict.insert("hydrophobic_ratio".to_string(), self.inner.hydrophobic_ratio.into_py(py));
-            dict.insert("glycine_ratio".to_string(), self.inner.glycine_ratio.into_py(py));
-            dict.insert("missing_residue_ratio".to_string(), self.inner.missing_residue_ratio.into_py(py));
-            dict.insert("secondary_structure_ratio".to_string(), self.inner.secondary_structure_ratio.into_py(py));
-            dict.insert("compactness_index".to_string(), self.inner.compactness_index.into_py(py));
+            dict.insert(
+                "radius_of_gyration".to_string(),
+                self.inner.radius_of_gyration.into_py(py),
+            );
+            dict.insert(
+                "max_ca_distance".to_string(),
+                self.inner.max_ca_distance.into_py(py),
+            );
+            dict.insert(
+                "hydrophobic_ratio".to_string(),
+                self.inner.hydrophobic_ratio.into_py(py),
+            );
+            dict.insert(
+                "glycine_ratio".to_string(),
+                self.inner.glycine_ratio.into_py(py),
+            );
+            dict.insert(
+                "missing_residue_ratio".to_string(),
+                self.inner.missing_residue_ratio.into_py(py),
+            );
+            dict.insert(
+                "secondary_structure_ratio".to_string(),
+                self.inner.secondary_structure_ratio.into_py(py),
+            );
+            dict.insert(
+                "compactness_index".to_string(),
+                self.inner.compactness_index.into_py(py),
+            );
             dict.insert("ca_density".to_string(), self.inner.ca_density.into_py(py));
             dict
         })
