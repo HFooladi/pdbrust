@@ -6,6 +6,9 @@ rust-version = "1.70.0"
 authors = ["Hosein Fooladi <fooladi.hosein@gmail.com>"]
 description = "Python bindings for PDBRust - High-performance PDB/mmCIF parsing and analysis"
 license = "MIT"
+homepage = "https://github.com/HFooladi/pdbrust"
+repository = "https://github.com/HFooladi/pdbrust"
+documentation = "https://github.com/HFooladi/pdbrust"
 publish = false  # Only publish to PyPI, not crates.io
 
 [lib]

@@ -40,3 +40,5 @@ dev = ["pytest>=7.0", "numpy>=1.20"]
 features = ["pyo3/extension-module", "full"]
 python-source = "python"
 module-name = "pdbrust._pdbrust"
+include = ["src/**/*", "Cargo.toml", "README.md", "python/**/*"]
+exclude = ["../README.md"]
