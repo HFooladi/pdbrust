@@ -31,16 +31,15 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist -i 3.9 3.10 3.11 3.12
+          args: --release --out dist -i 3.9 3.10 3.11 3.12 --manifest-path pdbrust-python/Cargo.toml
           sccache: 'true'
           manylinux: auto
-          working-directory: pdbrust-python
 
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
           name: wheels-linux-${{ matrix.target }}
-          path: pdbrust-python/dist
+          path: dist
 
   # Build wheels for macOS
   macos:
@@ -59,15 +58,14 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist -i 3.9 3.10 3.11 3.12
+          args: --release --out dist -i 3.9 3.10 3.11 3.12 --manifest-path pdbrust-python/Cargo.toml
           sccache: 'true'
-          working-directory: pdbrust-python
 
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
           name: wheels-macos-${{ matrix.target }}
-          path: pdbrust-python/dist
+          path: dist
 
   # Build wheels for Windows
   windows:
@@ -87,15 +85,14 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist -i 3.9 3.10 3.11 3.12
+          args: --release --out dist -i 3.9 3.10 3.11 3.12 --manifest-path pdbrust-python/Cargo.toml
           sccache: 'true'
-          working-directory: pdbrust-python
 
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
           name: wheels-windows-${{ matrix.target }}
-          path: pdbrust-python/dist
+          path: dist
 
   # Build source distribution
   sdist:
@@ -107,15 +104,14 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           command: sdist
-          args: --out dist
-          working-directory: pdbrust-python
+          args: --out dist --manifest-path pdbrust-python/Cargo.toml
         continue-on-error: true  # sdist may fail due to workspace README conflict
 
       - name: Upload sdist
         uses: actions/upload-artifact@v4
         with:
           name: wheels-sdist
-          path: pdbrust-python/dist
+          path: dist
         if: success()
 
   # Publish to PyPI on tag push
