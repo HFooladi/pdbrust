@@ -35,6 +35,25 @@ src/
 ├── summary/        # [feature: summary] Unified structure summaries
 └── rcsb/           # [feature: rcsb] RCSB PDB search and download
 
+pdbrust-python/     # Python bindings (PyO3)
+├── Cargo.toml          # Rust dependencies for Python bindings
+├── pyproject.toml      # Python package configuration (maturin)
+├── src/
+│   ├── lib.rs          # PyO3 module entry point
+│   ├── structure.rs    # PyPdbStructure wrapper
+│   ├── atom.rs         # PyAtom wrapper
+│   ├── records.rs      # PySSBond, PySeqRes, etc.
+│   ├── parsing.rs      # Parsing functions
+│   ├── error.rs        # Python exception mapping
+│   ├── descriptors.rs  # StructureDescriptors bindings
+│   ├── quality.rs      # QualityReport bindings
+│   ├── summary.rs      # StructureSummary bindings
+│   ├── rcsb.rs         # RCSB search/download bindings
+│   └── numpy_support.rs # Numpy array integration
+└── python/pdbrust/
+    ├── __init__.py     # Python exports
+    └── py.typed        # PEP 561 type hint marker
+
 docs/
 └── GETTING_STARTED.md  # Quick start guide for new users
 
@@ -46,6 +65,10 @@ examples/
 ├── batch_processing.rs
 ├── full_pdb_benchmark.rs  # Full PDB archive benchmark
 └── ...                 # Additional examples
+
+.github/workflows/
+├── rust.yml            # Rust CI/CD
+└── python-publish.yml  # Python wheel building and PyPI publishing
 
 benchmark_results/      # Results from full PDB archive benchmark
 ├── benchmark_report.txt
@@ -286,3 +309,79 @@ PDBRust has been validated against the entire Protein Data Bank (230,655 structu
 | Smallest Structure | 5zmz (31 atoms) |
 
 Results are stored in `benchmark_results/` directory.
+
+## Python Bindings
+
+The Python package is published to PyPI as `pdbrust`. It uses PyO3 for Rust-Python bindings and Maturin for building.
+
+### Python Development Commands
+
+```bash
+# Install maturin
+pip install maturin
+
+# Build and install in development mode
+cd pdbrust-python
+maturin develop --release
+
+# Build wheel for distribution
+maturin build --release
+
+# Publish to PyPI (requires MATURIN_PYPI_TOKEN or ~/.pypirc)
+maturin publish --no-sdist
+```
+
+### Python Package Features
+
+All features are enabled by default in the Python package:
+- Parsing: PDB, mmCIF, gzip-compressed files
+- Filtering: remove_ligands, keep_only_chain, keep_only_ca, etc.
+- Descriptors: radius_of_gyration, max_ca_distance, aa_composition
+- Quality: quality_report, has_altlocs, has_multiple_models
+- RCSB: download_structure, rcsb_search with SearchQuery
+- Numpy: get_coords_array, get_ca_coords_array (returns numpy.ndarray)
+
+### Python API Pattern
+
+```python
+import pdbrust
+import numpy as np
+
+# Parse
+structure = pdbrust.parse_pdb_file("protein.pdb")
+
+# Filter (method chaining)
+cleaned = structure.remove_ligands().keep_only_chain("A")
+
+# Descriptors
+rg = structure.radius_of_gyration()
+desc = structure.structure_descriptors()
+
+# Numpy arrays (efficient coordinate access)
+coords = structure.get_coords_array()        # Shape: (N, 3)
+ca_coords = structure.get_ca_coords_array()  # Shape: (CA, 3)
+
+# RCSB
+from pdbrust import download_structure, FileFormat, SearchQuery, rcsb_search
+structure = download_structure("1UBQ", FileFormat.pdb())
+results = rcsb_search(SearchQuery().with_text("kinase"), 10)
+```
+
+### CI/CD for Python
+
+The `.github/workflows/python-publish.yml` workflow:
+- Builds wheels for Linux (x86_64, aarch64), macOS (x86_64, aarch64), Windows (x64)
+- Supports Python 3.9, 3.10, 3.11, 3.12
+- Automatically publishes to PyPI on version tags (v*)
+- Uses PyPI trusted publishing (no token needed in CI)
+
+### Releasing a New Python Version
+
+1. Update version in `pdbrust-python/Cargo.toml` and `pdbrust-python/pyproject.toml`
+2. Commit the changes
+3. Create and push a tag:
+   ```bash
+   git tag v0.3.1
+   git push origin v0.3.1
+   ```
+4. GitHub Actions will build all wheels and publish to PyPI

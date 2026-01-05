@@ -1,13 +1,22 @@
 [![Crates.io](https://img.shields.io/crates/v/pdbrust.svg)](https://crates.io/crates/pdbrust)
+[![PyPI](https://img.shields.io/pypi/v/pdbrust.svg)](https://pypi.org/project/pdbrust/)
 [![Documentation](https://docs.rs/pdbrust/badge.svg)](https://docs.rs/pdbrust)
 [![Rust CI/CD](https://github.com/hfooladi/pdbrust/actions/workflows/rust.yml/badge.svg)](https://github.com/hfooladi/pdbrust/actions/workflows/rust.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 # PDBRust
 
-A fast Rust library for parsing and analyzing PDB and mmCIF protein structure files.
+A fast Rust library for parsing and analyzing PDB and mmCIF protein structure files. Also available as a Python package with **40-260x speedups** over pure Python implementations.
 
 ## Installation
+
+### Python
+
+```bash
+pip install pdbrust
+```
+
+### Rust
 
 ```toml
 [dependencies]
@@ -22,6 +31,33 @@ pdbrust = { version = "0.3", features = ["filter", "descriptors", "rcsb", "gzip"
 ```
 
 ## Quick Start
+
+### Python
+
+```python
+import pdbrust
+
+# Parse a PDB file
+structure = pdbrust.parse_pdb_file("protein.pdb")
+print(f"Atoms: {structure.num_atoms}")
+print(f"Chains: {structure.get_chain_ids()}")
+
+# Filter and analyze
+cleaned = structure.remove_ligands().keep_only_chain("A")
+rg = cleaned.radius_of_gyration()
+print(f"Radius of gyration: {rg:.2f} Å")
+
+# Get coordinates as numpy arrays (fast!)
+import numpy as np
+coords = structure.get_coords_array()      # Shape: (N, 3)
+ca_coords = structure.get_ca_coords_array() # Shape: (CA, 3)
+
+# Download from RCSB PDB
+from pdbrust import download_structure, FileFormat
+structure = download_structure("1UBQ", FileFormat.pdb())
+```
+
+### Rust
 
 ```rust
 use pdbrust::{parse_pdb_file, PdbStructure};
@@ -161,9 +197,20 @@ cargo run --release --example full_pdb_benchmark \
     -- /path/to/pdb/archive --output-dir ./results
 ```
 
+## Python Package
+
+Pre-built wheels available for Linux, macOS, and Windows (Python 3.9-3.12):
+
+```bash
+pip install pdbrust
+```
+
+See [pdbrust-python/README.md](pdbrust-python/README.md) for full Python API documentation.
+
 ## Documentation
 
-- [API Documentation](https://docs.rs/pdbrust)
+- [API Documentation (Rust)](https://docs.rs/pdbrust)
+- [PyPI Package](https://pypi.org/project/pdbrust/)
 - [Examples](examples/)
 
 ## Citation
