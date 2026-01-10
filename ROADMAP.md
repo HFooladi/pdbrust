@@ -11,13 +11,15 @@ Future development ideas for PDBRust. Priority will be determined based on user 
 - Multi-platform wheels: Linux, macOS, Windows (Python 3.9-3.12)
 - GitHub Actions CI/CD for automated releases
 
-## High Impact
-
-### Contact Maps / Distance Matrices
-- `structure.contact_map(threshold: f64)` → 2D boolean matrix
-- `structure.distance_matrix()` → 2D f64 matrix
+### Contact Maps / Distance Matrices ✅
+- `structure.distance_matrix_ca()` → 2D f64 matrix (CA atoms)
+- `structure.contact_map_ca(threshold)` → 2D boolean matrix (default: 8.0 Å)
+- `structure.distance_matrix()` → 2D f64 matrix (all atoms)
+- `structure.contact_map(threshold)` → 2D boolean matrix (default: 4.5 Å)
+- Python bindings return numpy arrays (N×N)
 - Essential for ML applications (GNNs, protein transformers)
-- Option to compute for CA-only or all atoms
+
+## High Impact
 
 ### RMSD / Structure Superposition
 - Kabsch algorithm for optimal alignment

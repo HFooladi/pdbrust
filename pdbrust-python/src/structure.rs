@@ -521,6 +521,69 @@ impl PyPdbStructure {
         crate::numpy_support::get_backbone_coords_array(py, &self.inner)
     }
 
+    // ==================== Distance Matrix / Contact Map Methods ====================
+
+    /// Get the CA distance matrix as a numpy array (N x N)
+    ///
+    /// Computes pairwise Euclidean distances between all CA atoms.
+    ///
+    /// Returns:
+    ///     numpy.ndarray of shape (N, N) with distances in Angstroms
+    #[cfg(all(feature = "numpy", feature = "descriptors"))]
+    fn distance_matrix_ca<'py>(&self, py: Python<'py>) -> Bound<'py, numpy::PyArray2<f64>> {
+        let matrix = self.inner.distance_matrix_ca();
+        crate::numpy_support::vec2d_to_array2(py, &matrix)
+    }
+
+    /// Get the CA contact map as a numpy boolean array (N x N)
+    ///
+    /// Args:
+    ///     threshold: Distance threshold in Angstroms (default: 8.0)
+    ///
+    /// Returns:
+    ///     numpy.ndarray of shape (N, N) with True where distance <= threshold
+    #[cfg(all(feature = "numpy", feature = "descriptors"))]
+    #[pyo3(signature = (threshold=8.0))]
+    fn contact_map_ca<'py>(
+        &self,
+        py: Python<'py>,
+        threshold: f64,
+    ) -> Bound<'py, numpy::PyArray2<bool>> {
+        let matrix = self.inner.contact_map_ca(threshold);
+        crate::numpy_support::vec2d_bool_to_array2(py, &matrix)
+    }
+
+    /// Get the all-atom distance matrix as a numpy array (N x N)
+    ///
+    /// Computes pairwise Euclidean distances between all atoms.
+    /// Warning: This can be memory-intensive for large structures.
+    ///
+    /// Returns:
+    ///     numpy.ndarray of shape (N, N) with distances in Angstroms
+    #[cfg(all(feature = "numpy", feature = "descriptors"))]
+    fn distance_matrix<'py>(&self, py: Python<'py>) -> Bound<'py, numpy::PyArray2<f64>> {
+        let matrix = self.inner.distance_matrix();
+        crate::numpy_support::vec2d_to_array2(py, &matrix)
+    }
+
+    /// Get the all-atom contact map as a numpy boolean array (N x N)
+    ///
+    /// Args:
+    ///     threshold: Distance threshold in Angstroms (default: 4.5)
+    ///
+    /// Returns:
+    ///     numpy.ndarray of shape (N, N) with True where distance <= threshold
+    #[cfg(all(feature = "numpy", feature = "descriptors"))]
+    #[pyo3(signature = (threshold=4.5))]
+    fn contact_map<'py>(
+        &self,
+        py: Python<'py>,
+        threshold: f64,
+    ) -> Bound<'py, numpy::PyArray2<bool>> {
+        let matrix = self.inner.contact_map(threshold);
+        crate::numpy_support::vec2d_bool_to_array2(py, &matrix)
+    }
+
     // ==================== Magic Methods ====================
 
     fn __repr__(&self) -> String {

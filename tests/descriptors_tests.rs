@@ -350,3 +350,233 @@ fn test_compare_structures() {
         assert!(ubq_desc.max_ca_distance > 0.0);
     }
 }
+
+// ============================================================================
+// Distance Matrix Tests
+// ============================================================================
+
+#[test]
+fn test_distance_matrix_ca_real_structure() {
+    let path = get_test_file("1UBQ.pdb");
+    let structure = parse_pdb_file(&path).expect("Failed to parse 1UBQ.pdb");
+
+    let matrix = structure.distance_matrix_ca();
+    let ca_count = structure.count_ca_residues();
+
+    // Matrix should be square with dimensions matching CA count
+    assert_eq!(matrix.len(), ca_count);
+    for row in &matrix {
+        assert_eq!(row.len(), ca_count);
+    }
+
+    // Diagonal should be zero
+    for (i, row) in matrix.iter().enumerate() {
+        assert_eq!(row[i], 0.0, "Diagonal should be zero at position {}", i);
+    }
+
+    // Matrix should be symmetric
+    for (i, row) in matrix.iter().enumerate() {
+        for (j, &val) in row.iter().enumerate() {
+            assert!(
+                (val - matrix[j][i]).abs() < 1e-10,
+                "Matrix should be symmetric at [{}, {}]",
+                i,
+                j
+            );
+        }
+    }
+
+    // All distances should be non-negative
+    for (i, row) in matrix.iter().enumerate() {
+        for (j, &val) in row.iter().enumerate() {
+            assert!(
+                val >= 0.0,
+                "Distances should be non-negative at [{}, {}]",
+                i,
+                j
+            );
+        }
+    }
+}
+
+#[test]
+fn test_distance_matrix_ca_max_equals_max_ca_distance() {
+    let path = get_test_file("1UBQ.pdb");
+    let structure = parse_pdb_file(&path).expect("Failed to parse 1UBQ.pdb");
+
+    let matrix = structure.distance_matrix_ca();
+    let max_dist = structure.max_ca_distance();
+
+    // Find max in matrix
+    let matrix_max: f64 = matrix
+        .iter()
+        .flat_map(|row| row.iter())
+        .cloned()
+        .fold(0.0, f64::max);
+
+    // Should match max_ca_distance()
+    assert!(
+        (matrix_max - max_dist).abs() < 1e-10,
+        "Max distance from matrix ({}) should match max_ca_distance ({})",
+        matrix_max,
+        max_dist
+    );
+}
+
+#[test]
+fn test_distance_matrix_all_atoms_real_structure() {
+    let path = get_test_file("1UBQ.pdb");
+    let structure = parse_pdb_file(&path).expect("Failed to parse 1UBQ.pdb");
+
+    let matrix = structure.distance_matrix();
+    let atom_count = structure.get_num_atoms();
+
+    // Matrix should be square with dimensions matching atom count
+    assert_eq!(matrix.len(), atom_count);
+    for row in &matrix {
+        assert_eq!(row.len(), atom_count);
+    }
+
+    // Diagonal should be zero
+    for (i, row) in matrix.iter().enumerate() {
+        assert_eq!(row[i], 0.0);
+    }
+}
+
+#[test]
+fn test_distance_matrix_empty_structure() {
+    let structure = PdbStructure::new();
+    let matrix = structure.distance_matrix_ca();
+    assert!(matrix.is_empty());
+
+    let all_atom_matrix = structure.distance_matrix();
+    assert!(all_atom_matrix.is_empty());
+}
+
+// ============================================================================
+// Contact Map Tests
+// ============================================================================
+
+#[test]
+fn test_contact_map_ca_real_structure() {
+    let path = get_test_file("1UBQ.pdb");
+    let structure = parse_pdb_file(&path).expect("Failed to parse 1UBQ.pdb");
+
+    let contacts = structure.contact_map_ca(8.0);
+    let ca_count = structure.count_ca_residues();
+
+    // Matrix should be square with dimensions matching CA count
+    assert_eq!(contacts.len(), ca_count);
+    for row in &contacts {
+        assert_eq!(row.len(), ca_count);
+    }
+
+    // Diagonal should be true (self-contact)
+    for (i, row) in contacts.iter().enumerate() {
+        assert!(row[i], "Diagonal should be true at position {}", i);
+    }
+
+    // Matrix should be symmetric
+    for (i, row) in contacts.iter().enumerate() {
+        for (j, &val) in row.iter().enumerate() {
+            assert_eq!(
+                val, contacts[j][i],
+                "Contact map should be symmetric at [{}, {}]",
+                i, j
+            );
+        }
+    }
+}
+
+#[test]
+fn test_contact_map_ca_consistent_with_distance_matrix() {
+    let path = get_test_file("1UBQ.pdb");
+    let structure = parse_pdb_file(&path).expect("Failed to parse 1UBQ.pdb");
+
+    let threshold = 8.0;
+    let distances = structure.distance_matrix_ca();
+    let contacts = structure.contact_map_ca(threshold);
+
+    // Contact map should match distance <= threshold
+    for (i, dist_row) in distances.iter().enumerate() {
+        for (j, &dist) in dist_row.iter().enumerate() {
+            let expected_contact = dist <= threshold;
+            assert_eq!(
+                contacts[i][j], expected_contact,
+                "Contact map should be consistent with distances at [{}, {}]: dist={}, threshold={}",
+                i, j, dist, threshold
+            );
+        }
+    }
+}
+
+#[test]
+fn test_contact_map_ca_threshold_variation() {
+    let path = get_test_file("1UBQ.pdb");
+    let structure = parse_pdb_file(&path).expect("Failed to parse 1UBQ.pdb");
+
+    let contacts_6 = structure.contact_map_ca(6.0);
+    let contacts_8 = structure.contact_map_ca(8.0);
+    let contacts_12 = structure.contact_map_ca(12.0);
+
+    // Count contacts for each threshold
+    let count_6: usize = contacts_6
+        .iter()
+        .flat_map(|r| r.iter())
+        .filter(|&&x| x)
+        .count();
+    let count_8: usize = contacts_8
+        .iter()
+        .flat_map(|r| r.iter())
+        .filter(|&&x| x)
+        .count();
+    let count_12: usize = contacts_12
+        .iter()
+        .flat_map(|r| r.iter())
+        .filter(|&&x| x)
+        .count();
+
+    // More contacts with larger threshold
+    assert!(
+        count_6 <= count_8,
+        "More contacts with larger threshold: {} <= {}",
+        count_6,
+        count_8
+    );
+    assert!(
+        count_8 <= count_12,
+        "More contacts with larger threshold: {} <= {}",
+        count_8,
+        count_12
+    );
+}
+
+#[test]
+fn test_contact_map_all_atoms_real_structure() {
+    let path = get_test_file("1UBQ.pdb");
+    let structure = parse_pdb_file(&path).expect("Failed to parse 1UBQ.pdb");
+
+    let contacts = structure.contact_map(4.5);
+    let atom_count = structure.get_num_atoms();
+
+    // Matrix should be square with dimensions matching atom count
+    assert_eq!(contacts.len(), atom_count);
+    for row in &contacts {
+        assert_eq!(row.len(), atom_count);
+    }
+
+    // Diagonal should be true
+    for (i, row) in contacts.iter().enumerate() {
+        assert!(row[i]);
+    }
+}
+
+#[test]
+fn test_contact_map_empty_structure() {
+    let structure = PdbStructure::new();
+    let contacts = structure.contact_map_ca(8.0);
+    assert!(contacts.is_empty());
+
+    let all_atom_contacts = structure.contact_map(4.5);
+    assert!(all_atom_contacts.is_empty());
+}

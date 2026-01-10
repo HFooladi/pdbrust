@@ -37,10 +37,12 @@
 //! ```
 
 mod composition;
+mod distance;
 mod geometry;
 
-// Re-export the StructureDescriptors struct
+// Re-export public constants and types
 pub use composition::HYDROPHOBIC_RESIDUES;
+pub use distance::{DEFAULT_ATOM_CONTACT_THRESHOLD, DEFAULT_CA_CONTACT_THRESHOLD};
 
 use std::collections::HashMap;
 
