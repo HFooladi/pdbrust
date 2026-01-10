@@ -92,7 +92,10 @@ pub fn vec2d_to_array2<'py>(py: Python<'py>, data: &[Vec<f64>]) -> Bound<'py, Py
 ///
 /// Used for contact maps.
 #[cfg(feature = "descriptors")]
-pub fn vec2d_bool_to_array2<'py>(py: Python<'py>, data: &[Vec<bool>]) -> Bound<'py, PyArray2<bool>> {
+pub fn vec2d_bool_to_array2<'py>(
+    py: Python<'py>,
+    data: &[Vec<bool>],
+) -> Bound<'py, PyArray2<bool>> {
     let n = data.len();
     if n == 0 {
         return PyArray2::zeros_bound(py, [0, 0], false);
