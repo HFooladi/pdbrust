@@ -130,6 +130,23 @@ cargo doc --no-deps --all-features
 cargo audit
 ```
 
+### GitHub Actions / CI
+**Important:** Use `gh_cli` instead of `gh` for GitHub CLI commands in this environment.
+
+```bash
+# List recent workflow runs
+gh_cli run list --limit 5
+
+# Watch a specific run (with exit status)
+gh_cli run watch <run_id> --exit-status
+
+# View logs for failed jobs
+gh_cli run view <run_id> --log-failed
+
+# Rerun failed jobs
+gh_cli run rerun <run_id> --failed
+```
+
 ### Benchmarking
 ```bash
 # Run Rust benchmark
