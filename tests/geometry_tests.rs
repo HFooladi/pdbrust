@@ -5,8 +5,8 @@
 
 #![cfg(feature = "geometry")]
 
-use pdbrust::geometry::{calculate_alignment, calculate_rmsd, rmsd_from_coords, AtomSelection};
-use pdbrust::{parse_pdb_file, PdbStructure};
+use pdbrust::geometry::{AtomSelection, calculate_alignment, calculate_rmsd, rmsd_from_coords};
+use pdbrust::{PdbStructure, parse_pdb_file};
 use std::path::PathBuf;
 
 fn get_test_file(name: &str) -> PathBuf {
@@ -29,7 +29,11 @@ fn test_rmsd_from_coords_identical() {
         (0.0, 0.0, 1.0),
     ];
     let rmsd = rmsd_from_coords(&coords, &coords).unwrap();
-    assert!(rmsd < 1e-10, "RMSD of identical coords should be 0, got {}", rmsd);
+    assert!(
+        rmsd < 1e-10,
+        "RMSD of identical coords should be 0, got {}",
+        rmsd
+    );
 }
 
 #[test]
@@ -167,11 +171,14 @@ fn test_alignment_with_rotation() {
 
     // Rotation matrix should have determinant 1 (proper rotation)
     let det = result.rotation[0][0]
-        * (result.rotation[1][1] * result.rotation[2][2] - result.rotation[1][2] * result.rotation[2][1])
+        * (result.rotation[1][1] * result.rotation[2][2]
+            - result.rotation[1][2] * result.rotation[2][1])
         - result.rotation[0][1]
-            * (result.rotation[1][0] * result.rotation[2][2] - result.rotation[1][2] * result.rotation[2][0])
+            * (result.rotation[1][0] * result.rotation[2][2]
+                - result.rotation[1][2] * result.rotation[2][0])
         + result.rotation[0][2]
-            * (result.rotation[1][0] * result.rotation[2][1] - result.rotation[1][1] * result.rotation[2][0]);
+            * (result.rotation[1][0] * result.rotation[2][1]
+                - result.rotation[1][1] * result.rotation[2][0]);
     assert!(
         (det - 1.0).abs() < 1e-6,
         "Rotation matrix determinant should be 1, got {}",
@@ -263,7 +270,10 @@ fn test_per_residue_rmsd_properties() {
         assert!(r.num_atoms > 0, "Should have at least one atom per residue");
 
         // Residue name should not be empty
-        assert!(!r.residue_name.is_empty(), "Residue name should not be empty");
+        assert!(
+            !r.residue_name.is_empty(),
+            "Residue name should not be empty"
+        );
     }
 }
 
@@ -329,14 +339,15 @@ fn test_error_on_mismatched_structures() {
 fn test_error_on_insufficient_atoms() {
     // Create structure with only 2 atoms
     let mut structure = PdbStructure::new();
-    structure.atoms.push(test_helpers::create_test_atom(0.0, 0.0, 0.0, 1));
-    structure.atoms.push(test_helpers::create_test_atom(1.0, 0.0, 0.0, 2));
+    structure
+        .atoms
+        .push(test_helpers::create_test_atom(0.0, 0.0, 0.0, 1));
+    structure
+        .atoms
+        .push(test_helpers::create_test_atom(1.0, 0.0, 0.0, 2));
 
     let result = structure.align_to(&structure);
-    assert!(
-        result.is_err(),
-        "Alignment with < 3 atoms should fail"
-    );
+    assert!(result.is_err(), "Alignment with < 3 atoms should fail");
 }
 
 // ============================================================================
@@ -365,12 +376,7 @@ fn test_alignment_result_properties() {
 
     // Translation should be ~0 for self-alignment
     for (i, t) in result.translation.iter().enumerate() {
-        assert!(
-            t.abs() < 1e-6,
-            "Translation[{}] should be ~0, got {}",
-            i,
-            t
-        );
+        assert!(t.abs() < 1e-6, "Translation[{}] should be ~0, got {}", i, t);
     }
 }
 

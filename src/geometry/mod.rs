@@ -73,12 +73,11 @@ mod transform;
 // Re-export public types
 pub use rmsd::{calculate_rmsd, calculate_rmsd_chain, rmsd_from_coords};
 pub use superposition::{
-    align_structures, calculate_alignment, per_residue_rmsd, AlignmentResult, PerResidueRmsd,
+    AlignmentResult, PerResidueRmsd, align_structures, calculate_alignment, per_residue_rmsd,
 };
 pub use transform::{
-    apply_transform, apply_transform_to_coords, center_coords, compute_centroid,
+    AtomSelection, apply_transform, apply_transform_to_coords, center_coords, compute_centroid,
     extract_coords_by_selection, extract_coords_with_residue_info, translate_structure,
-    AtomSelection,
 };
 
 use crate::core::PdbStructure;

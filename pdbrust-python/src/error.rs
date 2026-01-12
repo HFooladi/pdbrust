@@ -14,7 +14,9 @@ pub fn convert_error(err: PdbError) -> PyErr {
             "Atom count mismatch: expected {} atoms, found {}",
             expected, found
         )),
-        PdbError::NoAtomsSelected(msg) => PyValueError::new_err(format!("No atoms selected: {}", msg)),
+        PdbError::NoAtomsSelected(msg) => {
+            PyValueError::new_err(format!("No atoms selected: {}", msg))
+        }
         PdbError::InsufficientAtoms(msg) => {
             PyValueError::new_err(format!("Insufficient atoms: {}", msg))
         }

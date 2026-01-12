@@ -28,15 +28,15 @@
 
 use std::collections::HashMap;
 
-use nalgebra::{Matrix3, Vector3, SVD};
+use nalgebra::{Matrix3, SVD, Vector3};
 
 use crate::core::PdbStructure;
 use crate::error::PdbError;
 
 use super::rmsd::rmsd_from_coords;
 use super::transform::{
-    apply_transform, center_coords, extract_coords_by_selection,
-    extract_coords_with_residue_info, AtomSelection, CoordWithResidue, Point3D,
+    AtomSelection, CoordWithResidue, Point3D, apply_transform, center_coords,
+    extract_coords_by_selection, extract_coords_with_residue_info,
 };
 
 /// Result type for superposition: (aligned_coords, AlignmentResult).
@@ -343,13 +343,13 @@ pub fn per_residue_rmsd(
     // Group by residue
     let mut aligned_by_residue: ResidueCoordMap = HashMap::new();
     for item in aligned_with_res {
-        let key = (item.0 .0.clone(), item.0 .1);
+        let key = (item.0.0.clone(), item.0.1);
         aligned_by_residue.entry(key).or_default().push(item);
     }
 
     let mut target_by_residue: ResidueCoordMap = HashMap::new();
     for item in target_with_res {
-        let key = (item.0 .0.clone(), item.0 .1);
+        let key = (item.0.0.clone(), item.0.1);
         target_by_residue.entry(key).or_default().push(item);
     }
 
@@ -365,7 +365,7 @@ pub fn per_residue_rmsd(
                 if let Ok(rmsd) = rmsd_from_coords(&aligned_coords, &target_coords) {
                     results.push(PerResidueRmsd {
                         residue_id: residue_key.clone(),
-                        residue_name: aligned_atoms[0].0 .2.clone(),
+                        residue_name: aligned_atoms[0].0.2.clone(),
                         rmsd,
                         num_atoms: aligned_atoms.len(),
                     });
@@ -499,7 +499,10 @@ mod tests {
         ];
 
         // Translated by (10, 10, 10)
-        let coords2: Vec<_> = coords1.iter().map(|(x, y, z)| (x + 10.0, y + 10.0, z + 10.0)).collect();
+        let coords2: Vec<_> = coords1
+            .iter()
+            .map(|(x, y, z)| (x + 10.0, y + 10.0, z + 10.0))
+            .collect();
 
         let (aligned, result) = superpose_coords(&coords2, &coords1).unwrap();
 
@@ -532,7 +535,8 @@ mod tests {
     #[test]
     fn test_align_structures_identical() {
         let structure = create_linear_structure();
-        let (aligned, result) = align_structures(&structure, &structure, AtomSelection::CaOnly).unwrap();
+        let (aligned, result) =
+            align_structures(&structure, &structure, AtomSelection::CaOnly).unwrap();
 
         assert!(result.rmsd < 1e-10);
         assert_eq!(result.num_atoms, 4);

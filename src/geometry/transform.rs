@@ -67,10 +67,7 @@ pub fn extract_coords_by_selection(
     structure
         .atoms
         .iter()
-        .filter(|atom| {
-            selection.matches(&atom.name)
-                && chain_id.is_none_or(|c| atom.chain_id == c)
-        })
+        .filter(|atom| selection.matches(&atom.name) && chain_id.is_none_or(|c| atom.chain_id == c))
         .map(|atom| (atom.x, atom.y, atom.z))
         .collect()
 }
@@ -86,13 +83,14 @@ pub fn extract_coords_with_residue_info(
     structure
         .atoms
         .iter()
-        .filter(|atom| {
-            selection.matches(&atom.name)
-                && chain_id.is_none_or(|c| atom.chain_id == c)
-        })
+        .filter(|atom| selection.matches(&atom.name) && chain_id.is_none_or(|c| atom.chain_id == c))
         .map(|atom| {
             (
-                (atom.chain_id.clone(), atom.residue_seq, atom.residue_name.clone()),
+                (
+                    atom.chain_id.clone(),
+                    atom.residue_seq,
+                    atom.residue_name.clone(),
+                ),
                 (atom.x, atom.y, atom.z),
             )
         })
@@ -161,7 +159,11 @@ pub fn apply_transform_to_coords(
             let rx = rotation[0][0] * x + rotation[0][1] * y + rotation[0][2] * z;
             let ry = rotation[1][0] * x + rotation[1][1] * y + rotation[1][2] * z;
             let rz = rotation[2][0] * x + rotation[2][1] * y + rotation[2][2] * z;
-            (rx + translation[0], ry + translation[1], rz + translation[2])
+            (
+                rx + translation[0],
+                ry + translation[1],
+                rz + translation[2],
+            )
         })
         .collect()
 }

@@ -20,7 +20,7 @@
 use crate::core::PdbStructure;
 use crate::error::PdbError;
 
-use super::transform::{extract_coords_by_selection, AtomSelection};
+use super::transform::{AtomSelection, extract_coords_by_selection};
 
 /// Calculate RMSD directly from two coordinate sets.
 ///
