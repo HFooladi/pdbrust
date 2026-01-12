@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **mmCIF writing support**
+  - `write_mmcif_file()` for writing structures to mmCIF format files
+  - `write_mmcif_string()` for writing to strings
+  - `write_mmcif()` for writing to any `Write` implementor
+  - `write_gzip_mmcif_file()` for compressed output (`gzip` feature)
+  - Proper ATOM/HETATM record distinction based on residue type
+  - Support for SEQRES (sequence) and SSBOND (disulfide bonds) categories
+  - Full Python bindings: `write_mmcif_file()`, `write_mmcif_string()`, `write_gzip_mmcif_file()`
+
 ## [0.5.0] - 2025-01-12
 
 ### Added

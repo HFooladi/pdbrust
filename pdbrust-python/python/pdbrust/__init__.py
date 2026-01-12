@@ -38,7 +38,10 @@ from pdbrust._pdbrust import (
     parse_structure_file,
     parse_pdb_string,
     parse_mmcif_string,
+    # Writing functions
     write_pdb_file,
+    write_mmcif_file,
+    write_mmcif_string,
 )
 
 # Optional: gzip support
@@ -47,6 +50,7 @@ try:
         parse_gzip_pdb_file,
         parse_gzip_mmcif_file,
         parse_gzip_structure_file,
+        write_gzip_mmcif_file,
     )
 except ImportError:
     pass
@@ -111,11 +115,15 @@ __all__ = [
     "parse_structure_file",
     "parse_pdb_string",
     "parse_mmcif_string",
+    # Writing
     "write_pdb_file",
+    "write_mmcif_file",
+    "write_mmcif_string",
     # Gzip (optional)
     "parse_gzip_pdb_file",
     "parse_gzip_mmcif_file",
     "parse_gzip_structure_file",
+    "write_gzip_mmcif_file",
     # Descriptors (optional)
     "StructureDescriptors",
     # Quality (optional)

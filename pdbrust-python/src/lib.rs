@@ -49,13 +49,16 @@ fn _pdbrust(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(parsing::parse_pdb_string, m)?)?;
     m.add_function(wrap_pyfunction!(parsing::parse_mmcif_string, m)?)?;
     m.add_function(wrap_pyfunction!(parsing::write_pdb_file, m)?)?;
+    m.add_function(wrap_pyfunction!(parsing::write_mmcif_file, m)?)?;
+    m.add_function(wrap_pyfunction!(parsing::write_mmcif_string, m)?)?;
 
-    // Gzip parsing (feature-gated)
+    // Gzip parsing and writing (feature-gated)
     #[cfg(feature = "gzip")]
     {
         m.add_function(wrap_pyfunction!(parsing::parse_gzip_pdb_file, m)?)?;
         m.add_function(wrap_pyfunction!(parsing::parse_gzip_mmcif_file, m)?)?;
         m.add_function(wrap_pyfunction!(parsing::parse_gzip_structure_file, m)?)?;
+        m.add_function(wrap_pyfunction!(parsing::write_gzip_mmcif_file, m)?)?;
     }
 
     // Descriptors (feature-gated)

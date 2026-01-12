@@ -236,7 +236,7 @@ pub use parser::{
     parse_structure_file,
 };
 pub use records::{Atom, Conect, Model, Remark, Residue, SSBond, SeqRes};
-pub use writer::write_pdb_file;
+pub use writer::{write_mmcif, write_mmcif_file, write_mmcif_string, write_pdb, write_pdb_file};
 
 // Gzip parsing functions (requires "gzip" feature)
 #[cfg(feature = "gzip")]
@@ -244,3 +244,7 @@ pub use parser::{
     parse_gzip_mmcif_file, parse_gzip_mmcif_reader, parse_gzip_pdb_file, parse_gzip_pdb_reader,
     parse_gzip_structure_file,
 };
+
+// Gzip writing functions (requires "gzip" feature)
+#[cfg(feature = "gzip")]
+pub use writer::write_gzip_mmcif_file;

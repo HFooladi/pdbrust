@@ -28,12 +28,15 @@ Future development ideas for PDBRust. Priority will be determined based on user 
 - Python bindings with AtomSelection, AlignmentResult, PerResidueRmsd types
 - Under `geometry` feature flag (requires nalgebra)
 
-## Medium Impact
+### mmCIF Writing ✅
+- `write_mmcif_file()` function for file output
+- `write_mmcif_string()` for string output
+- `write_mmcif()` for generic writer output
+- `write_gzip_mmcif_file()` for compressed output (gzip feature)
+- Full Python bindings included
+- Supports ATOM/HETATM, SEQRES, SSBOND data
 
-### mmCIF Writing
-- Currently only PDB format output is supported
-- Add `write_mmcif_file()` function
-- Useful for modern pipelines that prefer mmCIF
+## Medium Impact
 
 ### DSSP-like Secondary Structure Assignment
 - Replace current heuristic with proper H-bond based assignment
