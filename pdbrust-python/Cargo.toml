@@ -16,9 +16,9 @@ name = "_pdbrust"
 crate-type = ["cdylib"]
 
 [dependencies]
-pyo3 = { version = "0.22", features = ["extension-module"] }
+pyo3 = { version = "0.27", features = ["extension-module"] }
 pdbrust = { path = "..", features = ["filter", "descriptors", "quality", "summary", "rcsb", "gzip", "geometry"] }
-numpy = { version = "0.22", optional = true }
+numpy = { version = "0.27", optional = true }
 
 [features]
 default = ["full"]
