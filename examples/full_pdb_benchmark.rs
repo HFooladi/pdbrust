@@ -57,6 +57,10 @@ impl From<&PdbError> for ErrorCategory {
             PdbError::IoError(_) => ErrorCategory::IoError,
             PdbError::InvalidRecord(_) => ErrorCategory::InvalidRecord,
             PdbError::ParseError(_) => ErrorCategory::ParseError,
+            // These errors are from geometry operations, not parsing
+            PdbError::AtomCountMismatch { .. }
+            | PdbError::NoAtomsSelected(_)
+            | PdbError::InsufficientAtoms(_) => ErrorCategory::InvalidRecord,
         }
     }
 }

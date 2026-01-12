@@ -584,6 +584,120 @@ impl PyPdbStructure {
         crate::numpy_support::vec2d_bool_to_array2(py, &matrix)
     }
 
+    // ==================== Geometry Methods (feature-gated) ====================
+
+    /// Calculate RMSD to another structure.
+    ///
+    /// This calculates RMSD without alignment. For aligned RMSD, use align_to()
+    /// which returns both the aligned structure and RMSD.
+    ///
+    /// Args:
+    ///     other: Target structure to compare against
+    ///     selection: Atom selection (default: CA atoms only).
+    ///                Use AtomSelection.ca_only(), backbone(), all_atoms(), or custom()
+    ///
+    /// Returns:
+    ///     RMSD in Angstroms
+    ///
+    /// Raises:
+    ///     ValueError: If structures have different numbers of selected atoms
+    ///
+    /// Example:
+    ///     >>> rmsd = structure1.rmsd_to(structure2)
+    ///     >>> rmsd = structure1.rmsd_to(structure2, AtomSelection.backbone())
+    #[cfg(feature = "geometry")]
+    #[pyo3(signature = (other, selection=None))]
+    fn rmsd_to(
+        &self,
+        other: &PyPdbStructure,
+        selection: Option<&crate::geometry::PyAtomSelection>,
+    ) -> PyResult<f64> {
+        let sel = selection
+            .map(|s| s.inner.clone())
+            .unwrap_or(pdbrust::geometry::AtomSelection::CaOnly);
+        self.inner
+            .rmsd_to_with_selection(&other.inner, sel)
+            .map_err(convert_error)
+    }
+
+    /// Align this structure onto a target structure.
+    ///
+    /// Uses the Kabsch algorithm to find optimal rotation and translation
+    /// that minimizes RMSD between the structures.
+    ///
+    /// Args:
+    ///     target: Reference structure to align onto
+    ///     selection: Atom selection for alignment (default: CA atoms only)
+    ///
+    /// Returns:
+    ///     Tuple of (aligned_structure, AlignmentResult)
+    ///
+    /// Raises:
+    ///     ValueError: If structures have different numbers of selected atoms,
+    ///                 or fewer than 3 atoms are selected
+    ///
+    /// Example:
+    ///     >>> aligned, result = mobile.align_to(target)
+    ///     >>> print(f"RMSD: {result.rmsd:.4f} Angstroms")
+    ///     >>> aligned.to_file("aligned.pdb")
+    #[cfg(feature = "geometry")]
+    #[pyo3(signature = (target, selection=None))]
+    fn align_to(
+        &self,
+        target: &PyPdbStructure,
+        selection: Option<&crate::geometry::PyAtomSelection>,
+    ) -> PyResult<(PyPdbStructure, crate::geometry::PyAlignmentResult)> {
+        let sel = selection
+            .map(|s| s.inner.clone())
+            .unwrap_or(pdbrust::geometry::AtomSelection::CaOnly);
+        let (aligned, result) = self
+            .inner
+            .align_to_with_selection(&target.inner, sel)
+            .map_err(convert_error)?;
+        Ok((
+            PyPdbStructure { inner: aligned },
+            crate::geometry::PyAlignmentResult::from(result),
+        ))
+    }
+
+    /// Get per-residue RMSD after alignment to target.
+    ///
+    /// This method first aligns the structures optimally, then computes
+    /// RMSD for each residue individually. Useful for identifying flexible
+    /// regions in protein structures.
+    ///
+    /// Args:
+    ///     target: Reference structure
+    ///     selection: Atom selection (default: CA atoms only)
+    ///
+    /// Returns:
+    ///     List of PerResidueRmsd objects
+    ///
+    /// Example:
+    ///     >>> per_res = mobile.per_residue_rmsd_to(target)
+    ///     >>> for r in per_res:
+    ///     ...     if r.rmsd > 2.0:
+    ///     ...         print(f"{r.chain_id}{r.residue_seq}: {r.rmsd:.2f} A")
+    #[cfg(feature = "geometry")]
+    #[pyo3(signature = (target, selection=None))]
+    fn per_residue_rmsd_to(
+        &self,
+        target: &PyPdbStructure,
+        selection: Option<&crate::geometry::PyAtomSelection>,
+    ) -> PyResult<Vec<crate::geometry::PyPerResidueRmsd>> {
+        let sel = selection
+            .map(|s| s.inner.clone())
+            .unwrap_or(pdbrust::geometry::AtomSelection::CaOnly);
+        self.inner
+            .per_residue_rmsd_to_with_selection(&target.inner, sel)
+            .map(|v| {
+                v.into_iter()
+                    .map(crate::geometry::PyPerResidueRmsd::from)
+                    .collect()
+            })
+            .map_err(convert_error)
+    }
+
     // ==================== Magic Methods ====================
 
     fn __repr__(&self) -> String {

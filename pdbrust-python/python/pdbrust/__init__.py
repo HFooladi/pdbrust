@@ -85,6 +85,16 @@ try:
 except ImportError:
     pass
 
+# Optional: geometry (RMSD, alignment)
+try:
+    from pdbrust._pdbrust import (
+        AtomSelection,
+        AlignmentResult,
+        PerResidueRmsd,
+    )
+except ImportError:
+    pass
+
 __version__ = "0.3.0"
 __all__ = [
     # Core types
@@ -122,4 +132,8 @@ __all__ = [
     "download_structure",
     "download_pdb_string",
     "download_to_file",
+    # Geometry (optional)
+    "AtomSelection",
+    "AlignmentResult",
+    "PerResidueRmsd",
 ]

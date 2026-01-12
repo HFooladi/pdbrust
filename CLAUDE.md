@@ -33,7 +33,8 @@ src/
 ├── descriptors/    # [feature: descriptors] Structural descriptors
 ├── quality/        # [feature: quality] Quality assessment
 ├── summary/        # [feature: summary] Unified structure summaries
-└── rcsb/           # [feature: rcsb] RCSB PDB search and download
+├── rcsb/           # [feature: rcsb] RCSB PDB search and download
+└── geometry/       # [feature: geometry] RMSD and structure superposition
 
 pdbrust-python/     # Python bindings (PyO3)
 ├── Cargo.toml          # Rust dependencies for Python bindings
@@ -49,6 +50,7 @@ pdbrust-python/     # Python bindings (PyO3)
 │   ├── quality.rs      # QualityReport bindings
 │   ├── summary.rs      # StructureSummary bindings
 │   ├── rcsb.rs         # RCSB search/download bindings
+│   ├── geometry.rs     # RMSD/alignment bindings
 │   └── numpy_support.rs # Numpy array integration
 └── python/pdbrust/
     ├── __init__.py     # Python exports
@@ -187,6 +189,9 @@ Test files:
 - `StructureSummary` (summary): Combined quality + descriptors
 - `SearchQuery` (rcsb): RCSB search query builder
 - `FileFormat` (rcsb): PDB/CIF format selection
+- `AlignmentResult` (geometry): RMSD and transformation from alignment
+- `PerResidueRmsd` (geometry): Per-residue RMSD for flexibility analysis
+- `AtomSelection` (geometry): Atom selection for RMSD/alignment
 
 ## Common Patterns
 
@@ -247,6 +252,29 @@ let results = rcsb_search(&query, 10)?;
 
 // Download
 let structure = download_structure("1UBQ", FileFormat::Pdb)?;
+```
+
+### Geometry (feature: geometry)
+```rust
+use pdbrust::geometry::AtomSelection;
+
+// RMSD calculation (without alignment)
+let rmsd = structure1.rmsd_to(&structure2)?;  // CA atoms by default
+
+// RMSD with different atom selection
+let rmsd = structure1.rmsd_to_with_selection(&structure2, AtomSelection::Backbone)?;
+
+// Structure alignment (Kabsch algorithm)
+let (aligned, result) = mobile.align_to(&target)?;
+println!("RMSD: {:.4} Angstroms ({} atoms)", result.rmsd, result.num_atoms);
+
+// Per-residue RMSD for flexibility analysis
+let per_res = mobile.per_residue_rmsd_to(&target)?;
+for r in &per_res {
+    if r.rmsd > 2.0 {
+        println!("Flexible: {}{} {}", r.residue_id.0, r.residue_id.1, r.rmsd);
+    }
+}
 ```
 
 ## Examples

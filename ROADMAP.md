@@ -19,13 +19,14 @@ Future development ideas for PDBRust. Priority will be determined based on user 
 - Python bindings return numpy arrays (N×N)
 - Essential for ML applications (GNNs, protein transformers)
 
-## High Impact
-
-### RMSD / Structure Superposition
-- Kabsch algorithm for optimal alignment
-- `align_structures(mobile, target)` → aligned structure + RMSD
-- `calculate_rmsd(structure1, structure2)` → f64
-- Per-residue RMSD for flexibility analysis
+### RMSD / Structure Superposition ✅
+- Kabsch algorithm for optimal alignment using nalgebra SVD
+- `structure.rmsd_to(other)` → f64 (CA atoms)
+- `structure.align_to(target)` → (aligned_structure, AlignmentResult)
+- `structure.per_residue_rmsd_to(target)` → Vec<PerResidueRmsd>
+- Flexible atom selection: CA only (default), backbone, all atoms, custom
+- Python bindings with AtomSelection, AlignmentResult, PerResidueRmsd types
+- Under `geometry` feature flag (requires nalgebra)
 
 ## Medium Impact
 

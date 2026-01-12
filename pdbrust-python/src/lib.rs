@@ -22,6 +22,9 @@ mod summary;
 #[cfg(feature = "rcsb")]
 mod rcsb;
 
+#[cfg(feature = "geometry")]
+mod geometry;
+
 #[cfg(feature = "numpy")]
 pub mod numpy_support;
 
@@ -85,6 +88,14 @@ fn _pdbrust(m: &Bound<'_, PyModule>) -> PyResult<()> {
         m.add_function(wrap_pyfunction!(rcsb::download_structure, m)?)?;
         m.add_function(wrap_pyfunction!(rcsb::download_pdb_string, m)?)?;
         m.add_function(wrap_pyfunction!(rcsb::download_to_file, m)?)?;
+    }
+
+    // Geometry (feature-gated)
+    #[cfg(feature = "geometry")]
+    {
+        m.add_class::<geometry::PyAtomSelection>()?;
+        m.add_class::<geometry::PyAlignmentResult>()?;
+        m.add_class::<geometry::PyPerResidueRmsd>()?;
     }
 
     Ok(())

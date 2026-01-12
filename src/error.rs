@@ -13,6 +13,17 @@ pub enum PdbError {
     InvalidRecord(String),
     /// An error occurred while parsing a number.
     ParseError(String),
+    /// Structures have mismatched atom counts for alignment/RMSD.
+    AtomCountMismatch {
+        /// Expected number of atoms (from target structure)
+        expected: usize,
+        /// Found number of atoms (from mobile structure)
+        found: usize,
+    },
+    /// No atoms found for the specified selection criteria.
+    NoAtomsSelected(String),
+    /// Insufficient atoms for the operation (need at least 3 for alignment).
+    InsufficientAtoms(String),
 }
 
 impl fmt::Display for PdbError {
@@ -21,6 +32,15 @@ impl fmt::Display for PdbError {
             PdbError::IoError(e) => write!(f, "IO error: {}", e),
             PdbError::InvalidRecord(e) => write!(f, "Invalid record: {}", e),
             PdbError::ParseError(e) => write!(f, "Parse error: {}", e),
+            PdbError::AtomCountMismatch { expected, found } => {
+                write!(
+                    f,
+                    "Atom count mismatch: expected {} atoms, found {}",
+                    expected, found
+                )
+            }
+            PdbError::NoAtomsSelected(msg) => write!(f, "No atoms selected: {}", msg),
+            PdbError::InsufficientAtoms(msg) => write!(f, "Insufficient atoms: {}", msg),
         }
     }
 }

@@ -17,7 +17,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 pyo3 = { version = "0.22", features = ["extension-module"] }
-pdbrust = { path = "..", features = ["filter", "descriptors", "quality", "summary", "rcsb", "gzip"] }
+pdbrust = { path = "..", features = ["filter", "descriptors", "quality", "summary", "rcsb", "gzip", "geometry"] }
 numpy = { version = "0.22", optional = true }
 
 [features]
@@ -28,5 +28,6 @@ quality = []
 summary = ["descriptors", "quality"]
 rcsb = []
 gzip = []
+geometry = []
 numpy = ["dep:numpy"]
-full = ["filter", "descriptors", "quality", "summary", "rcsb", "gzip", "numpy"]
+full = ["filter", "descriptors", "quality", "summary", "rcsb", "gzip", "geometry", "numpy"]
