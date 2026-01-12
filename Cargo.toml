@@ -27,11 +27,11 @@ categories = [
 readme = "README.md"
 
 [dependencies]
-thiserror = "1.0"
+thiserror = "2.0"
 rayon = { version = "1.8", optional = true }
-nalgebra = { version = "0.32", optional = true }
-itertools = "0.12"
-reqwest = { version = "0.12", features = ["json", "blocking", "rustls-tls"], default-features = false, optional = true }
+nalgebra = { version = "0.34", optional = true }
+itertools = "0.14"
+reqwest = { version = "0.13", features = ["json", "blocking", "rustls-tls"], default-features = false, optional = true }
 serde = { version = "1.0", features = ["derive"], optional = true }
 serde_json = { version = "1.0", optional = true }
 flate2 = { version = "1.0", optional = true }
