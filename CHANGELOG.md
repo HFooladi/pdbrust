@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2025-01-12
+
+### Added
+- **Distance matrix and contact map calculations** (`geometry` feature)
+  - `distance_matrix()` for all-atom pairwise distance calculations
+  - `distance_matrix_ca()` for CA-only distance matrix
+  - `contact_map(threshold)` for all-atom contact detection
+  - `contact_map_ca(threshold)` for CA contact maps
+  - Returns efficient numpy arrays in Python bindings
+- **RMSD calculation and structure superposition** (`geometry` feature)
+  - `rmsd_to()` for RMSD calculation between structures
+  - `align_to()` for structure superposition using Kabsch algorithm
+  - `per_residue_rmsd_to()` for per-residue RMSD analysis
+  - `AlignmentResult` with RMSD, rotation matrix, and translation vector
+  - `PerResidueRmsd` for flexibility analysis
+- **Python bindings for geometry features**
+  - Full numpy integration for distance matrices and contact maps
+  - Structure alignment returns (aligned_structure, AlignmentResult) tuple
+
+### Changed
+- **Platform-specific Python builds**
+  - Linux wheels built with `core` features (without RCSB) to avoid OpenSSL cross-compilation issues
+  - macOS and Windows wheels built with `full` features (including RCSB)
+  - All other features (parsing, filtering, descriptors, geometry, numpy) work on all platforms
+- Updated dependencies
+
+### Fixed
+- Linux wheel builds now work reliably without OpenSSL dependency issues
+
+### Notes
+- v0.4.0 and v0.4.1 were skipped (accidentally published during CI debugging)
+
 ## [0.3.0] - 2025-01-04
 
 ### Added
@@ -100,14 +132,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - None
 
-### Deprecated
-- None
-
-### Removed
-- None
-
 ### Fixed
-- None
-
-### Security
 - None

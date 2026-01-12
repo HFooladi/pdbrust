@@ -420,13 +420,42 @@ The `.github/workflows/python-publish.yml` workflow:
 - Automatically publishes to PyPI on version tags (v*)
 - Uses PyPI trusted publishing (no token needed in CI)
 
-### Releasing a New Python Version
+### Releasing a New Version
 
-1. Update version in `pdbrust-python/Cargo.toml` and `pdbrust-python/pyproject.toml`
-2. Commit the changes
-3. Create and push a tag:
+**IMPORTANT:** Always update CHANGELOG.md before releasing!
+
+1. **Update CHANGELOG.md** with new version entry:
+   - Move items from `[Unreleased]` to new version section
+   - Follow [Keep a Changelog](https://keepachangelog.com/) format
+   - Include: Added, Changed, Fixed, etc. sections as needed
+
+2. **Update version numbers** in all files:
+   - `Cargo.toml` (main library)
+   - `pdbrust-python/Cargo.toml`
+   - `pdbrust-python/pyproject.toml`
+   - `pdbrust-python/python/pdbrust/__init__.py` (`__version__`)
+   - `README.md` (version in dependency examples)
+
+3. **Commit all changes**:
    ```bash
-   git tag v0.3.1
-   git push origin v0.3.1
+   git add -A
+   git commit -m "chore: release vX.Y.Z"
    ```
-4. GitHub Actions will build all wheels and publish to PyPI
+
+4. **Wait for CI to pass** on the commit
+
+5. **Create and push tag**:
+   ```bash
+   git tag vX.Y.Z
+   git push origin main vX.Y.Z
+   ```
+
+6. **Publish to crates.io** (after GitHub Actions wheel builds pass):
+   ```bash
+   cargo publish
+   ```
+
+7. **Verify releases**:
+   - Check https://crates.io/crates/pdbrust
+   - Check https://pypi.org/project/pdbrust/
+   - GitHub Actions will auto-publish to PyPI on tag push
