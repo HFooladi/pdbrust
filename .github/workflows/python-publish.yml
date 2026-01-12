@@ -34,6 +34,13 @@ jobs:
           args: --release --out dist -i 3.9 3.10 3.11 3.12 --manifest-path pdbrust-python/Cargo.toml
           sccache: 'true'
           manylinux: auto
+          before-script-linux: |
+            # Install OpenSSL development packages for reqwest
+            if command -v yum &> /dev/null; then
+              yum install -y openssl-devel perl-IPC-Cmd
+            elif command -v apk &> /dev/null; then
+              apk add --no-cache openssl-dev
+            fi
 
       - name: Upload wheels
         uses: actions/upload-artifact@v4
