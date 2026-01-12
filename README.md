@@ -27,7 +27,7 @@ With optional features:
 
 ```toml
 [dependencies]
-pdbrust = { version = "0.3", features = ["filter", "descriptors", "rcsb", "gzip"] }
+pdbrust = { version = "0.5", features = ["filter", "descriptors", "rcsb", "gzip"] }
 ```
 
 ## Quick Start
