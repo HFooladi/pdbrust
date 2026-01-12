@@ -5,9 +5,9 @@ use std::io::{self, BufWriter, Write};
 use std::path::Path;
 
 #[cfg(feature = "gzip")]
-use flate2::write::GzEncoder;
-#[cfg(feature = "gzip")]
 use flate2::Compression;
+#[cfg(feature = "gzip")]
+use flate2::write::GzEncoder;
 
 /// Standard amino acid residue names (3-letter codes) for ATOM/HETATM distinction.
 const STANDARD_AMINO_ACIDS: &[&str] = &[
@@ -395,23 +395,28 @@ fn write_entity_poly_seq<W: Write>(writer: &mut W, structure: &PdbStructure) -> 
     writeln!(writer, "_entity_poly_seq.mon_id")?;
 
     // Group SEQRES by chain and assign entity IDs
-    let mut chain_to_entity: std::collections::HashMap<&str, i32> = std::collections::HashMap::new();
+    let mut chain_to_entity: std::collections::HashMap<&str, i32> =
+        std::collections::HashMap::new();
     let mut next_entity_id = 1;
 
     for seqres in &structure.seqres {
-        let entity_id = *chain_to_entity
-            .entry(&seqres.chain_id)
-            .or_insert_with(|| {
-                let id = next_entity_id;
-                next_entity_id += 1;
-                id
-            });
+        let entity_id = *chain_to_entity.entry(&seqres.chain_id).or_insert_with(|| {
+            let id = next_entity_id;
+            next_entity_id += 1;
+            id
+        });
 
         // Write residues from this SEQRES record
         // SEQRES records are numbered starting at 1 for each chain
         let base_num = (seqres.serial - 1) * 13; // Each SEQRES line has up to 13 residues
         for (i, residue) in seqres.residues.iter().enumerate() {
-            writeln!(writer, "{} {} {}", entity_id, base_num + i as i32 + 1, residue)?;
+            writeln!(
+                writer,
+                "{} {} {}",
+                entity_id,
+                base_num + i as i32 + 1,
+                residue
+            )?;
         }
     }
 

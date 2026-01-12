@@ -1,8 +1,8 @@
 //! Comprehensive tests for mmCIF parsing and writing functionality
 
 use pdbrust::{
-    parse_mmcif_file, parse_mmcif_string, parse_pdb_file, parse_structure_file, write_mmcif_file,
-    write_mmcif_string, Atom, PdbStructure,
+    Atom, PdbStructure, parse_mmcif_file, parse_mmcif_string, parse_pdb_file, parse_structure_file,
+    write_mmcif_file, write_mmcif_string,
 };
 use std::io::Write;
 use tempfile::NamedTempFile;
