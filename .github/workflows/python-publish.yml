@@ -31,7 +31,8 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist -i 3.9 3.10 3.11 3.12 --manifest-path pdbrust-python/Cargo.toml
+          # Use 'core' features for Linux (no RCSB to avoid OpenSSL issues)
+          args: --release --out dist -i 3.9 3.10 3.11 3.12 --manifest-path pdbrust-python/Cargo.toml --no-default-features --features core
           sccache: 'true'
           manylinux: auto
 
@@ -41,7 +42,7 @@ jobs:
           name: wheels-linux-${{ matrix.target }}
           path: dist
 
-  # Build wheels for macOS
+  # Build wheels for macOS (full features including RCSB)
   macos:
     runs-on: macos-latest
     strategy:
@@ -58,7 +59,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist -i 3.9 3.10 3.11 3.12 --manifest-path pdbrust-python/Cargo.toml
+          args: --release --out dist -i 3.9 3.10 3.11 3.12 --manifest-path pdbrust-python/Cargo.toml --features full
           sccache: 'true'
 
       - name: Upload wheels
@@ -67,7 +68,7 @@ jobs:
           name: wheels-macos-${{ matrix.target }}
           path: dist
 
-  # Build wheels for Windows
+  # Build wheels for Windows (full features including RCSB)
   windows:
     runs-on: windows-latest
     strategy:
@@ -85,7 +86,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist -i 3.9 3.10 3.11 3.12 --manifest-path pdbrust-python/Cargo.toml
+          args: --release --out dist -i 3.9 3.10 3.11 3.12 --manifest-path pdbrust-python/Cargo.toml --features full
           sccache: 'true'
 
       - name: Upload wheels

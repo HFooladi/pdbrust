@@ -1,6 +1,6 @@
 [package]
 name = "pdbrust-python"
-version = "0.3.0"
+version = "0.5.0"
 edition = "2021"
 rust-version = "1.70.0"
 authors = ["Hosein Fooladi <fooladi.hosein@gmail.com>"]
@@ -17,7 +17,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 pyo3 = { version = "0.22", features = ["extension-module"] }
-pdbrust = { path = "..", features = ["filter", "descriptors", "quality", "summary", "rcsb", "gzip", "geometry"] }
+pdbrust = { path = "..", features = ["filter", "descriptors", "quality", "summary", "gzip", "geometry"] }
 numpy = { version = "0.22", optional = true }
 
 [features]
@@ -26,8 +26,11 @@ filter = []
 descriptors = []
 quality = []
 summary = ["descriptors", "quality"]
-rcsb = []
+rcsb = ["pdbrust/rcsb"]
 gzip = []
 geometry = []
 numpy = ["dep:numpy"]
-full = ["filter", "descriptors", "quality", "summary", "rcsb", "gzip", "geometry", "numpy"]
+# Core features (work on all platforms including Linux)
+core = ["filter", "descriptors", "quality", "summary", "gzip", "geometry", "numpy"]
+# Full features (includes RCSB, works on macOS/Windows)
+full = ["core", "rcsb"]

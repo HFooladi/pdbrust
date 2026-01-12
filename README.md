@@ -20,7 +20,7 @@ pip install pdbrust
 
 ```toml
 [dependencies]
-pdbrust = "0.3"
+pdbrust = "0.5"
 ```
 
 With optional features:
@@ -205,6 +205,19 @@ Pre-built wheels available for Linux, macOS, and Windows (Python 3.9-3.12):
 pip install pdbrust
 ```
 
+### Platform Notes
+
+The Python package includes full functionality on **macOS** and **Windows**.
+On **Linux**, the RCSB download/search features are not available in the pre-built wheels
+due to cross-compilation constraints. All other features (parsing, filtering, analysis,
+geometry, numpy arrays, etc.) work on all platforms.
+
+| Platform | Parsing | Filtering | Descriptors | Geometry | RCSB |
+|----------|---------|-----------|-------------|----------|------|
+| macOS | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Windows | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Linux | ✓ | ✓ | ✓ | ✓ | - |
+
 See [pdbrust-python/README.md](pdbrust-python/README.md) for full Python API documentation.
 
 ## Documentation
@@ -223,7 +236,7 @@ If you use PDBRust in your research, please cite:
   title = {PDBRust: A High-Performance Rust Library for PDB/mmCIF Parsing and Analysis},
   year = {2025},
   url = {https://github.com/HFooladi/pdbrust},
-  version = {0.3.0}
+  version = {0.5.0}
 }
 ```
 
