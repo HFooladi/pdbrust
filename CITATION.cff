@@ -1,0 +1,34 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: "PDBRust: A High-Performance Rust Library for PDB/mmCIF Parsing and Analysis"
+message: "If you use this software, please cite it as below."
+type: software
+authors:
+  - given-names: Hosein
+    family-names: Fooladi
+    email: fooladi.hosein@gmail.com
+repository-code: "https://github.com/HFooladi/pdbrust"
+url: "https://docs.rs/pdbrust"
+abstract: >-
+  PDBRust is a fast Rust library for parsing and analyzing
+  Protein Data Bank (PDB) and mmCIF protein structure files.
+  It provides comprehensive support for molecular structure
+  data with robust error handling, structural analysis,
+  quality assessment, and RCSB PDB integration. Also
+  available as a Python package with 40-260x speedups over
+  pure Python implementations.
+keywords:
+  - bioinformatics
+  - protein
+  - pdb
+  - mmcif
+  - structural-biology
+  - rust
+  - python
+  - molecular-structure
+  - protein-structure
+license: MIT
+version: 0.5.0
+date-released: "2025-01-13"

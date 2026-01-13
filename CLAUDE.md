@@ -459,3 +459,29 @@ The `.github/workflows/python-publish.yml` workflow:
    - Check https://crates.io/crates/pdbrust
    - Check https://pypi.org/project/pdbrust/
    - GitHub Actions will auto-publish to PyPI on tag push
+
+### Zenodo Integration
+
+PDBRust uses Zenodo for DOI-based academic citations. Once enabled, each GitHub release automatically gets archived with a unique DOI.
+
+**Initial Setup (one-time):**
+1. Go to https://zenodo.org and log in with GitHub
+2. Navigate to Settings > GitHub
+3. Enable the repository (HFooladi/pdbrust)
+4. Create a GitHub release - Zenodo will automatically archive it
+
+**After First Zenodo Release:**
+1. Get your DOI from https://zenodo.org/account/settings/github/
+2. Update `README.md`: uncomment and update the Zenodo badge with your DOI
+3. Update `README.md`: uncomment and update the BibTeX citation with your DOI
+4. Update `CITATION.cff`: add the `doi:` field with your DOI
+5. Commit these changes
+
+**Files for Zenodo:**
+- `CITATION.cff` - Machine-readable citation metadata (GitHub recognizes this)
+- `.zenodo.json` - Zenodo-specific metadata (keywords, related identifiers, etc.)
+
+**Version-Specific vs Concept DOI:**
+- Each release gets a unique version DOI (e.g., `10.5281/zenodo.1234567`)
+- There's also a "concept DOI" that always resolves to the latest version
+- Use the concept DOI in documentation for always-current citations

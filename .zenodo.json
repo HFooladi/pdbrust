@@ -1,0 +1,53 @@
+{
+  "title": "PDBRust: A High-Performance Rust Library for PDB/mmCIF Parsing and Analysis",
+  "description": "<p>PDBRust is a fast Rust library for parsing and analyzing Protein Data Bank (PDB) and mmCIF protein structure files. It provides comprehensive support for molecular structure data with robust error handling, structural analysis, quality assessment, and RCSB PDB integration.</p><p>Key features:</p><ul><li>Dual format support: PDB and mmCIF with automatic format detection</li><li>40-260x faster than equivalent Python implementations</li><li>Validated against the entire PDB archive (230,655 structures, 100% success rate)</li><li>Python bindings available via PyPI</li><li>Feature-gated modules for minimal compile times</li></ul>",
+  "creators": [
+    {
+      "name": "Fooladi, Hosein",
+      "affiliation": "",
+      "orcid": ""
+    }
+  ],
+  "keywords": [
+    "bioinformatics",
+    "protein structure",
+    "PDB",
+    "mmCIF",
+    "structural biology",
+    "Rust",
+    "Python",
+    "molecular structure",
+    "protein analysis",
+    "computational biology"
+  ],
+  "license": "MIT",
+  "upload_type": "software",
+  "access_right": "open",
+  "programming_language": ["Rust", "Python"],
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/HFooladi/pdbrust",
+      "relation": "isSupplementTo",
+      "resource_type": "software",
+      "scheme": "url"
+    },
+    {
+      "identifier": "https://crates.io/crates/pdbrust",
+      "relation": "isIdenticalTo",
+      "resource_type": "software",
+      "scheme": "url"
+    },
+    {
+      "identifier": "https://pypi.org/project/pdbrust/",
+      "relation": "isIdenticalTo",
+      "resource_type": "software",
+      "scheme": "url"
+    },
+    {
+      "identifier": "https://docs.rs/pdbrust",
+      "relation": "isDocumentedBy",
+      "resource_type": "publication-other",
+      "scheme": "url"
+    }
+  ]
+}
