@@ -3,8 +3,7 @@
 [![Documentation](https://docs.rs/pdbrust/badge.svg)](https://docs.rs/pdbrust)
 [![Rust CI/CD](https://github.com/hfooladi/pdbrust/actions/workflows/rust.yml/badge.svg)](https://github.com/hfooladi/pdbrust/actions/workflows/rust.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-<!-- Zenodo DOI badge - uncomment and update after first release on Zenodo -->
-<!-- [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.XXXXXXX.svg)](https://doi.org/10.5281/zenodo.XXXXXXX) -->
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18232203.svg)](https://doi.org/10.5281/zenodo.18232203)
 
 # PDBRust
 
@@ -237,28 +236,16 @@ If you use PDBRust in your research, please cite it using the metadata in our [C
   author = {Fooladi, Hosein},
   title = {PDBRust: A High-Performance Rust Library for PDB/mmCIF Parsing and Analysis},
   year = {2025},
-  url = {https://github.com/HFooladi/pdbrust},
-  version = {0.5.0}
-}
-```
-
-<!-- After Zenodo DOI is assigned, use:
-```bibtex
-@software{pdbrust,
-  author = {Fooladi, Hosein},
-  title = {PDBRust: A High-Performance Rust Library for PDB/mmCIF Parsing and Analysis},
-  year = {2025},
   publisher = {Zenodo},
-  doi = {10.5281/zenodo.XXXXXXX},
-  url = {https://doi.org/10.5281/zenodo.XXXXXXX},
+  doi = {10.5281/zenodo.18232203},
+  url = {https://doi.org/10.5281/zenodo.18232203},
   version = {0.5.0}
 }
 ```
--->
 
 Or in text format:
 
-> Fooladi, H. (2025). PDBRust: A High-Performance Rust Library for PDB/mmCIF Parsing and Analysis. https://github.com/HFooladi/pdbrust
+> Fooladi, H. (2025). PDBRust: A High-Performance Rust Library for PDB/mmCIF Parsing and Analysis. Zenodo. https://doi.org/10.5281/zenodo.18232203
 
 ## License
 
