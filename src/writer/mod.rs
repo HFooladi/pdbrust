@@ -315,6 +315,7 @@ fn write_atom_site_loop<W: Write>(writer: &mut W, structure: &PdbStructure) -> i
     writeln!(writer, "_atom_site.label_comp_id")?;
     writeln!(writer, "_atom_site.label_asym_id")?;
     writeln!(writer, "_atom_site.label_seq_id")?;
+    writeln!(writer, "_atom_site.auth_seq_id")?;
     writeln!(writer, "_atom_site.pdbx_PDB_ins_code")?;
     writeln!(writer, "_atom_site.Cartn_x")?;
     writeln!(writer, "_atom_site.Cartn_y")?;
@@ -348,12 +349,16 @@ fn write_mmcif_atom_record<W: Write>(
     atom: &crate::records::Atom,
     model_num: i32,
 ) -> io::Result<()> {
-    // Determine ATOM or HETATM
-    let group_pdb = if is_standard_residue(&atom.residue_name) {
-        "ATOM"
+    // Determine ATOM or HETATM and set label_seq_id accordingly
+    // Per mmCIF convention: HETATM records have "." for label_seq_id
+    let (group_pdb, label_seq_id) = if is_standard_residue(&atom.residue_name) {
+        ("ATOM", atom.residue_seq.to_string())
     } else {
-        "HETATM"
+        ("HETATM", ".".to_string())
     };
+
+    // auth_seq_id always has the numeric residue sequence
+    let auth_seq_id = atom.residue_seq;
 
     // Handle optional fields
     let alt_loc = atom.alt_loc.map_or(".".to_string(), |c| c.to_string());
@@ -368,7 +373,7 @@ fn write_mmcif_atom_record<W: Write>(
 
     writeln!(
         writer,
-        "{} {} {} {} {} {} {} {} {} {:.3} {:.3} {:.3} {:.2} {:.2} {}",
+        "{} {} {} {} {} {} {} {} {} {} {:.3} {:.3} {:.3} {:.2} {:.2} {}",
         group_pdb,
         atom.serial,
         element,
@@ -376,7 +381,8 @@ fn write_mmcif_atom_record<W: Write>(
         alt_loc,
         atom.residue_name,
         atom.chain_id,
-        atom.residue_seq,
+        label_seq_id,
+        auth_seq_id,
         ins_code,
         atom.x,
         atom.y,

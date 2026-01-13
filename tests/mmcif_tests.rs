@@ -786,6 +786,14 @@ fn test_write_mmcif_with_hetatm() {
     // Should have both ATOM and HETATM
     assert!(mmcif_string.contains("ATOM 1"));
     assert!(mmcif_string.contains("HETATM 2"));
+
+    // Should have auth_seq_id header
+    assert!(mmcif_string.contains("_atom_site.auth_seq_id"));
+
+    // ATOM should have numeric label_seq_id (1) and auth_seq_id (1)
+    // HETATM should have "." for label_seq_id and numeric auth_seq_id (101)
+    assert!(mmcif_string.contains("ATOM 1 C CA . ALA A 1 1"));
+    assert!(mmcif_string.contains("HETATM 2 O O . HOH W . 101"));
 }
 
 #[test]
