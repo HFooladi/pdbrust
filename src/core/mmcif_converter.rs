@@ -109,6 +109,7 @@ struct AtomColumnIndices {
     label_comp_id: usize,
     label_asym_id: usize,
     label_seq_id: usize,
+    auth_seq_id: Option<usize>,
     pdbx_pdb_ins_code: Option<usize>,
     cartn_x: usize,
     cartn_y: usize,
@@ -140,6 +141,7 @@ fn get_atom_column_indices(category: &Category) -> Result<AtomColumnIndices, Pdb
         label_comp_id: find_required("label_comp_id")?,
         label_asym_id: find_required("label_asym_id")?,
         label_seq_id: find_required("label_seq_id")?,
+        auth_seq_id: find_optional("auth_seq_id"),
         pdbx_pdb_ins_code: find_optional("pdbx_PDB_ins_code"),
         cartn_x: find_required("Cartn_x")?,
         cartn_y: find_required("Cartn_y")?,
@@ -199,12 +201,25 @@ fn parse_atom_row(row: &[String], indices: &AtomColumnIndices) -> Result<Atom, P
     let residue_name = row[indices.label_comp_id].clone();
     let chain_id = row[indices.label_asym_id].clone();
 
-    let residue_seq: i32 = row[indices.label_seq_id].parse().map_err(|_| {
-        PdbError::ParseError(format!(
-            "Invalid residue sequence: {}",
-            row[indices.label_seq_id]
-        ))
-    })?;
+    let residue_seq: i32 = {
+        let label_seq = &row[indices.label_seq_id];
+        if label_seq == "." || label_seq == "?" {
+            // For non-polymer atoms (HETATM), label_seq_id is "." - use auth_seq_id
+            if let Some(auth_idx) = indices.auth_seq_id {
+                row[auth_idx].parse().map_err(|_| {
+                    PdbError::ParseError(format!("Invalid auth_seq_id: {}", row[auth_idx]))
+                })?
+            } else {
+                return Err(PdbError::ParseError(
+                    "label_seq_id is '.' and auth_seq_id not available".to_string(),
+                ));
+            }
+        } else {
+            label_seq.parse().map_err(|_| {
+                PdbError::ParseError(format!("Invalid residue sequence: {}", label_seq))
+            })?
+        }
+    };
 
     let ins_code = if let Some(idx) = indices.pdbx_pdb_ins_code {
         let ins_str = &row[idx];

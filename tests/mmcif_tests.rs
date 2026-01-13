@@ -404,6 +404,7 @@ ATOM 1
 
 #[test]
 fn test_mmcif_hetatm_records() {
+    // Test with auth_seq_id fallback for non-polymer atoms (label_seq_id = ".")
     let mmcif_content = r#"
 data_test
 _entry.id HETATM_TEST
@@ -417,13 +418,14 @@ _atom_site.label_alt_id
 _atom_site.label_comp_id
 _atom_site.label_asym_id
 _atom_site.label_seq_id
+_atom_site.auth_seq_id
 _atom_site.Cartn_x
 _atom_site.Cartn_y
 _atom_site.Cartn_z
 _atom_site.occupancy
 _atom_site.B_iso_or_equiv
-ATOM 1 N N . ALA A 1 0.000 0.000 0.000 1.00 20.00
-HETATM 2 O O . HOH W 101 10.000 10.000 10.000 1.00 30.00
+ATOM 1 N N . ALA A 1 1 0.000 0.000 0.000 1.00 20.00
+HETATM 2 O O . HOH W . 101 10.000 10.000 10.000 1.00 30.00
 "#;
 
     let structure = parse_mmcif_string(mmcif_content).unwrap();
@@ -433,11 +435,54 @@ HETATM 2 O O . HOH W 101 10.000 10.000 10.000 1.00 30.00
     let protein_atom = &structure.atoms[0];
     assert_eq!(protein_atom.residue_name, "ALA");
     assert_eq!(protein_atom.chain_id, "A");
+    assert_eq!(protein_atom.residue_seq, 1);
 
+    // Water uses auth_seq_id since label_seq_id is "."
     let water_atom = &structure.atoms[1];
     assert_eq!(water_atom.residue_name, "HOH");
     assert_eq!(water_atom.chain_id, "W");
     assert_eq!(water_atom.residue_seq, 101);
+}
+
+#[test]
+fn test_mmcif_hetatm_dot_label_seq_id() {
+    // Test that HETATM records with "." label_seq_id use auth_seq_id correctly
+    let mmcif_content = r#"
+data_test
+_entry.id DOT_SEQ_TEST
+
+loop_
+_atom_site.group_PDB
+_atom_site.id
+_atom_site.type_symbol
+_atom_site.label_atom_id
+_atom_site.label_alt_id
+_atom_site.label_comp_id
+_atom_site.label_asym_id
+_atom_site.label_seq_id
+_atom_site.auth_seq_id
+_atom_site.Cartn_x
+_atom_site.Cartn_y
+_atom_site.Cartn_z
+_atom_site.occupancy
+_atom_site.B_iso_or_equiv
+HETATM 1 ZN ZN . ZN B . 401 -21.378 29.266 -1.191 1.00 24.04
+HETATM 2 S S . SO4 D . 403 -45.892 41.335 -2.826 1.00 37.98
+"#;
+
+    let structure = parse_mmcif_string(mmcif_content).unwrap();
+
+    assert_eq!(structure.atoms.len(), 2);
+
+    let zn_atom = &structure.atoms[0];
+    assert_eq!(zn_atom.residue_name, "ZN");
+    assert_eq!(zn_atom.chain_id, "B");
+    assert_eq!(zn_atom.residue_seq, 401);
+
+    let so4_atom = &structure.atoms[1];
+    assert_eq!(so4_atom.residue_name, "SO4");
+    assert_eq!(so4_atom.chain_id, "D");
+    assert_eq!(so4_atom.residue_seq, 403);
 }
 
 #[test]
