@@ -9,6 +9,8 @@ authors:
   - given-names: Hosein
     family-names: Fooladi
     email: fooladi.hosein@gmail.com
+    orcid: "https://orcid.org/0000-0002-3124-2761"
+    affiliation: "Department of Pharmaceutical Sciences, Division of Pharmaceutical Chemistry, Faculty of Life Sciences, University of Vienna, Josef-Holaubek-Platz 2, 1090 Vienna, Austria"
 repository-code: "https://github.com/HFooladi/pdbrust"
 url: "https://docs.rs/pdbrust"
 abstract: >-
