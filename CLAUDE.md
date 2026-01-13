@@ -285,6 +285,7 @@ The `examples/` directory contains runnable examples demonstrating common workfl
 |---------|-------------------|-------------|
 | `analysis_workflow.rs` | filter, descriptors, quality, summary | Complete pipeline: load → clean → analyze → export |
 | `filtering_demo.rs` | filter | Fluent filtering API, method chaining, in-place modifications |
+| `geometry_demo.rs` | geometry | RMSD calculation, Kabsch alignment, per-residue RMSD |
 | `rcsb_workflow.rs` | rcsb, descriptors | RCSB search queries, download, analyze (requires network) |
 | `batch_processing.rs` | descriptors, summary | Process multiple files, compute summaries, export CSV |
 | `full_pdb_benchmark.rs` | gzip, parallel, descriptors, quality, summary | Full PDB archive benchmark (230K structures) |
@@ -294,13 +295,36 @@ The `examples/` directory contains runnable examples demonstrating common workfl
 | `atom_interactive.rs` | (none) | Atom operations, distances, angles |
 | `rust_benchmark.rs` | filter, descriptors | Performance benchmarking |
 
-### Running Examples
+### Python Examples
+
+The `pdbrust-python/examples/` directory contains Python examples:
+
+| Example | Description |
+|---------|-------------|
+| `basic_usage.py` | Parsing, accessing atoms/residues, basic filtering |
+| `writing_files.py` | Write PDB/mmCIF files, round-trip demonstration |
+| `geometry_rmsd.py` | RMSD calculation, structure alignment, per-residue RMSD |
+| `numpy_integration.py` | Coordinate arrays, distance matrices, contact maps |
+| `rcsb_search.py` | RCSB search queries and structure downloads |
+
+Run Python examples:
+```bash
+cd pdbrust-python/examples
+python basic_usage.py
+python geometry_rmsd.py
+python numpy_integration.py
+```
+
+### Running Rust Examples
 ```bash
 # Complete analysis workflow
 cargo run --example analysis_workflow --features "filter,descriptors,quality,summary"
 
 # Filtering operations
 cargo run --example filtering_demo --features "filter"
+
+# Geometry: RMSD and alignment
+cargo run --example geometry_demo --features "geometry"
 
 # RCSB search and download
 cargo run --example rcsb_workflow --features "rcsb,descriptors"

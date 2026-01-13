@@ -89,6 +89,85 @@ if report.is_analysis_ready():
     print("Structure is ready for analysis")
 ```
 
+### Writing Files
+
+```python
+import pdbrust
+
+structure = pdbrust.parse_pdb_file("input.pdb")
+
+# Write to PDB format
+pdbrust.write_pdb_file(structure, "output.pdb")
+
+# Write to mmCIF format
+pdbrust.write_mmcif_file(structure, "output.cif")
+
+# Write compressed mmCIF
+pdbrust.write_gzip_mmcif_file(structure, "output.cif.gz")
+
+# Get mmCIF as string (useful for web APIs, in-memory processing)
+mmcif_string = pdbrust.write_mmcif_string(structure)
+```
+
+### Geometry: RMSD and Structure Alignment
+
+```python
+from pdbrust import AtomSelection
+
+# Load two structures to compare
+structure1 = pdbrust.parse_pdb_file("structure1.pdb")
+structure2 = pdbrust.parse_pdb_file("structure2.pdb")
+
+# Calculate RMSD (without alignment)
+rmsd = structure1.rmsd_to(structure2)
+print(f"RMSD: {rmsd:.3f} Å")
+
+# RMSD with different atom selections
+rmsd_ca = structure1.rmsd_to(structure2, AtomSelection.ca_only())      # CA atoms (default)
+rmsd_bb = structure1.rmsd_to(structure2, AtomSelection.backbone())    # Backbone (N, CA, C, O)
+rmsd_all = structure1.rmsd_to(structure2, AtomSelection.all_atoms())  # All atoms
+
+# Align structures (Kabsch algorithm) - returns aligned structure and result
+aligned, result = structure1.align_to(structure2)
+print(f"Alignment RMSD: {result.rmsd:.3f} Å ({result.num_atoms} atoms)")
+
+# Per-residue RMSD for flexibility analysis
+per_res = structure1.per_residue_rmsd_to(structure2)
+for r in per_res:
+    if r.rmsd > 2.0:  # Highlight flexible regions
+        print(f"Flexible: {r.chain_id}{r.residue_seq} {r.residue_name}: {r.rmsd:.2f} Å")
+```
+
+### Numpy Integration
+
+```python
+import numpy as np
+
+structure = pdbrust.parse_pdb_file("protein.pdb")
+
+# Get coordinates as numpy arrays
+all_coords = structure.get_coords_array()          # Shape: (N_atoms, 3)
+ca_coords = structure.get_ca_coords_array()        # Shape: (N_ca, 3)
+bb_coords = structure.get_backbone_coords_array()  # Shape: (N_backbone, 3)
+
+# Chain-specific coordinates
+chain_a_ca = structure.get_ca_coords_array("A")
+
+# Distance matrix (pairwise CA-CA distances)
+dist_matrix = structure.distance_matrix_ca()  # Shape: (N_ca, N_ca)
+
+# Contact map (binary matrix of contacts within threshold)
+contact_map = structure.contact_map_ca(threshold=8.0)  # Default: 8 Å
+
+# All-atom versions
+all_dist = structure.distance_matrix()
+all_contacts = structure.contact_map(threshold=4.5)
+
+# Use with machine learning
+print(f"Coords shape: {all_coords.shape}")
+print(f"Contact map shape: {contact_map.shape}, contacts: {contact_map.sum()}")
+```
+
 ### RCSB PDB Integration
 
 ```python
@@ -97,12 +176,45 @@ from pdbrust import SearchQuery, rcsb_search, download_structure, FileFormat
 # Download a structure
 structure = download_structure("1UBQ", FileFormat.pdb())
 
-# Search RCSB
-query = SearchQuery().with_text("kinase").with_organism("Homo sapiens").with_resolution_max(2.0)
+# Download to file directly
+pdbrust.download_to_file("1UBQ", "1ubq.pdb", FileFormat.pdb())
+
+# Get as string without saving
+pdb_string = pdbrust.download_pdb_string("1UBQ", FileFormat.pdb())
+
+# Search RCSB with various filters
+query = (SearchQuery()
+    .with_text("kinase")
+    .with_organism("Homo sapiens")
+    .with_resolution_max(2.0)
+    .with_experimental_method(ExperimentalMethod.xray())
+    .with_sequence_length_min(100)
+    .with_sequence_length_max(500))
+
 results = rcsb_search(query, 10)
 print(f"Found {results.total_count} structures")
 for pdb_id in results.pdb_ids:
     print(f"  {pdb_id}")
+```
+
+### Additional Structure Methods
+
+```python
+# Access sequence from SEQRES records
+sequence = structure.get_sequence("A")
+
+# Get residues for a specific chain
+residues = structure.get_residues_for_chain("A")  # List of (seq_num, name) tuples
+
+# Access connectivity (CONECT records)
+connected = structure.get_connected_atoms(atom_serial=1)
+
+# Get center of mass
+centroid = structure.get_centroid()
+ca_centroid = structure.get_ca_centroid()
+
+# Translate structure
+structure.translate(10.0, 0.0, 0.0)
 ```
 
 ## Performance

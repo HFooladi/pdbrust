@@ -81,6 +81,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 | `descriptors` | Radius of gyration, amino acid composition, geometric metrics |
 | `quality` | Structure quality assessment (altlocs, missing residues, etc.) |
 | `summary` | Combined quality + descriptors in one call |
+| `geometry` | RMSD calculation, structure alignment (Kabsch), per-residue RMSD |
 | `rcsb` | Search and download structures from RCSB PDB |
 | `gzip` | Parse gzip-compressed files (.ent.gz, .pdb.gz, .cif.gz) |
 | `parallel` | Parallel processing with Rayon |
@@ -127,6 +128,33 @@ let structure = parse_gzip_pdb_file("pdb1ubq.ent.gz")?;
 println!("Atoms: {}", structure.atoms.len());
 ```
 
+### Geometry: RMSD and Alignment
+
+```rust
+use pdbrust::{parse_pdb_file, geometry::AtomSelection};
+
+let structure1 = parse_pdb_file("model1.pdb")?;
+let structure2 = parse_pdb_file("model2.pdb")?;
+
+// Calculate RMSD (without alignment)
+let rmsd = structure1.rmsd_to(&structure2)?;
+println!("RMSD: {:.3} Å", rmsd);
+
+// Align structures using Kabsch algorithm
+let (aligned, result) = structure1.align_to(&structure2)?;
+println!("Alignment RMSD: {:.3} Å ({} atoms)", result.rmsd, result.num_atoms);
+
+// Per-residue RMSD for flexibility analysis
+let per_res = structure1.per_residue_rmsd_to(&structure2)?;
+for r in per_res.iter().filter(|r| r.rmsd > 2.0) {
+    println!("Flexible: {}{} {:.2} Å", r.chain_id, r.residue_seq, r.rmsd);
+}
+
+// Different atom selections
+let rmsd_bb = structure1.rmsd_to_with_selection(&structure2, AtomSelection::Backbone)?;
+let rmsd_all = structure1.rmsd_to_with_selection(&structure2, AtomSelection::AllAtoms)?;
+```
+
 ### Download from RCSB PDB
 
 ```rust
@@ -152,14 +180,23 @@ See the [examples/](examples/) directory for complete working code:
 |----------|---------|---------------|
 | Load, clean, analyze, export | [analysis_workflow.rs](examples/analysis_workflow.rs) | filter, descriptors, quality, summary |
 | Filter and clean structures | [filtering_demo.rs](examples/filtering_demo.rs) | filter |
+| RMSD and structure alignment | [geometry_demo.rs](examples/geometry_demo.rs) | geometry |
 | Search and download from RCSB | [rcsb_workflow.rs](examples/rcsb_workflow.rs) | rcsb, descriptors |
 | Process multiple files | [batch_processing.rs](examples/batch_processing.rs) | descriptors, summary |
 
-Run examples with:
+**Python examples** are available in [pdbrust-python/examples/](pdbrust-python/examples/):
+- `basic_usage.py` - Parsing and structure access
+- `writing_files.py` - Write PDB/mmCIF files
+- `geometry_rmsd.py` - RMSD and alignment
+- `numpy_integration.py` - Numpy arrays, distance matrices, contact maps
+- `rcsb_search.py` - RCSB search and download
+
+Run Rust examples with:
 
 ```bash
 cargo run --example analysis_workflow --features "filter,descriptors,quality,summary"
 cargo run --example filtering_demo --features "filter"
+cargo run --example geometry_demo --features "geometry"
 cargo run --example rcsb_workflow --features "rcsb,descriptors"
 cargo run --example batch_processing --features "descriptors,summary"
 ```
