@@ -72,7 +72,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // OR operator
     let met_or_gln = structure.select("resname MET or resname GLN")?;
-    println!("resname MET or resname GLN: {} atoms", met_or_gln.get_num_atoms());
+    println!(
+        "resname MET or resname GLN: {} atoms",
+        met_or_gln.get_num_atoms()
+    );
 
     // NOT operator
     let not_hydrogen = structure.select("not hydrogen")?;
@@ -80,7 +83,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Parentheses for grouping
     let complex1 = structure.select("(resid 1 or resid 2) and name CA")?;
-    println!("(resid 1 or resid 2) and name CA: {} atoms", complex1.get_num_atoms());
+    println!(
+        "(resid 1 or resid 2) and name CA: {} atoms",
+        complex1.get_num_atoms()
+    );
     println!();
 
     // ====================
@@ -116,7 +122,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Protein without hydrogen
     let heavy_atoms = structure.select("protein and not hydrogen")?;
-    println!("protein and not hydrogen: {} atoms", heavy_atoms.get_num_atoms());
+    println!(
+        "protein and not hydrogen: {} atoms",
+        heavy_atoms.get_num_atoms()
+    );
     println!();
 
     // ====================

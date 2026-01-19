@@ -27,11 +27,11 @@ pub enum Token {
     Not,
 
     // Comparison operators
-    Lt,  // <
-    Gt,  // >
-    Le,  // <=
-    Ge,  // >=
-    Eq,  // =
+    Lt, // <
+    Gt, // >
+    Le, // <=
+    Ge, // >=
+    Eq, // =
 
     // Grouping and ranges
     LParen, // (
@@ -148,7 +148,7 @@ impl<'a> Lexer<'a> {
                 return Err(SelectionError::SyntaxError {
                     message: format!("Unexpected character '{}'", c),
                     position: start,
-                })
+                });
             }
         };
 
@@ -304,7 +304,10 @@ mod tests {
     #[test]
     fn test_simple_chain() {
         let tokens = tokenize("chain A");
-        assert_eq!(tokens, vec![Token::Chain, Token::Identifier("A".to_string()), Token::Eof]);
+        assert_eq!(
+            tokens,
+            vec![Token::Chain, Token::Identifier("A".to_string()), Token::Eof]
+        );
     }
 
     #[test]
@@ -337,7 +340,13 @@ mod tests {
         let tokens = tokenize("resid 1:100");
         assert_eq!(
             tokens,
-            vec![Token::Resid, Token::Integer(1), Token::Colon, Token::Integer(100), Token::Eof]
+            vec![
+                Token::Resid,
+                Token::Integer(1),
+                Token::Colon,
+                Token::Integer(100),
+                Token::Eof
+            ]
         );
     }
 

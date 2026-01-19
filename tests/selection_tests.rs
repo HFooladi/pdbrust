@@ -2,7 +2,7 @@
 
 #![cfg(feature = "filter")]
 
-use pdbrust::{parse_pdb_file, PdbStructure, SelectionError};
+use pdbrust::{PdbStructure, SelectionError, parse_pdb_file};
 use std::path::PathBuf;
 
 fn get_test_file(name: &str) -> PathBuf {
@@ -198,7 +198,9 @@ fn test_select_not() {
 fn test_select_parentheses() {
     let structure = load_test_structure();
     // (resid 1 or resid 2) and name CA
-    let selected = structure.select("(resid 1 or resid 2) and name CA").unwrap();
+    let selected = structure
+        .select("(resid 1 or resid 2) and name CA")
+        .unwrap();
 
     assert!(!selected.atoms.is_empty(), "Selection should not be empty");
     for atom in &selected.atoms {
@@ -395,7 +397,10 @@ fn test_select_error_unclosed_paren() {
     let structure = load_test_structure();
     let result = structure.select("(chain A and name CA");
 
-    assert!(matches!(result, Err(SelectionError::UnclosedParenthesis { .. })));
+    assert!(matches!(
+        result,
+        Err(SelectionError::UnclosedParenthesis { .. })
+    ));
 }
 
 #[test]

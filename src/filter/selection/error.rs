@@ -72,11 +72,7 @@ impl fmt::Display for SelectionError {
                 value,
                 reason,
             } => {
-                write!(
-                    f,
-                    "Invalid value '{}' for {}: {}",
-                    value, field, reason
-                )
+                write!(f, "Invalid value '{}' for {}: {}", value, field, reason)
             }
             SelectionError::UnclosedParenthesis { position } => {
                 write!(f, "Unclosed parenthesis at position {}", position)

@@ -202,7 +202,7 @@ impl Parser {
                     expected: "comparison operator (<, >, <=, >=, =)".to_string(),
                     found: format!("{:?}", self.current_token()),
                     position,
-                })
+                });
             }
         };
         self.advance();
@@ -273,10 +273,7 @@ impl Parser {
     }
 
     fn current_position(&self) -> usize {
-        self.tokens
-            .get(self.position)
-            .map(|t| t.start)
-            .unwrap_or(0)
+        self.tokens.get(self.position).map(|t| t.start).unwrap_or(0)
     }
 
     fn advance(&mut self) {
@@ -323,7 +320,10 @@ mod tests {
     #[test]
     fn test_parse_resid_range() {
         let expr = parse("resid 1:100").unwrap();
-        assert!(matches!(expr, SelectionExpr::ResidRange { start: 1, end: 100 }));
+        assert!(matches!(
+            expr,
+            SelectionExpr::ResidRange { start: 1, end: 100 }
+        ));
     }
 
     #[test]
@@ -416,10 +416,7 @@ mod tests {
     #[test]
     fn test_parse_error_unknown_keyword() {
         let result = parse("unknown_keyword");
-        assert!(matches!(
-            result,
-            Err(SelectionError::UnknownKeyword { .. })
-        ));
+        assert!(matches!(result, Err(SelectionError::UnknownKeyword { .. })));
     }
 
     #[test]
@@ -433,11 +430,17 @@ mod tests {
 
     #[test]
     fn test_parse_keywords() {
-        assert!(matches!(parse("backbone").unwrap(), SelectionExpr::Backbone));
+        assert!(matches!(
+            parse("backbone").unwrap(),
+            SelectionExpr::Backbone
+        ));
         assert!(matches!(parse("protein").unwrap(), SelectionExpr::Protein));
         assert!(matches!(parse("nucleic").unwrap(), SelectionExpr::Nucleic));
         assert!(matches!(parse("water").unwrap(), SelectionExpr::Water));
         assert!(matches!(parse("hetero").unwrap(), SelectionExpr::Hetero));
-        assert!(matches!(parse("hydrogen").unwrap(), SelectionExpr::Hydrogen));
+        assert!(matches!(
+            parse("hydrogen").unwrap(),
+            SelectionExpr::Hydrogen
+        ));
     }
 }

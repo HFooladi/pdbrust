@@ -371,10 +371,7 @@ impl PdbStructure {
     /// // Residue range
     /// let residues = structure.select("resid 1:50 and protein")?;
     /// ```
-    pub fn select(
-        &self,
-        selection: &str,
-    ) -> Result<Self, super::selection::SelectionError> {
+    pub fn select(&self, selection: &str) -> Result<Self, super::selection::SelectionError> {
         let expr = super::selection::parse_selection(selection)?;
         Ok(super::selection::execute_selection(self, &expr))
     }
@@ -404,9 +401,7 @@ impl PdbStructure {
     /// assert!(PdbStructure::validate_selection("").is_err());
     /// assert!(PdbStructure::validate_selection("(chain A").is_err());
     /// ```
-    pub fn validate_selection(
-        selection: &str,
-    ) -> Result<(), super::selection::SelectionError> {
+    pub fn validate_selection(selection: &str) -> Result<(), super::selection::SelectionError> {
         super::selection::validate_selection(selection)
     }
 }

@@ -147,7 +147,10 @@ mod tests {
             &atom
         ));
         assert!(!evaluate(
-            &SelectionExpr::ResidRange { start: 51, end: 100 },
+            &SelectionExpr::ResidRange {
+                start: 51,
+                end: 100
+            },
             &atom
         ));
     }
