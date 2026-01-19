@@ -307,6 +307,68 @@ impl PyPdbStructure {
         self.inner.get_ca_centroid()
     }
 
+    /// Select atoms using a PyMOL/VMD-style selection language.
+    ///
+    /// This method provides a powerful and flexible way to filter atoms
+    /// using a query language inspired by molecular visualization tools.
+    ///
+    /// Basic Selectors:
+    ///     - chain A: Select atoms from chain A
+    ///     - name CA: Select atoms named CA (alpha carbons)
+    ///     - resname ALA: Select alanine residues
+    ///     - resid 50: Select residue number 50
+    ///     - resid 1:100: Select residues 1 through 100
+    ///     - element C: Select carbon atoms
+    ///
+    /// Keywords:
+    ///     - backbone: N, CA, C, O atoms
+    ///     - protein: Standard amino acids
+    ///     - nucleic: Standard nucleotides
+    ///     - water: Water molecules (HOH, WAT)
+    ///     - hetero: HETATM records
+    ///     - hydrogen: Hydrogen atoms
+    ///     - all or *: All atoms
+    ///
+    /// Numeric Comparisons:
+    ///     - bfactor < 30.0: B-factor less than 30
+    ///     - occupancy >= 0.5: Occupancy at least 0.5
+    ///
+    /// Boolean Operations:
+    ///     - and: Both conditions must match
+    ///     - or: Either condition matches
+    ///     - not: Negation
+    ///     - (): Grouping with parentheses
+    ///
+    /// Args:
+    ///     selection: A selection string (e.g., "chain A and name CA")
+    ///
+    /// Returns:
+    ///     New PdbStructure containing only the selected atoms
+    ///
+    /// Raises:
+    ///     ValueError: If the selection string is invalid
+    ///
+    /// Example:
+    ///     >>> # Simple selections
+    ///     >>> chain_a = structure.select("chain A")
+    ///     >>> ca_atoms = structure.select("name CA")
+    ///     >>>
+    ///     >>> # Combined selections
+    ///     >>> chain_a_ca = structure.select("chain A and name CA")
+    ///     >>>
+    ///     >>> # Complex selections
+    ///     >>> selected = structure.select("(chain A or chain B) and backbone")
+    ///     >>>
+    ///     >>> # Numeric comparisons
+    ///     >>> low_bfactor = structure.select("protein and bfactor < 30.0")
+    #[cfg(feature = "filter")]
+    fn select(&self, selection: &str) -> PyResult<PyPdbStructure> {
+        self.inner
+            .select(selection)
+            .map(|s| PyPdbStructure { inner: s })
+            .map_err(crate::error::convert_selection_error)
+    }
+
     // ==================== Descriptor Methods (feature-gated) ====================
 
     /// Calculate radius of gyration

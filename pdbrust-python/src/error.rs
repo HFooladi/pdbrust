@@ -46,3 +46,44 @@ pub fn convert_search_error(err: pdbrust::rcsb::SearchError) -> PyErr {
         SearchError::InvalidQuery(msg) => PyValueError::new_err(format!("Invalid query: {}", msg)),
     }
 }
+
+/// Convert SelectionError to Python exception
+#[cfg(feature = "filter")]
+pub fn convert_selection_error(err: pdbrust::SelectionError) -> PyErr {
+    use pdbrust::SelectionError;
+    match err {
+        SelectionError::UnexpectedToken { expected, found, position } => {
+            PyValueError::new_err(format!(
+                "Selection syntax error at position {}: expected {}, found '{}'",
+                position, expected, found
+            ))
+        }
+        SelectionError::UnknownKeyword { keyword, position } => {
+            PyValueError::new_err(format!(
+                "Unknown selection keyword '{}' at position {}",
+                keyword, position
+            ))
+        }
+        SelectionError::InvalidValue { field, value, reason } => {
+            PyValueError::new_err(format!(
+                "Invalid value '{}' for {}: {}",
+                value, field, reason
+            ))
+        }
+        SelectionError::UnclosedParenthesis { position } => {
+            PyValueError::new_err(format!(
+                "Unclosed parenthesis at position {}",
+                position
+            ))
+        }
+        SelectionError::EmptySelection => {
+            PyValueError::new_err("Selection string is empty")
+        }
+        SelectionError::SyntaxError { message, position } => {
+            PyValueError::new_err(format!(
+                "Selection syntax error at position {}: {}",
+                position, message
+            ))
+        }
+    }
+}

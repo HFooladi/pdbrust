@@ -213,6 +213,10 @@ pub mod writer;
 #[cfg(feature = "filter")]
 pub mod filter;
 
+// Re-export selection error type for convenience
+#[cfg(feature = "filter")]
+pub use filter::selection::SelectionError;
+
 #[cfg(feature = "descriptors")]
 pub mod descriptors;
 

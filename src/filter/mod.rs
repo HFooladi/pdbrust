@@ -38,9 +38,10 @@
 
 mod cleaning;
 mod extraction;
+pub mod selection;
 
 // The cleaning and extraction modules extend PdbStructure with impl blocks.
-// No standalone items need to be re-exported.
+// Selection module is public for accessing SelectionError and other types.
 
 /// Standard amino acid residue names (3-letter codes).
 pub const STANDARD_AMINO_ACIDS: &[&str] = &[

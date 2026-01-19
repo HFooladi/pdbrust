@@ -36,6 +36,16 @@ Future development ideas for PDBRust. Priority will be determined based on user 
 - Full Python bindings included
 - Supports ATOM/HETATM, SEQRES, SSBOND data
 
+### Selection Language (Query DSL) ✅
+- PyMOL/VMD-style selection syntax: `structure.select("chain A and name CA")`
+- Basic selectors: `chain`, `name`, `resname`, `resid`, `element`
+- Range selections: `resid 1:100`
+- Keywords: `backbone`, `protein`, `nucleic`, `water`, `hetero`, `hydrogen`
+- Boolean operators: `and`, `or`, `not`, parentheses for grouping
+- Numeric comparisons: `bfactor < 30.0`, `occupancy >= 0.5`
+- Zero external dependencies (hand-written recursive descent parser)
+- Full Python bindings included
+
 ## Medium Impact
 
 ### DSSP-like Secondary Structure Assignment

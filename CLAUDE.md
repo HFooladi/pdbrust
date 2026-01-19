@@ -168,6 +168,7 @@ python3 benchmarks/python_benchmark.py
 
 Test files:
 - `tests/filter_tests.rs` - 18 tests
+- `tests/selection_tests.rs` - 30 tests (selection language)
 - `tests/descriptors_tests.rs` - 17 tests
 - `tests/quality_tests.rs` - 18 tests
 - `tests/summary_tests.rs` - 18 tests
@@ -184,6 +185,7 @@ Test files:
 - `SSBond`: Disulfide bond connectivity
 
 ### Feature-Specific Types
+- `SelectionError` (filter): Selection language parsing errors
 - `QualityReport` (quality): Structure quality assessment
 - `StructureDescriptors` (descriptors): Computed structural metrics
 - `StructureSummary` (summary): Combined quality + descriptors
@@ -225,6 +227,24 @@ structure.normalize_chain_ids();
 structure.reindex_residues();
 structure.center_structure();
 ```
+
+### Selection Language (feature: filter)
+```rust
+// PyMOL/VMD-style selection language
+let selected = structure.select("chain A and name CA")?;
+let backbone = structure.select("backbone and not hydrogen")?;
+let residues = structure.select("resid 1:100 and protein")?;
+let complex = structure.select("(chain A or chain B) and bfactor < 30.0")?;
+
+// Validate without executing
+PdbStructure::validate_selection("chain A and name CA")?;
+```
+
+**Selection syntax:**
+- Basic: `chain A`, `name CA`, `resname ALA`, `resid 50`, `resid 1:100`, `element C`
+- Keywords: `backbone`, `protein`, `nucleic`, `water`, `hetero`, `hydrogen`, `all`
+- Numeric: `bfactor < 30.0`, `occupancy >= 0.5`
+- Boolean: `and`, `or`, `not`, `()`
 
 ### Descriptors (feature: descriptors)
 ```rust
@@ -285,6 +305,7 @@ The `examples/` directory contains runnable examples demonstrating common workfl
 |---------|-------------------|-------------|
 | `analysis_workflow.rs` | filter, descriptors, quality, summary | Complete pipeline: load → clean → analyze → export |
 | `filtering_demo.rs` | filter | Fluent filtering API, method chaining, in-place modifications |
+| `selection_demo.rs` | filter | PyMOL/VMD-style selection language: chain A and name CA |
 | `geometry_demo.rs` | geometry | RMSD calculation, Kabsch alignment, per-residue RMSD |
 | `rcsb_workflow.rs` | rcsb, descriptors | RCSB search queries, download, analyze (requires network) |
 | `batch_processing.rs` | descriptors, summary | Process multiple files, compute summaries, export CSV |

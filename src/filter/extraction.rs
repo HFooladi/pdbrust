@@ -307,6 +307,108 @@ impl PdbStructure {
             current_model: self.current_model,
         }
     }
+
+    /// Select atoms using a PyMOL/VMD-style selection language.
+    ///
+    /// This method provides a powerful and flexible way to filter atoms
+    /// using a query language inspired by molecular visualization tools.
+    ///
+    /// # Syntax
+    ///
+    /// ## Basic Selectors
+    /// - `chain A` - Select atoms from chain A
+    /// - `name CA` - Select atoms named CA (alpha carbons)
+    /// - `resname ALA` - Select alanine residues
+    /// - `resid 50` - Select residue number 50
+    /// - `resid 1:100` - Select residues 1 through 100
+    /// - `element C` - Select carbon atoms
+    ///
+    /// ## Keywords
+    /// - `backbone` - N, CA, C, O atoms
+    /// - `protein` - Standard amino acids
+    /// - `nucleic` - Standard nucleotides
+    /// - `water` - Water molecules (HOH, WAT)
+    /// - `hetero` - HETATM records
+    /// - `hydrogen` - Hydrogen atoms
+    /// - `all` or `*` - All atoms
+    ///
+    /// ## Numeric Comparisons
+    /// - `bfactor < 30.0` - B-factor less than 30
+    /// - `occupancy >= 0.5` - Occupancy at least 0.5
+    ///
+    /// ## Boolean Operations
+    /// - `and` - Both conditions must match
+    /// - `or` - Either condition matches
+    /// - `not` - Negation
+    /// - `()` - Grouping with parentheses
+    ///
+    /// # Arguments
+    ///
+    /// * `selection` - A selection string (e.g., "chain A and name CA")
+    ///
+    /// # Returns
+    ///
+    /// A new `PdbStructure` containing only the selected atoms,
+    /// or a `SelectionError` if the selection string is invalid.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// use pdbrust::parse_pdb_file;
+    ///
+    /// let structure = parse_pdb_file("protein.pdb")?;
+    ///
+    /// // Simple selections
+    /// let chain_a = structure.select("chain A")?;
+    /// let ca_atoms = structure.select("name CA")?;
+    ///
+    /// // Combined selections
+    /// let chain_a_ca = structure.select("chain A and name CA")?;
+    ///
+    /// // Complex selections
+    /// let selected = structure.select("(chain A or chain B) and backbone and bfactor < 40.0")?;
+    ///
+    /// // Residue range
+    /// let residues = structure.select("resid 1:50 and protein")?;
+    /// ```
+    pub fn select(
+        &self,
+        selection: &str,
+    ) -> Result<Self, super::selection::SelectionError> {
+        let expr = super::selection::parse_selection(selection)?;
+        Ok(super::selection::execute_selection(self, &expr))
+    }
+
+    /// Validate a selection string without executing it.
+    ///
+    /// Useful for validation in user interfaces or configuration parsing.
+    ///
+    /// # Arguments
+    ///
+    /// * `selection` - A selection string to validate
+    ///
+    /// # Returns
+    ///
+    /// `Ok(())` if the selection is valid, or a `SelectionError` if invalid.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// use pdbrust::PdbStructure;
+    ///
+    /// // Valid selections
+    /// assert!(PdbStructure::validate_selection("chain A").is_ok());
+    /// assert!(PdbStructure::validate_selection("chain A and name CA").is_ok());
+    ///
+    /// // Invalid selections
+    /// assert!(PdbStructure::validate_selection("").is_err());
+    /// assert!(PdbStructure::validate_selection("(chain A").is_err());
+    /// ```
+    pub fn validate_selection(
+        selection: &str,
+    ) -> Result<(), super::selection::SelectionError> {
+        super::selection::validate_selection(selection)
+    }
 }
 
 #[cfg(test)]
