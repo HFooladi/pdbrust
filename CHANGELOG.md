@@ -8,6 +8,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **DSSP 4-like secondary structure assignment** (`dssp` feature)
+  - Implements Kabsch & Sander algorithm with DSSP 4 updates (Hekkelman et al., 2025)
+  - 9-state classification: H (α-helix), G (3₁₀-helix), I (π-helix), P (κ-helix/PPII), E (extended strand), B (β-bridge), T (turn), S (bend), C (coil)
+  - `assign_secondary_structure()` returns full `SecondaryStructureAssignment` with per-residue details
+  - `secondary_structure_string()` returns compact string representation (e.g., "HHHHEEEECCCC")
+  - `secondary_structure_composition()` returns (helix_fraction, sheet_fraction, coil_fraction)
+  - H-bond detection using Kabsch-Sander electrostatic energy model
+  - PPII/κ-helix detection using backbone dihedral angles (φ = -75° ± 29°, ψ = +145° ± 29°)
+  - Full Python bindings with `SecondaryStructure`, `ResidueSSAssignment`, `SecondaryStructureAssignment` classes
+  - Iterator and indexing support for residue assignments in Python
+- **PyMOL/VMD-style selection language** (`filter` feature)
+  - `select()` method for flexible atom selection using familiar syntax
+  - Supports: `chain A`, `name CA`, `resname ALA`, `resid 50`, `resid 1:100`, `element C`
+  - Keywords: `backbone`, `protein`, `nucleic`, `water`, `hetero`, `hydrogen`, `all`
+  - Numeric comparisons: `bfactor < 30.0`, `occupancy >= 0.5`
+  - Boolean operators: `and`, `or`, `not`, parentheses for grouping
+  - Examples: `chain A and name CA`, `(chain A or chain B) and bfactor < 30.0`
+  - `validate_selection()` for syntax checking without execution
 - **mmCIF writing support**
   - `write_mmcif_file()` for writing structures to mmCIF format files
   - `write_mmcif_string()` for writing to strings
@@ -16,6 +34,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Proper ATOM/HETATM record distinction based on residue type
   - Support for SEQRES (sequence) and SSBOND (disulfide bonds) categories
   - Full Python bindings: `write_mmcif_file()`, `write_mmcif_string()`, `write_gzip_mmcif_file()`
+
+### Changed
+- `analysis` feature now includes `dssp` feature
 
 ## [0.5.0] - 2025-01-12
 
@@ -135,14 +156,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Performance benchmarks
 - Optional parallel processing support
 - Optional geometric analysis support
-
-## [Unreleased]
-
-### Added
-- None
-
-### Changed
-- None
-
-### Fixed
-- None
