@@ -46,12 +46,18 @@ Future development ideas for PDBRust. Priority will be determined based on user 
 - Zero external dependencies (hand-written recursive descent parser)
 - Full Python bindings included
 
-## Medium Impact
+### DSSP 4-like Secondary Structure Assignment ✅
+- Implements Kabsch & Sander algorithm with DSSP 4 updates (Hekkelman et al., 2025)
+- H-bond detection using electrostatic energy model (E < -0.5 kcal/mol threshold)
+- 9-state classification: H (α-helix), G (3₁₀-helix), I (π-helix), P (κ-helix/PPII), E (extended), B (β-bridge), T (turn), S (bend), C (coil)
+- PPII/κ-helix detection using backbone dihedral angles (φ = -75° ± 29°, ψ = +145° ± 29°)
+- `structure.assign_secondary_structure()` → `SecondaryStructureAssignment`
+- `structure.secondary_structure_string()` → String (e.g., "HHHHEEEECCCC")
+- `structure.secondary_structure_composition()` → (helix_fraction, sheet_fraction, coil_fraction)
+- Full Python bindings with iterator and indexing support
+- Under `dssp` feature flag (included in `analysis`)
 
-### DSSP-like Secondary Structure Assignment
-- Replace current heuristic with proper H-bond based assignment
-- Compute secondary structure from coordinates alone
-- Return per-residue SS codes (H, E, C, etc.)
+## Medium Impact
 
 ### Async RCSB Downloads
 - Add async variants of download functions

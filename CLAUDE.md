@@ -34,7 +34,8 @@ src/
 ├── quality/        # [feature: quality] Quality assessment
 ├── summary/        # [feature: summary] Unified structure summaries
 ├── rcsb/           # [feature: rcsb] RCSB PDB search and download
-└── geometry/       # [feature: geometry] RMSD and structure superposition
+├── geometry/       # [feature: geometry] RMSD and structure superposition
+└── dssp/           # [feature: dssp] Secondary structure assignment
 
 pdbrust-python/     # Python bindings (PyO3)
 ├── Cargo.toml          # Rust dependencies for Python bindings
@@ -51,6 +52,7 @@ pdbrust-python/     # Python bindings (PyO3)
 │   ├── summary.rs      # StructureSummary bindings
 │   ├── rcsb.rs         # RCSB search/download bindings
 │   ├── geometry.rs     # RMSD/alignment bindings
+│   ├── dssp.rs         # Secondary structure bindings
 │   └── numpy_support.rs # Numpy array integration
 └── python/pdbrust/
     ├── __init__.py     # Python exports
@@ -90,7 +92,8 @@ benchmark_results/      # Results from full PDB archive benchmark
 | `gzip` | Parse gzip-compressed files (.ent.gz, .pdb.gz) | `flate2` |
 | `parallel` | Parallel processing with Rayon | `rayon` |
 | `geometry` | Geometric analysis with nalgebra | `nalgebra` |
-| `analysis` | All analysis features | `filter`, `descriptors`, `quality`, `summary` |
+| `dssp` | DSSP-like secondary structure assignment | - |
+| `analysis` | All analysis features | `filter`, `descriptors`, `quality`, `summary`, `dssp` |
 | `full` | Everything | `parallel`, `geometry`, `analysis`, `rcsb`, `gzip` |
 
 ## Development Commands
@@ -173,6 +176,7 @@ Test files:
 - `tests/quality_tests.rs` - 18 tests
 - `tests/summary_tests.rs` - 18 tests
 - `tests/rcsb_tests.rs` - 28 tests (11 network tests ignored by default)
+- `tests/dssp_tests.rs` - 34 tests (secondary structure assignment)
 
 ## Key Data Structures
 
@@ -194,6 +198,9 @@ Test files:
 - `AlignmentResult` (geometry): RMSD and transformation from alignment
 - `PerResidueRmsd` (geometry): Per-residue RMSD for flexibility analysis
 - `AtomSelection` (geometry): Atom selection for RMSD/alignment
+- `SecondaryStructure` (dssp): 9-state SS classification (H, G, I, P, E, B, T, S, C)
+- `ResidueSSAssignment` (dssp): Per-residue secondary structure assignment
+- `SecondaryStructureAssignment` (dssp): Complete SS assignment with statistics
 
 ## Common Patterns
 
@@ -296,6 +303,40 @@ for r in &per_res {
     }
 }
 ```
+
+### Secondary Structure (feature: dssp)
+```rust
+// Compute DSSP-like secondary structure assignment
+let ss = structure.assign_secondary_structure();
+
+// Get summary statistics
+println!("Helix: {:.1}%", ss.helix_fraction * 100.0);
+println!("Sheet: {:.1}%", ss.sheet_fraction * 100.0);
+println!("Coil:  {:.1}%", ss.coil_fraction * 100.0);
+
+// Get as compact string (e.g., "HHHHEEEECCCC")
+let ss_string = structure.secondary_structure_string();
+
+// Get composition tuple (helix, sheet, coil)
+let (helix, sheet, coil) = structure.secondary_structure_composition();
+
+// Iterate over per-residue assignments
+for res in &ss.residue_assignments {
+    println!("{}{}: {} ({})",
+        res.chain_id, res.residue_seq, res.residue_name, res.ss.code());
+}
+```
+
+**Secondary Structure Codes (DSSP 4):**
+- `H`: α-helix (i → i+4 H-bond pattern)
+- `G`: 3₁₀-helix (i → i+3 H-bond pattern)
+- `I`: π-helix (i → i+5 H-bond pattern)
+- `P`: κ-helix/PPII (polyproline II, dihedral-based)
+- `E`: Extended strand (β-sheet)
+- `B`: Isolated β-bridge
+- `T`: Hydrogen-bonded turn
+- `S`: Bend (high backbone curvature)
+- `C`: Coil (none of the above)
 
 ## Examples
 
@@ -430,6 +471,7 @@ All features are enabled by default in the Python package:
 - Quality: quality_report, has_altlocs, has_multiple_models
 - RCSB: download_structure, rcsb_search with SearchQuery
 - Numpy: get_coords_array, get_ca_coords_array (returns numpy.ndarray)
+- DSSP: assign_secondary_structure, secondary_structure_string, secondary_structure_composition
 
 ### Python API Pattern
 
@@ -455,6 +497,12 @@ ca_coords = structure.get_ca_coords_array()  # Shape: (CA, 3)
 from pdbrust import download_structure, FileFormat, SearchQuery, rcsb_search
 structure = download_structure("1UBQ", FileFormat.pdb())
 results = rcsb_search(SearchQuery().with_text("kinase"), 10)
+
+# Secondary structure (DSSP)
+ss = structure.assign_secondary_structure()
+print(f"Helix: {ss.helix_fraction*100:.1f}%")
+print(f"Sheet: {ss.sheet_fraction*100:.1f}%")
+ss_string = structure.secondary_structure_string()  # e.g., "HHHHEEEECCCC"
 ```
 
 ### CI/CD for Python

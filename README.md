@@ -82,6 +82,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 | `quality` | Structure quality assessment (altlocs, missing residues, etc.) |
 | `summary` | Combined quality + descriptors in one call |
 | `geometry` | RMSD calculation, structure alignment (Kabsch), per-residue RMSD |
+| `dssp` | DSSP 4-like secondary structure assignment (H, G, I, P, E, B, T, S, C) |
 | `rcsb` | Search and download structures from RCSB PDB |
 | `gzip` | Parse gzip-compressed files (.ent.gz, .pdb.gz, .cif.gz) |
 | `parallel` | Parallel processing with Rayon |
@@ -172,6 +173,47 @@ let query = SearchQuery::new()
 let results = rcsb_search(&query, 10)?;
 ```
 
+### Secondary Structure Assignment (DSSP)
+
+```rust
+use pdbrust::parse_pdb_file;
+
+let structure = parse_pdb_file("protein.pdb")?;
+
+// Compute DSSP-like secondary structure
+let ss = structure.assign_secondary_structure();
+println!("Helix: {:.1}%", ss.helix_fraction * 100.0);
+println!("Sheet: {:.1}%", ss.sheet_fraction * 100.0);
+println!("Coil:  {:.1}%", ss.coil_fraction * 100.0);
+
+// Get as compact string (e.g., "HHHHEEEECCCC")
+let ss_string = structure.secondary_structure_string();
+
+// Get composition tuple
+let (helix, sheet, coil) = structure.secondary_structure_composition();
+```
+
+**Python:**
+
+```python
+import pdbrust
+
+structure = pdbrust.parse_pdb_file("protein.pdb")
+
+# Get secondary structure assignment
+ss = structure.assign_secondary_structure()
+print(f"Helix: {ss.helix_fraction*100:.1f}%")
+print(f"Sheet: {ss.sheet_fraction*100:.1f}%")
+
+# Compact string representation
+ss_string = structure.secondary_structure_string()
+print(f"SS: {ss_string}")  # e.g., "CCCCHHHHHHHCCEEEEEECCC"
+
+# Iterate over residue assignments
+for res in ss:
+    print(f"{res.chain_id}{res.residue_seq}: {res.ss.code()}")
+```
+
 ## Common Workflows
 
 See the [examples/](examples/) directory for complete working code:
@@ -250,11 +292,11 @@ On **Linux**, the RCSB download/search features are not available in the pre-bui
 due to cross-compilation constraints. All other features (parsing, filtering, analysis,
 geometry, numpy arrays, etc.) work on all platforms.
 
-| Platform | Parsing | Filtering | Descriptors | Geometry | RCSB |
-|----------|---------|-----------|-------------|----------|------|
-| macOS | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Windows | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Linux | ✓ | ✓ | ✓ | ✓ | - |
+| Platform | Parsing | Filtering | Descriptors | Geometry | DSSP | RCSB |
+|----------|---------|-----------|-------------|----------|------|------|
+| macOS | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Windows | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Linux | ✓ | ✓ | ✓ | ✓ | ✓ | - |
 
 See [pdbrust-python/README.md](pdbrust-python/README.md) for full Python API documentation.
 
