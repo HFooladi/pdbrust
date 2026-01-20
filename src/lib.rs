@@ -232,6 +232,9 @@ pub mod rcsb;
 #[cfg(feature = "geometry")]
 pub mod geometry;
 
+#[cfg(feature = "dssp")]
+pub mod dssp;
+
 // Re-exports for convenience
 pub use core::PdbStructure;
 pub use error::PdbError;

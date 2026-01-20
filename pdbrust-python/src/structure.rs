@@ -760,6 +760,65 @@ impl PyPdbStructure {
             .map_err(convert_error)
     }
 
+    // ==================== DSSP Methods (feature-gated) ====================
+
+    /// Compute DSSP-like secondary structure assignment.
+    ///
+    /// This method analyzes the protein structure and assigns secondary
+    /// structure to each residue using the DSSP algorithm.
+    ///
+    /// Returns:
+    ///     SecondaryStructureAssignment containing:
+    ///     - Per-residue assignments
+    ///     - Statistics (helix/sheet/coil counts and fractions)
+    ///     - Any warnings generated during assignment
+    ///
+    /// Example:
+    ///     >>> ss = structure.assign_secondary_structure()
+    ///     >>> print(f"Helix: {ss.helix_fraction * 100:.1f}%")
+    ///     >>> print(f"Sheet: {ss.sheet_fraction * 100:.1f}%")
+    ///     >>> for res in ss:
+    ///     ...     print(f"{res.chain_id}{res.residue_seq}: {res.code()}")
+    #[cfg(feature = "dssp")]
+    fn assign_secondary_structure(&self) -> crate::dssp::PySecondaryStructureAssignment {
+        crate::dssp::PySecondaryStructureAssignment::from(self.inner.assign_secondary_structure())
+    }
+
+    /// Get the secondary structure as a string of single-character codes.
+    ///
+    /// The string contains one character per residue in sequence order,
+    /// using standard DSSP codes (H, G, I, P, E, B, T, S, C).
+    ///
+    /// Returns:
+    ///     String like "CCCHHHHHHHHHCCCEEEEECCC"
+    ///
+    /// Example:
+    ///     >>> ss_string = structure.secondary_structure_string()
+    ///     >>> print(f"Secondary structure: {ss_string}")
+    #[cfg(feature = "dssp")]
+    fn secondary_structure_string(&self) -> String {
+        self.inner.secondary_structure_string()
+    }
+
+    /// Get the secondary structure composition as fractions.
+    ///
+    /// Returns:
+    ///     Tuple of (helix_fraction, sheet_fraction, coil_fraction) where:
+    ///     - helix includes H, G, I, and P (κ-helix/PPII)
+    ///     - sheet includes E and B
+    ///     - coil includes T, S, and C
+    ///     All fractions sum to 1.0.
+    ///
+    /// Example:
+    ///     >>> helix, sheet, coil = structure.secondary_structure_composition()
+    ///     >>> print(f"Helix: {helix * 100:.1f}%")
+    ///     >>> print(f"Sheet: {sheet * 100:.1f}%")
+    ///     >>> print(f"Coil:  {coil * 100:.1f}%")
+    #[cfg(feature = "dssp")]
+    fn secondary_structure_composition(&self) -> (f64, f64, f64) {
+        self.inner.secondary_structure_composition()
+    }
+
     // ==================== Magic Methods ====================
 
     fn __repr__(&self) -> String {

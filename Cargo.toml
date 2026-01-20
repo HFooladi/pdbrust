@@ -52,8 +52,9 @@ quality = []
 summary = ["descriptors", "quality"]
 rcsb = ["reqwest", "serde", "serde_json"]
 gzip = ["flate2"]
+dssp = []
 # Convenience feature for all analysis features
-analysis = ["filter", "descriptors", "quality", "summary"]
+analysis = ["filter", "descriptors", "quality", "summary", "dssp"]
 # Full feature set
 full = ["parallel", "geometry", "analysis", "rcsb", "gzip"]
 

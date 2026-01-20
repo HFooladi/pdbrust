@@ -25,6 +25,9 @@ mod rcsb;
 #[cfg(feature = "geometry")]
 mod geometry;
 
+#[cfg(feature = "dssp")]
+mod dssp;
+
 #[cfg(feature = "numpy")]
 pub mod numpy_support;
 
@@ -99,6 +102,14 @@ fn _pdbrust(m: &Bound<'_, PyModule>) -> PyResult<()> {
         m.add_class::<geometry::PyAtomSelection>()?;
         m.add_class::<geometry::PyAlignmentResult>()?;
         m.add_class::<geometry::PyPerResidueRmsd>()?;
+    }
+
+    // DSSP (feature-gated)
+    #[cfg(feature = "dssp")]
+    {
+        m.add_class::<dssp::PySecondaryStructure>()?;
+        m.add_class::<dssp::PyResidueSSAssignment>()?;
+        m.add_class::<dssp::PySecondaryStructureAssignment>()?;
     }
 
     Ok(())
