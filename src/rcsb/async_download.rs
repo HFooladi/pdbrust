@@ -299,11 +299,7 @@ async fn download_with_retry(
         }
 
         let result = async {
-            let response = client
-                .get(&url)
-                .timeout(timeout)
-                .send()
-                .await?;
+            let response = client.get(&url).timeout(timeout).send().await?;
 
             if response.status() == reqwest::StatusCode::NOT_FOUND {
                 return Err(DownloadError::NotFound(pdb_id.to_string()));

@@ -203,11 +203,7 @@ async fn test_download_multiple_async_simple() {
             result
         );
         let structure = result.as_ref().unwrap();
-        assert!(
-            structure.atoms.len() > 100,
-            "{} has too few atoms",
-            pdb_id
-        );
+        assert!(structure.atoms.len() > 100, "{} has too few atoms", pdb_id);
     }
 }
 

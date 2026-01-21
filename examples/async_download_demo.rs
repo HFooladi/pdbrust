@@ -11,7 +11,7 @@
 //! ```
 
 use pdbrust::rcsb::{
-    download_multiple_async, download_structure_async, AsyncDownloadOptions, FileFormat,
+    AsyncDownloadOptions, FileFormat, download_multiple_async, download_structure_async,
 };
 use std::error::Error;
 use std::time::Instant;
@@ -58,7 +58,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 #[cfg(feature = "descriptors")]
                 {
                     let rg = structure.radius_of_gyration();
-                    println!("  {}: {} atoms, Rg={:.1} A", pdb_id, structure.atoms.len(), rg);
+                    println!(
+                        "  {}: {} atoms, Rg={:.1} A",
+                        pdb_id,
+                        structure.atoms.len(),
+                        rg
+                    );
                 }
                 #[cfg(not(feature = "descriptors"))]
                 {
@@ -90,7 +95,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let results = download_multiple_async(&pdb_ids, FileFormat::Pdb, Some(options)).await;
     let elapsed = start.elapsed();
 
-    println!("\nDownloaded {} structures in {:?}:", pdb_ids.len(), elapsed);
+    println!(
+        "\nDownloaded {} structures in {:?}:",
+        pdb_ids.len(),
+        elapsed
+    );
     for (pdb_id, result) in &results {
         match result {
             Ok(structure) => println!("  {}: {} atoms", pdb_id, structure.atoms.len()),
@@ -113,7 +122,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let results = download_multiple_async(&pdb_ids, FileFormat::Pdb, Some(options)).await;
     let elapsed = start.elapsed();
 
-    println!("\nDownloaded {} structures in {:?}:", pdb_ids.len(), elapsed);
+    println!(
+        "\nDownloaded {} structures in {:?}:",
+        pdb_ids.len(),
+        elapsed
+    );
     for (pdb_id, result) in &results {
         match result {
             Ok(structure) => println!("  {}: {} atoms", pdb_id, structure.atoms.len()),
@@ -140,7 +153,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let results = download_multiple_async(&pdb_ids, FileFormat::Pdb, Some(options)).await;
     let elapsed = start.elapsed();
 
-    println!("\nDownloaded {} structures in {:?}:", pdb_ids.len(), elapsed);
+    println!(
+        "\nDownloaded {} structures in {:?}:",
+        pdb_ids.len(),
+        elapsed
+    );
     for (pdb_id, result) in &results {
         match result {
             Ok(structure) => println!("  {}: {} atoms", pdb_id, structure.atoms.len()),
