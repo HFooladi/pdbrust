@@ -379,6 +379,12 @@ See the [examples/](examples/) directory for complete working code:
 - `geometry_rmsd.py` - RMSD and alignment
 - `numpy_integration.py` - Numpy arrays, distance matrices, contact maps
 - `rcsb_search.py` - RCSB search and download
+- `selection_language.py` - PyMOL/VMD-style selection language
+- `secondary_structure.py` - DSSP secondary structure assignment
+- `b_factor_analysis.py` - B-factor statistics and flexibility analysis
+- `quality_and_summary.py` - Quality reports and structure summaries
+- `batch_processing.py` - Process multiple files with CSV export
+- `advanced_filtering.py` - Filtering, normalization, and manipulation
 
 Run Rust examples with:
 

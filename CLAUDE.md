@@ -406,6 +406,12 @@ The `pdbrust-python/examples/` directory contains Python examples:
 | `geometry_rmsd.py` | RMSD calculation, structure alignment, per-residue RMSD |
 | `numpy_integration.py` | Coordinate arrays, distance matrices, contact maps |
 | `rcsb_search.py` | RCSB search queries and structure downloads |
+| `selection_language.py` | PyMOL/VMD-style selection language with boolean operators |
+| `secondary_structure.py` | DSSP secondary structure assignment and analysis |
+| `b_factor_analysis.py` | B-factor statistics, flexible/rigid residues, normalization |
+| `quality_and_summary.py` | Quality reports, structure summaries, CSV export |
+| `batch_processing.py` | Process multiple files, quality filtering, dataset statistics |
+| `advanced_filtering.py` | Method chaining, normalization, centering, translation |
 
 Run Python examples:
 ```bash
@@ -413,6 +419,9 @@ cd pdbrust-python/examples
 python basic_usage.py
 python geometry_rmsd.py
 python numpy_integration.py
+python selection_language.py
+python secondary_structure.py
+python b_factor_analysis.py
 ```
 
 ### Running Rust Examples
