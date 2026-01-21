@@ -8,7 +8,7 @@ Add PDBRust to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-pdbrust = "0.3"
+pdbrust = "0.6"
 ```
 
 ### Choosing Features
@@ -17,16 +17,16 @@ PDBRust uses feature flags to keep the core library lightweight. Enable only wha
 
 ```toml
 # Minimal: just parsing
-pdbrust = "0.3"
+pdbrust = "0.6"
 
 # Common setup: parsing + filtering + analysis
-pdbrust = { version = "0.3", features = ["filter", "descriptors", "quality"] }
+pdbrust = { version = "0.6", features = ["filter", "descriptors", "quality"] }
 
 # Full analysis suite
-pdbrust = { version = "0.3", features = ["analysis"] }
+pdbrust = { version = "0.6", features = ["analysis"] }
 
 # Everything including RCSB download
-pdbrust = { version = "0.3", features = ["full"] }
+pdbrust = { version = "0.6", features = ["full"] }
 ```
 
 ### Which Features Do I Need?
@@ -35,10 +35,14 @@ pdbrust = { version = "0.3", features = ["full"] }
 |-------------------|----------------------|
 | Just parse PDB/mmCIF files | (none - included by default) |
 | Filter atoms, extract chains, clean structures | `filter` |
-| Compute Rg, composition, distances | `descriptors` |
+| Use selection language (chain A and name CA) | `filter` |
+| Compute Rg, composition, B-factor analysis | `descriptors` |
 | Assess structure quality | `quality` |
 | Get all metrics in one call | `summary` |
+| Calculate RMSD and align structures | `geometry` |
+| Compute secondary structure (DSSP) | `dssp` |
 | Download from RCSB PDB | `rcsb` |
+| Async bulk downloads with rate limiting | `rcsb-async` |
 | Process files in parallel | `parallel` |
 | All analysis features | `analysis` |
 | Everything | `full` |
@@ -86,6 +90,26 @@ let ca_coords = structure.get_ca_coords(None);
 let ca_atoms = structure.get_ca_atoms(None);
 ```
 
+### 2b. Selection Language (requires `filter` feature)
+
+```rust
+let structure = parse_pdb_file("protein.pdb")?;
+
+// PyMOL/VMD-style selections
+let chain_a = structure.select("chain A")?;
+let ca_atoms = structure.select("name CA")?;
+let backbone = structure.select("backbone")?;
+
+// Combine with boolean operators
+let chain_a_ca = structure.select("chain A and name CA")?;
+let heavy_atoms = structure.select("protein and not hydrogen")?;
+let complex = structure.select("(chain A or chain B) and bfactor < 30.0")?;
+
+// Residue ranges and numeric comparisons
+let active_site = structure.select("resid 50:60")?;
+let flexible = structure.select("bfactor > 40.0")?;
+```
+
 ### 3. Compute Descriptors (requires `descriptors` feature)
 
 ```rust
@@ -100,6 +124,31 @@ let composition = structure.aa_composition();
 let descriptors = structure.structure_descriptors();
 println!("Rg: {:.2} A", descriptors.radius_of_gyration);
 println!("Hydrophobic: {:.1}%", descriptors.hydrophobic_ratio * 100.0);
+```
+
+### 3b. B-factor Analysis (requires `descriptors` feature)
+
+```rust
+let structure = parse_pdb_file("protein.pdb")?;
+
+// B-factor statistics
+let mean_b = structure.b_factor_mean();
+let mean_ca = structure.b_factor_mean_ca();
+let std_b = structure.b_factor_std();
+println!("Mean B-factor: {:.2} Å²", mean_b);
+
+// Per-residue B-factor profile
+let profile = structure.b_factor_profile();
+for res in &profile {
+    println!("{}{}: mean={:.2}", res.chain_id, res.residue_seq, res.mean);
+}
+
+// Identify flexible/rigid regions
+let flexible = structure.flexible_residues(50.0);  // B > 50 Å²
+let rigid = structure.rigid_residues(15.0);        // B < 15 Å²
+
+// Normalize for cross-structure comparison
+let normalized = structure.normalize_b_factors();
 ```
 
 ### 4. Quality Assessment (requires `quality` feature)
@@ -134,6 +183,83 @@ let query = SearchQuery::new()
 
 let results = rcsb_search(&query, 10)?;
 println!("Found {} structures", results.total_count);
+```
+
+### 5b. Async Bulk Downloads (requires `rcsb-async` feature)
+
+```rust
+use pdbrust::rcsb::{download_multiple_async, AsyncDownloadOptions, FileFormat};
+
+#[tokio::main]
+async fn main() {
+    let pdb_ids = vec!["1UBQ", "8HM2", "4INS", "1HHB"];
+
+    // Download with default options (5 concurrent, 100ms rate limit)
+    let results = download_multiple_async(&pdb_ids, FileFormat::Pdb, None).await;
+
+    // Or with custom options
+    let options = AsyncDownloadOptions::default()
+        .with_max_concurrent(10)
+        .with_rate_limit_ms(50);
+    let results = download_multiple_async(&pdb_ids, FileFormat::Cif, Some(options)).await;
+
+    for (pdb_id, result) in results {
+        match result {
+            Ok(structure) => println!("{}: {} atoms", pdb_id, structure.atoms.len()),
+            Err(e) => eprintln!("{}: {}", pdb_id, e),
+        }
+    }
+}
+```
+
+### 6. Geometry: RMSD and Alignment (requires `geometry` feature)
+
+```rust
+use pdbrust::{parse_pdb_file, geometry::AtomSelection};
+
+let structure1 = parse_pdb_file("model1.pdb")?;
+let structure2 = parse_pdb_file("model2.pdb")?;
+
+// Calculate RMSD (without alignment)
+let rmsd = structure1.rmsd_to(&structure2)?;
+println!("RMSD: {:.3} Å", rmsd);
+
+// Align structures using Kabsch algorithm
+let (aligned, result) = structure1.align_to(&structure2)?;
+println!("Alignment RMSD: {:.3} Å ({} atoms)", result.rmsd, result.num_atoms);
+
+// Per-residue RMSD for flexibility analysis
+let per_res = structure1.per_residue_rmsd_to(&structure2)?;
+for r in per_res.iter().filter(|r| r.rmsd > 2.0) {
+    println!("Flexible: {} {:.2} Å", r.residue_name, r.rmsd);
+}
+
+// Different atom selections
+let rmsd_bb = structure1.rmsd_to_with_selection(&structure2, AtomSelection::Backbone)?;
+```
+
+### 7. Secondary Structure (requires `dssp` feature)
+
+```rust
+let structure = parse_pdb_file("protein.pdb")?;
+
+// Compute DSSP-like secondary structure
+let ss = structure.assign_secondary_structure();
+println!("Helix: {:.1}%", ss.helix_fraction * 100.0);
+println!("Sheet: {:.1}%", ss.sheet_fraction * 100.0);
+println!("Coil:  {:.1}%", ss.coil_fraction * 100.0);
+
+// Get compact string (e.g., "HHHHEEEECCCC")
+let ss_string = structure.secondary_structure_string();
+
+// Get composition tuple
+let (helix, sheet, coil) = structure.secondary_structure_composition();
+
+// Iterate over per-residue assignments
+for res in &ss.residue_assignments {
+    println!("{}{}: {} ({})",
+        res.chain_id, res.residue_seq, res.residue_name, res.ss.code());
+}
 ```
 
 ## Common Workflows
@@ -206,8 +332,23 @@ cargo run --example analysis_workflow --features "filter,descriptors,quality,sum
 # Filtering operations
 cargo run --example filtering_demo --features "filter"
 
+# Selection language
+cargo run --example selection_demo --features "filter"
+
+# B-factor analysis
+cargo run --example b_factor_demo --features "descriptors"
+
+# Secondary structure (DSSP)
+cargo run --example secondary_structure_demo --features "dssp"
+
+# RMSD and structure alignment
+cargo run --example geometry_demo --features "geometry"
+
 # RCSB search and download
 cargo run --example rcsb_workflow --features "rcsb,descriptors"
+
+# Async bulk downloads
+cargo run --example async_download_demo --features "rcsb-async,descriptors"
 
 # Batch processing
 cargo run --example batch_processing --features "descriptors,summary"
@@ -270,7 +411,7 @@ let ca_count = structure.atoms.iter()
 Make sure you've enabled the required feature in `Cargo.toml`:
 
 ```toml
-pdbrust = { version = "0.3", features = ["filter", "descriptors"] }
+pdbrust = { version = "0.6", features = ["filter", "descriptors"] }
 ```
 
 ### Network errors with RCSB

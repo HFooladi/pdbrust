@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "pdbrust"
-version = "0.5.0"
+version = "0.6.0"
 description = "High-performance PDB/mmCIF parsing and analysis library with Python bindings"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -19,6 +19,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Programming Language :: Rust",
     "Topic :: Scientific/Engineering :: Bio-Informatics",
     "Topic :: Scientific/Engineering :: Chemistry",

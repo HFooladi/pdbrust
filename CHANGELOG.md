@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2025-01-21
+
 ### Added
 - **B-factor (temperature factor) analysis** (`descriptors` feature)
   - `b_factor_mean()` - Mean B-factor across all atoms
@@ -58,6 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - `analysis` feature now includes `dssp` feature
+- **Python 3.13 support** - Pre-built wheels now available for Python 3.9-3.13 (closes #9)
 
 ## [0.5.0] - 2025-01-12
 

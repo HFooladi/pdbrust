@@ -32,7 +32,7 @@ jobs:
         with:
           target: ${{ matrix.target }}
           # Use 'core' features for Linux (no RCSB to avoid OpenSSL issues)
-          args: --release --out dist -i 3.9 3.10 3.11 3.12 --manifest-path pdbrust-python/Cargo.toml --no-default-features --features core
+          args: --release --out dist -i 3.9 3.10 3.11 3.12 3.13 --manifest-path pdbrust-python/Cargo.toml --no-default-features --features core
           sccache: 'true'
           manylinux: auto
 
@@ -59,7 +59,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist -i 3.9 3.10 3.11 3.12 --manifest-path pdbrust-python/Cargo.toml --features full
+          args: --release --out dist -i 3.9 3.10 3.11 3.12 3.13 --manifest-path pdbrust-python/Cargo.toml --features full
           sccache: 'true'
 
       - name: Upload wheels
@@ -86,7 +86,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist -i 3.9 3.10 3.11 3.12 --manifest-path pdbrust-python/Cargo.toml --features full
+          args: --release --out dist -i 3.9 3.10 3.11 3.12 3.13 --manifest-path pdbrust-python/Cargo.toml --features full
           sccache: 'true'
 
       - name: Upload wheels

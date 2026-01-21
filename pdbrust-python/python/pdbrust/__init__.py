@@ -57,7 +57,7 @@ except ImportError:
 
 # Optional: descriptors
 try:
-    from pdbrust._pdbrust import StructureDescriptors
+    from pdbrust._pdbrust import StructureDescriptors, ResidueBFactor
 except ImportError:
     pass
 
@@ -89,6 +89,16 @@ try:
 except ImportError:
     pass
 
+# Optional: RCSB Async
+try:
+    from pdbrust._pdbrust import (
+        AsyncDownloadOptions,
+        DownloadResult,
+        download_multiple,
+    )
+except ImportError:
+    pass
+
 # Optional: geometry (RMSD, alignment)
 try:
     from pdbrust._pdbrust import (
@@ -109,7 +119,7 @@ try:
 except ImportError:
     pass
 
-__version__ = "0.5.0"
+__version__ = "0.6.0"
 __all__ = [
     # Core types
     "PdbStructure",
@@ -136,6 +146,7 @@ __all__ = [
     "write_gzip_mmcif_file",
     # Descriptors (optional)
     "StructureDescriptors",
+    "ResidueBFactor",
     # Quality (optional)
     "QualityReport",
     # Summary (optional)
@@ -150,6 +161,10 @@ __all__ = [
     "download_structure",
     "download_pdb_string",
     "download_to_file",
+    # RCSB Async (optional)
+    "AsyncDownloadOptions",
+    "DownloadResult",
+    "download_multiple",
     # Geometry (optional)
     "AtomSelection",
     "AlignmentResult",

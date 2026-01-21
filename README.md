@@ -21,7 +21,7 @@ pip install pdbrust
 
 ```toml
 [dependencies]
-pdbrust = "0.5"
+pdbrust = "0.6"
 ```
 
 With optional features:
@@ -261,6 +261,102 @@ for res in ss:
     print(f"{res.chain_id}{res.residue_seq}: {res.ss.code()}")
 ```
 
+### B-factor Analysis
+
+```rust
+use pdbrust::parse_pdb_file;
+
+let structure = parse_pdb_file("protein.pdb")?;
+
+// B-factor statistics
+let mean_b = structure.b_factor_mean();
+let mean_b_ca = structure.b_factor_mean_ca();
+let std_b = structure.b_factor_std();
+println!("Mean B-factor: {:.2} Å²", mean_b);
+println!("Std deviation: {:.2} Å²", std_b);
+
+// Per-residue B-factor profile
+let profile = structure.b_factor_profile();
+for res in &profile {
+    println!("{}{}: mean={:.2}, max={:.2}",
+        res.chain_id, res.residue_seq, res.mean, res.max);
+}
+
+// Identify flexible/rigid regions
+let flexible = structure.flexible_residues(50.0);  // B > 50 Å²
+let rigid = structure.rigid_residues(15.0);        // B < 15 Å²
+
+// Normalize for cross-structure comparison
+let normalized = structure.normalize_b_factors();
+```
+
+**Python:**
+
+```python
+import pdbrust
+
+structure = pdbrust.parse_pdb_file("protein.pdb")
+
+# B-factor statistics
+print(f"Mean B-factor: {structure.b_factor_mean():.2f} Å²")
+print(f"CA mean: {structure.b_factor_mean_ca():.2f} Å²")
+
+# Per-residue profile
+profile = structure.b_factor_profile()
+for res in profile:
+    print(f"{res.chain_id}{res.residue_seq}: {res.mean:.2f} Å²")
+
+# Flexible regions
+flexible = structure.flexible_residues(50.0)
+print(f"Found {len(flexible)} flexible residues")
+```
+
+### Selection Language (PyMOL/VMD-style)
+
+```rust
+use pdbrust::parse_pdb_file;
+
+let structure = parse_pdb_file("protein.pdb")?;
+
+// Basic selections
+let chain_a = structure.select("chain A")?;
+let ca_atoms = structure.select("name CA")?;
+let backbone = structure.select("backbone")?;
+
+// Residue selections
+let res_range = structure.select("resid 1:100")?;
+let alanines = structure.select("resname ALA")?;
+
+// Boolean operators
+let chain_a_ca = structure.select("chain A and name CA")?;
+let heavy_atoms = structure.select("protein and not hydrogen")?;
+let complex = structure.select("(chain A or chain B) and backbone")?;
+
+// Numeric comparisons
+let low_bfactor = structure.select("bfactor < 30.0")?;
+let high_occ = structure.select("occupancy >= 0.5")?;
+
+// Validate without executing
+pdbrust::PdbStructure::validate_selection("chain A and name CA")?;
+```
+
+**Python:**
+
+```python
+import pdbrust
+
+structure = pdbrust.parse_pdb_file("protein.pdb")
+
+# Select atoms using familiar syntax
+chain_a = structure.select("chain A")
+ca_atoms = structure.select("name CA")
+backbone = structure.select("backbone and not hydrogen")
+
+# Complex selections
+active_site = structure.select("resid 50:60 and chain A")
+flexible = structure.select("chain A and bfactor > 40.0")
+```
+
 ## Common Workflows
 
 See the [examples/](examples/) directory for complete working code:
@@ -269,6 +365,9 @@ See the [examples/](examples/) directory for complete working code:
 |----------|---------|---------------|
 | Load, clean, analyze, export | [analysis_workflow.rs](examples/analysis_workflow.rs) | filter, descriptors, quality, summary |
 | Filter and clean structures | [filtering_demo.rs](examples/filtering_demo.rs) | filter |
+| Selection language | [selection_demo.rs](examples/selection_demo.rs) | filter |
+| B-factor analysis | [b_factor_demo.rs](examples/b_factor_demo.rs) | descriptors |
+| Secondary structure (DSSP) | [secondary_structure_demo.rs](examples/secondary_structure_demo.rs) | dssp |
 | RMSD and structure alignment | [geometry_demo.rs](examples/geometry_demo.rs) | geometry |
 | Search and download from RCSB | [rcsb_workflow.rs](examples/rcsb_workflow.rs) | rcsb, descriptors |
 | Async bulk downloads | [async_download_demo.rs](examples/async_download_demo.rs) | rcsb-async, descriptors |
@@ -286,6 +385,9 @@ Run Rust examples with:
 ```bash
 cargo run --example analysis_workflow --features "filter,descriptors,quality,summary"
 cargo run --example filtering_demo --features "filter"
+cargo run --example selection_demo --features "filter"
+cargo run --example b_factor_demo --features "descriptors"
+cargo run --example secondary_structure_demo --features "dssp"
 cargo run --example geometry_demo --features "geometry"
 cargo run --example rcsb_workflow --features "rcsb,descriptors"
 cargo run --example async_download_demo --features "rcsb-async,descriptors"
@@ -328,7 +430,7 @@ cargo run --release --example full_pdb_benchmark \
 
 ## Python Package
 
-Pre-built wheels available for Linux, macOS, and Windows (Python 3.9-3.12):
+Pre-built wheels available for Linux, macOS, and Windows (Python 3.9-3.13):
 
 ```bash
 pip install pdbrust
@@ -367,7 +469,7 @@ If you use PDBRust in your research, please cite it using the metadata in our [C
   publisher = {Zenodo},
   doi = {10.5281/zenodo.18232203},
   url = {https://doi.org/10.5281/zenodo.18232203},
-  version = {0.5.0}
+  version = {0.6.0}
 }
 ```
 
