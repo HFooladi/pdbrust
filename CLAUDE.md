@@ -194,6 +194,7 @@ Test files:
 - `SelectionError` (filter): Selection language parsing errors
 - `QualityReport` (quality): Structure quality assessment
 - `StructureDescriptors` (descriptors): Computed structural metrics
+- `ResidueBFactor` (descriptors): Per-residue B-factor statistics (mean, min, max)
 - `StructureSummary` (summary): Combined quality + descriptors
 - `SearchQuery` (rcsb): RCSB search query builder
 - `FileFormat` (rcsb): PDB/CIF format selection
@@ -262,6 +263,12 @@ let rg = structure.radius_of_gyration();
 let max_dist = structure.max_ca_distance();
 let composition = structure.aa_composition();
 let descriptors = structure.structure_descriptors(); // All at once
+
+// B-factor analysis
+let mean_b = structure.b_factor_mean();
+let profile = structure.b_factor_profile();
+let flexible = structure.flexible_residues(50.0);  // B > 50 Å²
+let normalized = structure.normalize_b_factors();
 ```
 
 ### Quality (feature: quality)
@@ -501,7 +508,8 @@ maturin publish --no-sdist
 All features are enabled by default in the Python package:
 - Parsing: PDB, mmCIF, gzip-compressed files
 - Filtering: remove_ligands, keep_only_chain, keep_only_ca, etc.
-- Descriptors: radius_of_gyration, max_ca_distance, aa_composition
+- Descriptors: radius_of_gyration, max_ca_distance, aa_composition, B-factor analysis
+- B-factor: b_factor_mean, b_factor_profile, flexible_residues, normalize_b_factors
 - Quality: quality_report, has_altlocs, has_multiple_models
 - RCSB: download_structure, rcsb_search with SearchQuery
 - Numpy: get_coords_array, get_ca_coords_array (returns numpy.ndarray)
@@ -537,6 +545,13 @@ ss = structure.assign_secondary_structure()
 print(f"Helix: {ss.helix_fraction*100:.1f}%")
 print(f"Sheet: {ss.sheet_fraction*100:.1f}%")
 ss_string = structure.secondary_structure_string()  # e.g., "HHHHEEEECCCC"
+
+# B-factor analysis
+mean_b = structure.b_factor_mean()
+profile = structure.b_factor_profile()
+flexible = structure.flexible_residues(50.0)
+print(f"Mean B-factor: {mean_b:.2f} Å²")
+print(f"Found {len(flexible)} flexible residues")
 ```
 
 ### CI/CD for Python

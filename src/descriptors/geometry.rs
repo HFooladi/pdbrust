@@ -336,6 +336,7 @@ impl PdbStructure {
     /// println!("Residues: {}", descriptors.num_residues);
     /// println!("Rg: {:.2} Å", descriptors.radius_of_gyration);
     /// println!("Compactness: {:.2}", descriptors.compactness_index);
+    /// println!("Mean B-factor: {:.2} Å²", descriptors.b_factor_mean);
     /// ```
     pub fn structure_descriptors(&self) -> StructureDescriptors {
         StructureDescriptors {
@@ -350,6 +351,11 @@ impl PdbStructure {
             secondary_structure_ratio: self.secondary_structure_ratio(),
             compactness_index: self.compactness_index(),
             ca_density: self.ca_density(),
+            b_factor_mean: self.b_factor_mean(),
+            b_factor_mean_ca: self.b_factor_mean_ca(),
+            b_factor_min: self.b_factor_min(),
+            b_factor_max: self.b_factor_max(),
+            b_factor_std: self.b_factor_std(),
         }
     }
 }

@@ -66,12 +66,21 @@ Future development ideas for PDBRust. Priority will be determined based on user 
 - Python bindings: `download_multiple()` with `AsyncDownloadOptions` and `DownloadResult`
 - Under `rcsb-async` feature flag (included in `full`)
 
-## Medium Impact
+### B-factor Analysis ✅
+- `structure.b_factor_mean()` → mean B-factor across all atoms
+- `structure.b_factor_mean_ca()` → mean B-factor for CA atoms only
+- `structure.b_factor_min()`, `b_factor_max()`, `b_factor_std()` → basic statistics
+- `structure.b_factor_profile()` → per-residue B-factor statistics (mean, min, max)
+- `structure.flexible_residues(threshold)` → identify mobile/disordered regions
+- `structure.rigid_residues(threshold)` → identify well-ordered regions
+- `structure.normalize_b_factors()` → Z-score normalization for cross-structure comparison
+- `structure.b_factor_percentile(atom_serial)` → get percentile rank of atom's B-factor
+- `ResidueBFactor` struct with chain_id, residue_seq, residue_name, and B-factor stats
+- Full Python bindings with `ResidueBFactor` class
+- B-factor fields added to `StructureDescriptors`
+- Under existing `descriptors` feature flag
 
-### B-factor Analysis
-- `structure.b_factor_profile()` → per-residue B-factors
-- Identify flexible regions
-- Normalize B-factors across structures
+## Medium Impact
 
 ## Lower Priority
 

@@ -580,3 +580,313 @@ fn test_contact_map_empty_structure() {
     let all_atom_contacts = structure.contact_map(4.5);
     assert!(all_atom_contacts.is_empty());
 }
+
+// ============================================================================
+// B-factor Analysis Tests
+// ============================================================================
+
+#[test]
+fn test_b_factor_mean_real_structure() {
+    let path = get_test_file("1UBQ.pdb");
+    let structure = parse_pdb_file(&path).expect("Failed to parse 1UBQ.pdb");
+
+    let mean_b = structure.b_factor_mean();
+
+    // B-factors should be positive and reasonable
+    assert!(
+        mean_b > 0.0,
+        "Mean B-factor should be positive, got {}",
+        mean_b
+    );
+    assert!(
+        mean_b < 100.0,
+        "Mean B-factor should be reasonable, got {}",
+        mean_b
+    );
+}
+
+#[test]
+fn test_b_factor_mean_ca_real_structure() {
+    let path = get_test_file("1UBQ.pdb");
+    let structure = parse_pdb_file(&path).expect("Failed to parse 1UBQ.pdb");
+
+    let mean_b_ca = structure.b_factor_mean_ca();
+    let mean_b_all = structure.b_factor_mean();
+
+    // CA B-factor should be positive
+    assert!(
+        mean_b_ca > 0.0,
+        "Mean CA B-factor should be positive, got {}",
+        mean_b_ca
+    );
+
+    // CA and all-atom means can differ but should be in same ballpark
+    assert!(
+        (mean_b_ca - mean_b_all).abs() < 20.0,
+        "CA mean ({}) should be close to all-atom mean ({})",
+        mean_b_ca,
+        mean_b_all
+    );
+}
+
+#[test]
+fn test_b_factor_min_max_real_structure() {
+    let path = get_test_file("1UBQ.pdb");
+    let structure = parse_pdb_file(&path).expect("Failed to parse 1UBQ.pdb");
+
+    let min_b = structure.b_factor_min();
+    let max_b = structure.b_factor_max();
+    let mean_b = structure.b_factor_mean();
+
+    // Min should be <= mean <= max
+    assert!(
+        min_b <= mean_b,
+        "Min ({}) should be <= mean ({})",
+        min_b,
+        mean_b
+    );
+    assert!(
+        mean_b <= max_b,
+        "Mean ({}) should be <= max ({})",
+        mean_b,
+        max_b
+    );
+
+    // There should be a range of B-factors
+    assert!(max_b > min_b, "Max ({}) should be > min ({})", max_b, min_b);
+}
+
+#[test]
+fn test_b_factor_std_real_structure() {
+    let path = get_test_file("1UBQ.pdb");
+    let structure = parse_pdb_file(&path).expect("Failed to parse 1UBQ.pdb");
+
+    let std_b = structure.b_factor_std();
+
+    // Std should be positive (there should be variation)
+    assert!(
+        std_b > 0.0,
+        "B-factor std should be positive, got {}",
+        std_b
+    );
+
+    // Std should be reasonable (typically < 30 for well-determined structures)
+    assert!(
+        std_b < 50.0,
+        "B-factor std should be reasonable, got {}",
+        std_b
+    );
+}
+
+#[test]
+fn test_b_factor_profile_real_structure() {
+    let path = get_test_file("1UBQ.pdb");
+    let structure = parse_pdb_file(&path).expect("Failed to parse 1UBQ.pdb");
+
+    let profile = structure.b_factor_profile();
+
+    // 1UBQ has 76 amino acid residues plus water molecules
+    // Profile includes all residues (protein + waters)
+    assert!(
+        profile.len() >= 76,
+        "Profile should have at least 76 residues, got {}",
+        profile.len()
+    );
+
+    // Each residue should have valid statistics
+    for res in &profile {
+        assert!(
+            !res.chain_id.is_empty() || res.chain_id.trim().is_empty(),
+            "Chain ID can be empty for some records"
+        );
+        assert!(
+            res.b_factor_mean >= res.b_factor_min,
+            "Mean ({}) should be >= min ({})",
+            res.b_factor_mean,
+            res.b_factor_min
+        );
+        assert!(
+            res.b_factor_mean <= res.b_factor_max,
+            "Mean ({}) should be <= max ({})",
+            res.b_factor_mean,
+            res.b_factor_max
+        );
+        assert!(res.atom_count > 0, "Atom count should be > 0");
+    }
+}
+
+#[test]
+fn test_b_factor_profile_ordering() {
+    let path = get_test_file("1UBQ.pdb");
+    let structure = parse_pdb_file(&path).expect("Failed to parse 1UBQ.pdb");
+
+    let profile = structure.b_factor_profile();
+
+    // Profile should be sorted by chain, then by residue number
+    for window in profile.windows(2) {
+        let a = &window[0];
+        let b = &window[1];
+
+        if a.chain_id == b.chain_id {
+            assert!(
+                a.residue_seq <= b.residue_seq,
+                "Residues should be sorted within chain: {} <= {}",
+                a.residue_seq,
+                b.residue_seq
+            );
+        } else {
+            assert!(
+                a.chain_id < b.chain_id,
+                "Chains should be sorted alphabetically: {} < {}",
+                a.chain_id,
+                b.chain_id
+            );
+        }
+    }
+}
+
+#[test]
+fn test_flexible_residues_real_structure() {
+    let path = get_test_file("1UBQ.pdb");
+    let structure = parse_pdb_file(&path).expect("Failed to parse 1UBQ.pdb");
+
+    // Get some statistics to set reasonable threshold
+    let mean_b = structure.b_factor_mean();
+    let std_b = structure.b_factor_std();
+
+    // Use mean + std as threshold
+    let threshold = mean_b + std_b;
+    let flexible = structure.flexible_residues(threshold);
+
+    // Should find some flexible residues (but not all)
+    assert!(!flexible.is_empty(), "Should find some flexible residues");
+    assert!(
+        flexible.len() < structure.b_factor_profile().len(),
+        "Not all residues should be flexible"
+    );
+
+    // All returned residues should be above threshold
+    for res in &flexible {
+        assert!(
+            res.b_factor_mean > threshold,
+            "Flexible residue B-factor ({}) should be > threshold ({})",
+            res.b_factor_mean,
+            threshold
+        );
+    }
+}
+
+#[test]
+fn test_rigid_residues_real_structure() {
+    let path = get_test_file("1UBQ.pdb");
+    let structure = parse_pdb_file(&path).expect("Failed to parse 1UBQ.pdb");
+
+    // Get some statistics to set reasonable threshold
+    let mean_b = structure.b_factor_mean();
+    let std_b = structure.b_factor_std();
+
+    // Use mean - std as threshold
+    let threshold = mean_b - std_b;
+    let rigid = structure.rigid_residues(threshold);
+
+    // Should find some rigid residues (but not all)
+    assert!(!rigid.is_empty(), "Should find some rigid residues");
+    assert!(
+        rigid.len() < structure.b_factor_profile().len(),
+        "Not all residues should be rigid"
+    );
+
+    // All returned residues should be below threshold
+    for res in &rigid {
+        assert!(
+            res.b_factor_mean < threshold,
+            "Rigid residue B-factor ({}) should be < threshold ({})",
+            res.b_factor_mean,
+            threshold
+        );
+    }
+}
+
+#[test]
+fn test_normalize_b_factors_real_structure() {
+    let path = get_test_file("1UBQ.pdb");
+    let structure = parse_pdb_file(&path).expect("Failed to parse 1UBQ.pdb");
+
+    let normalized = structure.normalize_b_factors();
+
+    // After normalization, mean should be ~0 and std should be ~1
+    let norm_mean = normalized.b_factor_mean();
+    let norm_std = normalized.b_factor_std();
+
+    assert!(
+        norm_mean.abs() < 1e-6,
+        "Normalized mean should be ~0, got {}",
+        norm_mean
+    );
+    assert!(
+        (norm_std - 1.0).abs() < 1e-6,
+        "Normalized std should be ~1, got {}",
+        norm_std
+    );
+
+    // Original structure should be unchanged
+    let original_mean = structure.b_factor_mean();
+    assert!(
+        original_mean.abs() > 1.0,
+        "Original mean should be unchanged"
+    );
+}
+
+#[test]
+fn test_b_factor_empty_structure() {
+    let structure = PdbStructure::new();
+
+    assert_eq!(structure.b_factor_mean(), 0.0);
+    assert_eq!(structure.b_factor_mean_ca(), 0.0);
+    assert_eq!(structure.b_factor_min(), 0.0);
+    assert_eq!(structure.b_factor_max(), 0.0);
+    assert_eq!(structure.b_factor_std(), 0.0);
+    assert!(structure.b_factor_profile().is_empty());
+    assert!(structure.flexible_residues(50.0).is_empty());
+    assert!(structure.rigid_residues(20.0).is_empty());
+}
+
+#[test]
+fn test_b_factor_percentile_real_structure() {
+    let path = get_test_file("1UBQ.pdb");
+    let structure = parse_pdb_file(&path).expect("Failed to parse 1UBQ.pdb");
+
+    // Get percentile for first atom
+    if let Some(first_atom) = structure.atoms.first() {
+        let percentile = structure.b_factor_percentile(first_atom.serial);
+        assert!(
+            percentile.is_some(),
+            "Should find percentile for existing atom"
+        );
+
+        let p = percentile.unwrap();
+        assert!(
+            (0.0..=100.0).contains(&p),
+            "Percentile should be 0-100, got {}",
+            p
+        );
+    }
+
+    // Non-existent atom should return None
+    assert!(structure.b_factor_percentile(-999).is_none());
+}
+
+#[test]
+fn test_structure_descriptors_includes_bfactors() {
+    let path = get_test_file("1UBQ.pdb");
+    let structure = parse_pdb_file(&path).expect("Failed to parse 1UBQ.pdb");
+
+    let desc = structure.structure_descriptors();
+
+    // B-factor fields should be populated and consistent with individual methods
+    assert!((desc.b_factor_mean - structure.b_factor_mean()).abs() < 1e-10);
+    assert!((desc.b_factor_mean_ca - structure.b_factor_mean_ca()).abs() < 1e-10);
+    assert!((desc.b_factor_min - structure.b_factor_min()).abs() < 1e-10);
+    assert!((desc.b_factor_max - structure.b_factor_max()).abs() < 1e-10);
+    assert!((desc.b_factor_std - structure.b_factor_std()).abs() < 1e-10);
+}

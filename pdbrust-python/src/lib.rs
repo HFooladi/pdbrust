@@ -68,6 +68,7 @@ fn _pdbrust(m: &Bound<'_, PyModule>) -> PyResult<()> {
     #[cfg(feature = "descriptors")]
     {
         m.add_class::<descriptors::PyStructureDescriptors>()?;
+        m.add_class::<descriptors::PyResidueBFactor>()?;
     }
 
     // Quality (feature-gated)

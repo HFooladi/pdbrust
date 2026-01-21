@@ -470,6 +470,158 @@ impl PyPdbStructure {
         crate::descriptors::PyStructureDescriptors::from(self.inner.structure_descriptors())
     }
 
+    // ==================== B-factor Methods (feature-gated) ====================
+
+    /// Calculate mean B-factor across all atoms
+    ///
+    /// Returns:
+    ///     Mean B-factor (temperature factor) in Å²
+    #[cfg(feature = "descriptors")]
+    fn b_factor_mean(&self) -> f64 {
+        self.inner.b_factor_mean()
+    }
+
+    /// Calculate mean B-factor for CA atoms only
+    ///
+    /// Returns:
+    ///     Mean B-factor for CA atoms in Å²
+    #[cfg(feature = "descriptors")]
+    fn b_factor_mean_ca(&self) -> f64 {
+        self.inner.b_factor_mean_ca()
+    }
+
+    /// Get minimum B-factor value
+    ///
+    /// Returns:
+    ///     Minimum B-factor in Å²
+    #[cfg(feature = "descriptors")]
+    fn b_factor_min(&self) -> f64 {
+        self.inner.b_factor_min()
+    }
+
+    /// Get maximum B-factor value
+    ///
+    /// Returns:
+    ///     Maximum B-factor in Å²
+    #[cfg(feature = "descriptors")]
+    fn b_factor_max(&self) -> f64 {
+        self.inner.b_factor_max()
+    }
+
+    /// Calculate standard deviation of B-factors
+    ///
+    /// Returns:
+    ///     B-factor standard deviation in Å²
+    #[cfg(feature = "descriptors")]
+    fn b_factor_std(&self) -> f64 {
+        self.inner.b_factor_std()
+    }
+
+    /// Get per-residue B-factor statistics
+    ///
+    /// For each residue, computes mean, min, and max B-factors
+    /// across all atoms in that residue.
+    ///
+    /// Returns:
+    ///     List of ResidueBFactor objects, sorted by chain and residue number
+    ///
+    /// Example:
+    ///     >>> profile = structure.b_factor_profile()
+    ///     >>> for res in profile:
+    ///     ...     print(f"{res.chain_id}{res.residue_seq}: {res.b_factor_mean:.2f}")
+    #[cfg(feature = "descriptors")]
+    fn b_factor_profile(&self) -> Vec<crate::descriptors::PyResidueBFactor> {
+        self.inner
+            .b_factor_profile()
+            .into_iter()
+            .map(crate::descriptors::PyResidueBFactor::from)
+            .collect()
+    }
+
+    /// Identify flexible residues (high B-factors)
+    ///
+    /// Returns residues where mean B-factor exceeds the threshold.
+    /// High B-factors indicate mobile or disordered regions.
+    ///
+    /// Args:
+    ///     threshold: B-factor cutoff in Å². Residues with mean B > threshold
+    ///                are returned. Common values: 40-60 Å².
+    ///
+    /// Returns:
+    ///     List of ResidueBFactor for flexible residues
+    ///
+    /// Example:
+    ///     >>> flexible = structure.flexible_residues(50.0)
+    ///     >>> print(f"Found {len(flexible)} flexible residues")
+    #[cfg(feature = "descriptors")]
+    fn flexible_residues(&self, threshold: f64) -> Vec<crate::descriptors::PyResidueBFactor> {
+        self.inner
+            .flexible_residues(threshold)
+            .into_iter()
+            .map(crate::descriptors::PyResidueBFactor::from)
+            .collect()
+    }
+
+    /// Identify rigid residues (low B-factors)
+    ///
+    /// Returns residues where mean B-factor is below the threshold.
+    /// Low B-factors indicate well-ordered, rigid regions.
+    ///
+    /// Args:
+    ///     threshold: B-factor cutoff in Å². Residues with mean B < threshold
+    ///                are returned. Common values: 15-25 Å².
+    ///
+    /// Returns:
+    ///     List of ResidueBFactor for rigid residues
+    ///
+    /// Example:
+    ///     >>> rigid = structure.rigid_residues(20.0)
+    ///     >>> print(f"Found {len(rigid)} rigid residues")
+    #[cfg(feature = "descriptors")]
+    fn rigid_residues(&self, threshold: f64) -> Vec<crate::descriptors::PyResidueBFactor> {
+        self.inner
+            .rigid_residues(threshold)
+            .into_iter()
+            .map(crate::descriptors::PyResidueBFactor::from)
+            .collect()
+    }
+
+    /// Create a new structure with Z-score normalized B-factors
+    ///
+    /// Transforms B-factors to have mean 0 and standard deviation 1,
+    /// enabling comparison between different structures.
+    ///
+    /// Returns:
+    ///     New PdbStructure with normalized B-factors
+    ///
+    /// Example:
+    ///     >>> normalized = structure.normalize_b_factors()
+    ///     >>> print(f"Normalized mean: {normalized.b_factor_mean():.4f}")
+    ///     >>> print(f"Normalized std:  {normalized.b_factor_std():.4f}")
+    #[cfg(feature = "descriptors")]
+    fn normalize_b_factors(&self) -> PyPdbStructure {
+        PyPdbStructure {
+            inner: self.inner.normalize_b_factors(),
+        }
+    }
+
+    /// Get the percentile rank of an atom's B-factor
+    ///
+    /// Args:
+    ///     atom_serial: Serial number of the atom to query
+    ///
+    /// Returns:
+    ///     Percentile (0-100) of the atom's B-factor, or None if not found
+    ///
+    /// Example:
+    ///     >>> percentile = structure.b_factor_percentile(42)
+    ///     >>> if percentile is not None:
+    ///     ...     print(f"Atom 42 is at the {percentile:.1f}th percentile")
+    #[cfg(feature = "descriptors")]
+    fn b_factor_percentile(&self, atom_serial: i32) -> Option<f64> {
+        self.inner.b_factor_percentile(atom_serial)
+    }
+
     // ==================== Quality Methods (feature-gated) ====================
 
     /// Check if structure has only CA atoms (coarse-grained)

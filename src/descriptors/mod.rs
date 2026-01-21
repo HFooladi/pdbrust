@@ -7,6 +7,7 @@
 //! - **Geometric descriptors**: Radius of gyration, compactness, density
 //! - **Structural completeness**: Missing residue detection
 //! - **Secondary structure**: Heuristic estimation based on Cα distances
+//! - **B-factor analysis**: Temperature factor statistics and flexibility identification
 //!
 //! # Examples
 //!
@@ -23,6 +24,11 @@
 //! let rg = structure.radius_of_gyration();
 //! let compactness = structure.compactness_index();
 //!
+//! // B-factor analysis
+//! let mean_b = structure.b_factor_mean();
+//! let profile = structure.b_factor_profile();
+//! let flexible = structure.flexible_residues(50.0);
+//!
 //! // Get comprehensive summary
 //! let summary = structure.structure_descriptors();
 //! ```
@@ -36,6 +42,7 @@
 //! pdbrust = { version = "0.1", features = ["descriptors"] }
 //! ```
 
+mod bfactor;
 mod composition;
 mod distance;
 mod geometry;
@@ -45,6 +52,30 @@ pub use composition::HYDROPHOBIC_RESIDUES;
 pub use distance::{DEFAULT_ATOM_CONTACT_THRESHOLD, DEFAULT_CA_CONTACT_THRESHOLD};
 
 use std::collections::HashMap;
+
+/// Per-residue B-factor statistics.
+///
+/// Contains the mean, min, max B-factors and atom count for a single residue.
+/// Used by `PdbStructure::b_factor_profile()` and related methods.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ResidueBFactor {
+    /// Chain identifier (e.g., "A")
+    pub chain_id: String,
+    /// Residue sequence number
+    pub residue_seq: i32,
+    /// Insertion code (if any)
+    pub ins_code: Option<char>,
+    /// Residue name (e.g., "ALA", "GLY")
+    pub residue_name: String,
+    /// Mean B-factor across all atoms in the residue (Å²)
+    pub b_factor_mean: f64,
+    /// Minimum B-factor among atoms in the residue (Å²)
+    pub b_factor_min: f64,
+    /// Maximum B-factor among atoms in the residue (Å²)
+    pub b_factor_max: f64,
+    /// Number of atoms in the residue
+    pub atom_count: usize,
+}
 
 /// Comprehensive structure descriptors combining composition and geometry.
 ///
@@ -74,6 +105,16 @@ pub struct StructureDescriptors {
     pub compactness_index: f64,
     /// Cα density: count / bounding box volume
     pub ca_density: f64,
+    /// Mean B-factor (temperature factor) across all atoms (Å²)
+    pub b_factor_mean: f64,
+    /// Mean B-factor for Cα atoms only (Å²)
+    pub b_factor_mean_ca: f64,
+    /// Minimum B-factor in the structure (Å²)
+    pub b_factor_min: f64,
+    /// Maximum B-factor in the structure (Å²)
+    pub b_factor_max: f64,
+    /// Standard deviation of B-factors (Å²)
+    pub b_factor_std: f64,
 }
 
 impl Default for StructureDescriptors {
@@ -90,6 +131,11 @@ impl Default for StructureDescriptors {
             secondary_structure_ratio: 0.0,
             compactness_index: 0.0,
             ca_density: 0.0,
+            b_factor_mean: 0.0,
+            b_factor_mean_ca: 0.0,
+            b_factor_min: 0.0,
+            b_factor_max: 0.0,
+            b_factor_std: 0.0,
         }
     }
 }

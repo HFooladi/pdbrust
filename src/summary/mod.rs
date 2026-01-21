@@ -485,6 +485,11 @@ mod tests {
             secondary_structure_ratio: 0.8,
             compactness_index: 2.5,
             ca_density: 0.005,
+            b_factor_mean: 25.0,
+            b_factor_mean_ca: 22.0,
+            b_factor_min: 10.0,
+            b_factor_max: 60.0,
+            b_factor_std: 12.0,
         };
 
         let summary = StructureSummary::from_parts(quality, descriptors);

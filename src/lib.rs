@@ -220,6 +220,10 @@ pub use filter::selection::SelectionError;
 #[cfg(feature = "descriptors")]
 pub mod descriptors;
 
+// Re-export descriptor types for convenience
+#[cfg(feature = "descriptors")]
+pub use descriptors::{ResidueBFactor, StructureDescriptors};
+
 #[cfg(feature = "quality")]
 pub mod quality;
 

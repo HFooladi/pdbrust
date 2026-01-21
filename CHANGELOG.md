@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **B-factor (temperature factor) analysis** (`descriptors` feature)
+  - `b_factor_mean()` - Mean B-factor across all atoms
+  - `b_factor_mean_ca()` - Mean B-factor for CA atoms only
+  - `b_factor_min()`, `b_factor_max()` - Min/max B-factor values
+  - `b_factor_std()` - Standard deviation of B-factors
+  - `b_factor_profile()` - Per-residue B-factor statistics (ResidueBFactor struct)
+  - `flexible_residues(threshold)` - Identify mobile/disordered regions (B > threshold)
+  - `rigid_residues(threshold)` - Identify well-ordered regions (B < threshold)
+  - `normalize_b_factors()` - Z-score normalization for cross-structure comparison
+  - `b_factor_percentile(atom_serial)` - Get percentile rank of atom's B-factor
+  - B-factor fields (mean, mean_ca, min, max, std) added to `StructureDescriptors`
+  - Full Python bindings: `ResidueBFactor` class with all statistics
 - **Async RCSB Downloads** (`rcsb-async` feature)
   - `download_multiple_async()` for concurrent bulk downloads with rate limiting
   - `download_structure_async()`, `download_pdb_string_async()`, `download_to_file_async()` for single async downloads
