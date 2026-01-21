@@ -35,6 +35,8 @@ reqwest = { version = "0.12", features = ["json", "blocking"], optional = true }
 serde = { version = "1.0", features = ["derive"], optional = true }
 serde_json = { version = "1.0", optional = true }
 flate2 = { version = "1.0", optional = true }
+tokio = { version = "1.0", features = ["rt-multi-thread", "sync", "time", "fs", "io-util", "macros"], optional = true }
+futures = { version = "0.3", optional = true }
 
 [dev-dependencies]
 criterion = "0.5"
@@ -51,12 +53,13 @@ descriptors = []
 quality = []
 summary = ["descriptors", "quality"]
 rcsb = ["reqwest", "serde", "serde_json"]
+rcsb-async = ["rcsb", "tokio", "futures"]
 gzip = ["flate2"]
 dssp = []
 # Convenience feature for all analysis features
 analysis = ["filter", "descriptors", "quality", "summary", "dssp"]
 # Full feature set
-full = ["parallel", "geometry", "analysis", "rcsb", "gzip"]
+full = ["parallel", "geometry", "analysis", "rcsb", "rcsb-async", "gzip"]
 
 [package.metadata]
 maintenance = { status = "actively-developed" }

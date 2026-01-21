@@ -57,12 +57,16 @@ Future development ideas for PDBRust. Priority will be determined based on user 
 - Full Python bindings with iterator and indexing support
 - Under `dssp` feature flag (included in `analysis`)
 
-## Medium Impact
+### Async RCSB Downloads ✅
+- Async variants of download functions for efficient bulk downloading
+- `download_multiple_async()` with concurrency control via `AsyncDownloadOptions`
+- Configurable: max_concurrent (default: 5), rate_limit_ms (default: 100ms), timeout, retries
+- Preset options: `conservative()` for rate-limited scenarios, `fast()` for high-throughput
+- Automatic retry with exponential backoff on transient failures
+- Python bindings: `download_multiple()` with `AsyncDownloadOptions` and `DownloadResult`
+- Under `rcsb-async` feature flag (included in `full`)
 
-### Async RCSB Downloads
-- Add async variants of download functions
-- Better for bulk downloading hundreds of structures
-- `download_multiple_async()` with concurrency control
+## Medium Impact
 
 ### B-factor Analysis
 - `structure.b_factor_profile()` → per-residue B-factors

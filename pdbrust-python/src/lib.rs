@@ -96,6 +96,14 @@ fn _pdbrust(m: &Bound<'_, PyModule>) -> PyResult<()> {
         m.add_function(wrap_pyfunction!(rcsb::download_to_file, m)?)?;
     }
 
+    // RCSB Async (feature-gated)
+    #[cfg(feature = "rcsb-async")]
+    {
+        m.add_class::<rcsb::PyAsyncDownloadOptions>()?;
+        m.add_class::<rcsb::PyDownloadResult>()?;
+        m.add_function(wrap_pyfunction!(rcsb::download_multiple, m)?)?;
+    }
+
     // Geometry (feature-gated)
     #[cfg(feature = "geometry")]
     {

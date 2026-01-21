@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Async RCSB Downloads** (`rcsb-async` feature)
+  - `download_multiple_async()` for concurrent bulk downloads with rate limiting
+  - `download_structure_async()`, `download_pdb_string_async()`, `download_to_file_async()` for single async downloads
+  - `AsyncDownloadOptions` for controlling concurrency (max_concurrent), rate limiting (rate_limit_ms), timeout, and retries
+  - Preset options: `conservative()` (2 concurrent, 500ms delay) and `fast()` (20 concurrent, 25ms delay)
+  - Builder pattern: `.with_max_concurrent()`, `.with_rate_limit_ms()`, `.with_timeout_secs()`, `.with_retries()`
+  - Python bindings: `download_multiple()` function with `AsyncDownloadOptions` and `DownloadResult` types
+  - Uses tokio for async runtime and futures for concurrent execution
+  - Automatic retry with exponential backoff on transient failures
 - **DSSP 4-like secondary structure assignment** (`dssp` feature)
   - Implements Kabsch & Sander algorithm with DSSP 4 updates (Hekkelman et al., 2025)
   - 9-state classification: H (α-helix), G (3₁₀-helix), I (π-helix), P (κ-helix/PPII), E (extended strand), B (β-bridge), T (turn), S (bend), C (coil)

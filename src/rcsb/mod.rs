@@ -50,12 +50,21 @@
 mod download;
 mod search;
 
+#[cfg(feature = "rcsb-async")]
+mod async_download;
+
 pub use download::{
     DownloadError, FileFormat, download_multiple, download_multiple_to_files, download_pdb_string,
     download_structure, download_to_file,
 };
 pub use search::{
     ExperimentalMethod, PolymerType, SearchError, SearchQuery, SearchResult, rcsb_search,
+};
+
+#[cfg(feature = "rcsb-async")]
+pub use async_download::{
+    AsyncDownloadOptions, download_multiple_async, download_multiple_to_files_async,
+    download_pdb_string_async, download_structure_async, download_to_file_async,
 };
 
 /// RCSB PDB base URLs

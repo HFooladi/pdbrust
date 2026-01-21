@@ -84,6 +84,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 | `geometry` | RMSD calculation, structure alignment (Kabsch), per-residue RMSD |
 | `dssp` | DSSP 4-like secondary structure assignment (H, G, I, P, E, B, T, S, C) |
 | `rcsb` | Search and download structures from RCSB PDB |
+| `rcsb-async` | Async/concurrent bulk downloads with rate limiting |
 | `gzip` | Parse gzip-compressed files (.ent.gz, .pdb.gz, .cif.gz) |
 | `parallel` | Parallel processing with Rayon |
 
@@ -173,6 +174,52 @@ let query = SearchQuery::new()
 let results = rcsb_search(&query, 10)?;
 ```
 
+### Bulk Downloads with Async
+
+```rust
+use pdbrust::rcsb::{download_multiple_async, AsyncDownloadOptions, FileFormat};
+
+#[tokio::main]
+async fn main() {
+    let pdb_ids = vec!["1UBQ", "8HM2", "4INS", "1HHB", "2MBP"];
+
+    // Download with default options (5 concurrent, 100ms rate limit)
+    let results = download_multiple_async(&pdb_ids, FileFormat::Pdb, None).await;
+
+    // Or with custom options
+    let options = AsyncDownloadOptions::default()
+        .with_max_concurrent(10)
+        .with_rate_limit_ms(50);
+    let results = download_multiple_async(&pdb_ids, FileFormat::Cif, Some(options)).await;
+
+    for (pdb_id, result) in results {
+        match result {
+            Ok(structure) => println!("{}: {} atoms", pdb_id, structure.atoms.len()),
+            Err(e) => eprintln!("{}: {}", pdb_id, e),
+        }
+    }
+}
+```
+
+**Python:**
+
+```python
+from pdbrust import download_multiple, AsyncDownloadOptions, FileFormat
+
+# Download multiple structures concurrently
+results = download_multiple(["1UBQ", "8HM2", "4INS"], FileFormat.pdb())
+
+# With custom options
+options = AsyncDownloadOptions(max_concurrent=10, rate_limit_ms=50)
+results = download_multiple(pdb_ids, FileFormat.cif(), options)
+
+for r in results:
+    if r.success:
+        print(f"{r.pdb_id}: {len(r.get_structure().atoms)} atoms")
+    else:
+        print(f"{r.pdb_id}: {r.error}")
+```
+
 ### Secondary Structure Assignment (DSSP)
 
 ```rust
@@ -224,6 +271,7 @@ See the [examples/](examples/) directory for complete working code:
 | Filter and clean structures | [filtering_demo.rs](examples/filtering_demo.rs) | filter |
 | RMSD and structure alignment | [geometry_demo.rs](examples/geometry_demo.rs) | geometry |
 | Search and download from RCSB | [rcsb_workflow.rs](examples/rcsb_workflow.rs) | rcsb, descriptors |
+| Async bulk downloads | [async_download_demo.rs](examples/async_download_demo.rs) | rcsb-async, descriptors |
 | Process multiple files | [batch_processing.rs](examples/batch_processing.rs) | descriptors, summary |
 
 **Python examples** are available in [pdbrust-python/examples/](pdbrust-python/examples/):
@@ -240,6 +288,7 @@ cargo run --example analysis_workflow --features "filter,descriptors,quality,sum
 cargo run --example filtering_demo --features "filter"
 cargo run --example geometry_demo --features "geometry"
 cargo run --example rcsb_workflow --features "rcsb,descriptors"
+cargo run --example async_download_demo --features "rcsb-async,descriptors"
 cargo run --example batch_processing --features "descriptors,summary"
 ```
 

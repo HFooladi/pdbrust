@@ -89,12 +89,13 @@ benchmark_results/      # Results from full PDB archive benchmark
 | `quality` | Quality assessment and reports | - |
 | `summary` | Unified summaries combining quality + descriptors | `descriptors`, `quality` |
 | `rcsb` | RCSB PDB search API and file download | `reqwest`, `serde`, `serde_json` |
+| `rcsb-async` | Async/concurrent bulk downloads with rate limiting | `rcsb`, `tokio`, `futures` |
 | `gzip` | Parse gzip-compressed files (.ent.gz, .pdb.gz) | `flate2` |
 | `parallel` | Parallel processing with Rayon | `rayon` |
 | `geometry` | Geometric analysis with nalgebra | `nalgebra` |
 | `dssp` | DSSP-like secondary structure assignment | - |
 | `analysis` | All analysis features | `filter`, `descriptors`, `quality`, `summary`, `dssp` |
-| `full` | Everything | `parallel`, `geometry`, `analysis`, `rcsb`, `gzip` |
+| `full` | Everything | `parallel`, `geometry`, `analysis`, `rcsb`, `rcsb-async`, `gzip` |
 
 ## Development Commands
 
@@ -176,6 +177,7 @@ Test files:
 - `tests/quality_tests.rs` - 18 tests
 - `tests/summary_tests.rs` - 18 tests
 - `tests/rcsb_tests.rs` - 28 tests (11 network tests ignored by default)
+- `tests/rcsb_async_tests.rs` - 24 tests (12 unit tests + 12 network tests ignored)
 - `tests/dssp_tests.rs` - 34 tests (secondary structure assignment)
 
 ## Key Data Structures
@@ -195,6 +197,7 @@ Test files:
 - `StructureSummary` (summary): Combined quality + descriptors
 - `SearchQuery` (rcsb): RCSB search query builder
 - `FileFormat` (rcsb): PDB/CIF format selection
+- `AsyncDownloadOptions` (rcsb-async): Concurrency and rate limiting configuration
 - `AlignmentResult` (geometry): RMSD and transformation from alignment
 - `PerResidueRmsd` (geometry): Per-residue RMSD for flexibility analysis
 - `AtomSelection` (geometry): Atom selection for RMSD/alignment
@@ -281,6 +284,33 @@ let results = rcsb_search(&query, 10)?;
 let structure = download_structure("1UBQ", FileFormat::Pdb)?;
 ```
 
+### Async Downloads (feature: rcsb-async)
+```rust
+use pdbrust::rcsb::{download_multiple_async, AsyncDownloadOptions, FileFormat};
+
+// Download multiple structures concurrently
+let pdb_ids = vec!["1UBQ", "8HM2", "4INS"];
+let results = download_multiple_async(&pdb_ids, FileFormat::Pdb, None).await;
+
+// With custom options
+let options = AsyncDownloadOptions::default()
+    .with_max_concurrent(10)
+    .with_rate_limit_ms(50);
+let results = download_multiple_async(&pdb_ids, FileFormat::Cif, Some(options)).await;
+
+// Preset options
+let conservative = AsyncDownloadOptions::conservative(); // 2 concurrent, 500ms delay
+let fast = AsyncDownloadOptions::fast();                 // 20 concurrent, 25ms delay
+
+// Handle results
+for (pdb_id, result) in results {
+    match result {
+        Ok(structure) => println!("{}: {} atoms", pdb_id, structure.atoms.len()),
+        Err(e) => eprintln!("{}: {}", pdb_id, e),
+    }
+}
+```
+
 ### Geometry (feature: geometry)
 ```rust
 use pdbrust::geometry::AtomSelection;
@@ -349,6 +379,7 @@ The `examples/` directory contains runnable examples demonstrating common workfl
 | `selection_demo.rs` | filter | PyMOL/VMD-style selection language: chain A and name CA |
 | `geometry_demo.rs` | geometry | RMSD calculation, Kabsch alignment, per-residue RMSD |
 | `rcsb_workflow.rs` | rcsb, descriptors | RCSB search queries, download, analyze (requires network) |
+| `async_download_demo.rs` | rcsb-async, descriptors | Concurrent bulk downloads with rate limiting |
 | `batch_processing.rs` | descriptors, summary | Process multiple files, compute summaries, export CSV |
 | `full_pdb_benchmark.rs` | gzip, parallel, descriptors, quality, summary | Full PDB archive benchmark (230K structures) |
 | `read_pdb.rs` | (none) | Basic PDB file reading and structure inspection |
@@ -390,6 +421,9 @@ cargo run --example geometry_demo --features "geometry"
 
 # RCSB search and download
 cargo run --example rcsb_workflow --features "rcsb,descriptors"
+
+# Async bulk downloads
+cargo run --example async_download_demo --features "rcsb-async,descriptors"
 
 # Batch processing
 cargo run --example batch_processing --features "descriptors,summary"
