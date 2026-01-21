@@ -86,7 +86,8 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist -i 3.9 3.10 3.11 3.12 3.13 --manifest-path pdbrust-python/Cargo.toml --features full
+          # Skip Python 3.9 on Windows due to PyO3 generate-import-lib requirement
+          args: --release --out dist -i 3.10 3.11 3.12 3.13 --manifest-path pdbrust-python/Cargo.toml --features full
           sccache: 'true'
 
       - name: Upload wheels
