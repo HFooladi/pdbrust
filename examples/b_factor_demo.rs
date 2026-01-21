@@ -63,7 +63,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     for res in profile.iter().take(10) {
         println!(
             "{:<6} {:<8} {:<5} {:<10.2} {:<10.2} {:<10.2}",
-            res.chain_id, res.residue_seq, res.residue_name, res.b_factor_mean, res.b_factor_min, res.b_factor_max
+            res.chain_id,
+            res.residue_seq,
+            res.residue_name,
+            res.b_factor_mean,
+            res.b_factor_min,
+            res.b_factor_max
         );
     }
     println!();
@@ -86,7 +91,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         for res in flexible.iter().take(5) {
             println!(
                 "  {}{} {}: mean={:.2} Å², max={:.2} Å²",
-                res.chain_id, res.residue_seq, res.residue_name, res.b_factor_mean, res.b_factor_max
+                res.chain_id,
+                res.residue_seq,
+                res.residue_name,
+                res.b_factor_mean,
+                res.b_factor_max
             );
         }
     }
@@ -110,7 +119,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         for res in rigid.iter().take(5) {
             println!(
                 "  {}{} {}: mean={:.2} Å², min={:.2} Å²",
-                res.chain_id, res.residue_seq, res.residue_name, res.b_factor_mean, res.b_factor_min
+                res.chain_id,
+                res.residue_seq,
+                res.residue_name,
+                res.b_factor_mean,
+                res.b_factor_min
             );
         }
     }

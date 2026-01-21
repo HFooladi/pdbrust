@@ -102,10 +102,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("=== Per-Residue Assignments ===");
 
     println!("First 15 residues:");
-    println!(
-        "{:<6} {:<8} {:<5} {:<6}",
-        "Chain", "ResSeq", "Name", "SS"
-    );
+    println!("{:<6} {:<8} {:<5} {:<6}", "Chain", "ResSeq", "Name", "SS");
     println!("{}", "-".repeat(30));
 
     for res in ss.residue_assignments.iter().take(15) {
