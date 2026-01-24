@@ -47,9 +47,35 @@ mod composition;
 mod distance;
 mod geometry;
 
+#[cfg(feature = "dssp")]
+mod dihedrals;
+
+#[cfg(feature = "dssp")]
+mod hbonds;
+
+mod alphafold;
+mod interactions;
+
 // Re-export public constants and types
 pub use composition::HYDROPHOBIC_RESIDUES;
 pub use distance::{DEFAULT_ATOM_CONTACT_THRESHOLD, DEFAULT_CA_CONTACT_THRESHOLD};
+
+// Re-export dihedral types (requires dssp feature)
+#[cfg(feature = "dssp")]
+pub use dihedrals::{RamachandranRegion, RamachandranStats, ResidueDihedrals, ResidueRef};
+
+// Re-export hydrogen bond types (requires dssp feature)
+#[cfg(feature = "dssp")]
+pub use hbonds::{HBondStats, HBondType, MainchainHBond, ResidueHBonds};
+
+// Re-export AlphaFold/pLDDT types
+pub use alphafold::{ConfidenceCategory, ResiduePlddt};
+
+// Re-export protein-ligand interaction types
+pub use interactions::{
+    BindingSite, ContactResidue, HydrophobicContact, LigandInteractionProfile, ProteinLigandHBond,
+    SaltBridge,
+};
 
 use std::collections::HashMap;
 

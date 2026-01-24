@@ -69,6 +69,28 @@ fn _pdbrust(m: &Bound<'_, PyModule>) -> PyResult<()> {
     {
         m.add_class::<descriptors::PyStructureDescriptors>()?;
         m.add_class::<descriptors::PyResidueBFactor>()?;
+        // AlphaFold/pLDDT types
+        m.add_class::<descriptors::PyConfidenceCategory>()?;
+        m.add_class::<descriptors::PyResiduePlddt>()?;
+        // Protein-ligand interaction types
+        m.add_class::<descriptors::PyContactResidue>()?;
+        m.add_class::<descriptors::PyProteinLigandHBond>()?;
+        m.add_class::<descriptors::PySaltBridge>()?;
+        m.add_class::<descriptors::PyHydrophobicContact>()?;
+        m.add_class::<descriptors::PyLigandInteractionProfile>()?;
+        m.add_class::<descriptors::PyBindingSite>()?;
+    }
+
+    // Dihedral/H-bond types (requires both descriptors and dssp)
+    #[cfg(all(feature = "descriptors", feature = "dssp"))]
+    {
+        m.add_class::<descriptors::PyRamachandranRegion>()?;
+        m.add_class::<descriptors::PyResidueDihedrals>()?;
+        m.add_class::<descriptors::PyRamachandranStats>()?;
+        m.add_class::<descriptors::PyHBondType>()?;
+        m.add_class::<descriptors::PyMainchainHBond>()?;
+        m.add_class::<descriptors::PyResidueHBonds>()?;
+        m.add_class::<descriptors::PyHBondStats>()?;
     }
 
     // Quality (feature-gated)

@@ -162,6 +162,60 @@ cargo run --release --features "filter,descriptors" --example rust_benchmark
 python3 benchmarks/python_benchmark.py
 ```
 
+## Git Workflow (Gitflow)
+
+This project follows Gitflow branching strategy to protect the main branch.
+
+### Branch Structure
+- `main` - Production-ready code only. Protected branch.
+- `develop` - Integration branch for features (optional)
+- `feature/*` - Feature branches for new development
+
+### Workflow for New Features
+
+1. **Create feature branch from main:**
+   ```bash
+   git checkout main
+   git pull origin main
+   git checkout -b feature/feature-name
+   ```
+
+2. **Develop and commit on feature branch:**
+   ```bash
+   # Make changes
+   git add <files>
+   git commit -m "feat: description"
+   ```
+
+3. **Run all tests before merging:**
+   ```bash
+   cargo test --all-features
+   cargo clippy --all-targets --all-features -- -D warnings
+   cargo fmt --check
+   ```
+
+4. **Merge to main (after all tests pass):**
+   ```bash
+   git checkout main
+   git merge feature/feature-name
+   git push origin main
+   git branch -d feature/feature-name
+   ```
+
+### Branch Naming Convention
+- `feature/alphafold-plddt` - New features
+- `fix/parsing-bug` - Bug fixes
+- `refactor/dssp-cleanup` - Code refactoring
+- `docs/api-examples` - Documentation updates
+
+### Commit Message Convention
+- `feat:` - New feature
+- `fix:` - Bug fix
+- `docs:` - Documentation
+- `refactor:` - Code refactoring
+- `test:` - Test additions/changes
+- `chore:` - Maintenance tasks
+
 ## Testing Strategy
 
 - **Unit tests**: In individual modules (`#[cfg(test)]` blocks)

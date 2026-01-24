@@ -224,6 +224,25 @@ pub mod descriptors;
 #[cfg(feature = "descriptors")]
 pub use descriptors::{ResidueBFactor, StructureDescriptors};
 
+// Re-export AlphaFold/pLDDT types
+#[cfg(feature = "descriptors")]
+pub use descriptors::{ConfidenceCategory, ResiduePlddt};
+
+// Re-export protein-ligand interaction types
+#[cfg(feature = "descriptors")]
+pub use descriptors::{
+    BindingSite, ContactResidue, HydrophobicContact, LigandInteractionProfile, ProteinLigandHBond,
+    SaltBridge,
+};
+
+// Re-export dihedral types (requires dssp + descriptors)
+#[cfg(all(feature = "descriptors", feature = "dssp"))]
+pub use descriptors::{RamachandranRegion, RamachandranStats, ResidueDihedrals, ResidueRef};
+
+// Re-export hydrogen bond types (requires dssp + descriptors)
+#[cfg(all(feature = "descriptors", feature = "dssp"))]
+pub use descriptors::{HBondStats, HBondType, MainchainHBond, ResidueHBonds};
+
 #[cfg(feature = "quality")]
 pub mod quality;
 

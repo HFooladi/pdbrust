@@ -80,6 +80,40 @@ Future development ideas for PDBRust. Priority will be determined based on user 
 - B-factor fields added to `StructureDescriptors`
 - Under existing `descriptors` feature flag
 
+## High Priority
+
+### AlphaFold/pLDDT Support
+- Detect AlphaFold/ESMFold predicted structures from metadata
+- Interpret B-factor column as pLDDT confidence scores (0-100)
+- `structure.is_predicted()` to detect AI-predicted structures
+- `structure.plddt_mean()` for mean confidence score
+- `structure.low_confidence_regions(threshold)` to identify disordered regions
+- `structure.filter_by_plddt(min_plddt)` to extract high-confidence regions
+- Integration with QualityReport for predicted structure warnings
+
+### Phi/Psi Dihedral Angles & Ramachandran Analysis
+- Expose DSSP's internal dihedral calculations to users
+- `structure.phi_psi_angles()` for all backbone dihedrals
+- `structure.ramachandran_outliers()` for structure validation
+- `structure.cis_peptide_bonds()` for cis/trans peptide detection
+- `structure.ramachandran_statistics()` for quality metrics
+- Ramachandran region classification (Favored, Allowed, Outlier)
+
+### Hydrogen Bond Network API
+- Expose DSSP's H-bond detection with user-friendly API
+- `structure.mainchain_hbonds()` for all backbone H-bonds
+- `structure.hbonds_for_residue(chain, resid)` for per-residue queries
+- `structure.hbond_statistics()` for network analysis
+- H-bond classification (intra-helical, beta-sheet, long-range)
+- Full Python bindings with energy and distance information
+
+### Protein-Ligand Interaction Analysis
+- `structure.ligand_interactions(ligand_name)` for interaction fingerprinting
+- `structure.binding_site(ligand_name, distance)` for contact residues
+- Detection of H-bonds, salt bridges, hydrophobic contacts
+- Optional: π-stacking and cation-π interactions
+- Drug discovery and binding site characterization use cases
+
 ## Medium Impact
 
 ## Lower Priority

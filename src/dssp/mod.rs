@@ -107,6 +107,18 @@ pub use dihedral::{PPII_ANGLE_TOLERANCE, PPII_PHI_CENTER, PPII_PSI_CENTER};
 pub use hbond::HBOND_THRESHOLD;
 pub use patterns::BEND_ANGLE_THRESHOLD;
 
+// Re-export dihedral calculation types and functions for the dihedrals API
+pub use dihedral::{
+    BackboneDihedrals, PPII_MIN_CONSECUTIVE, calculate_all_dihedrals, calculate_dihedral,
+    calculate_omega, calculate_phi, calculate_psi,
+};
+
+// Re-export hydrogen bond types and functions for the hbonds API
+pub use hbond::{
+    BackboneAtoms, HydrogenBond, calculate_hbond_energy, compute_all_virtual_hydrogens,
+    detect_hydrogen_bonds, extract_backbone_atoms,
+};
+
 use crate::PdbStructure;
 
 /// Extension trait for secondary structure assignment on PdbStructure.

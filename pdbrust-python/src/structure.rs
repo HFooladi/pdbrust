@@ -971,6 +971,297 @@ impl PyPdbStructure {
         self.inner.secondary_structure_composition()
     }
 
+    // ==================== AlphaFold/pLDDT Methods (descriptors feature) ====================
+
+    /// Check if this structure appears to be from AlphaFold/ESMFold.
+    ///
+    /// Detection is based on header/title keywords and B-factor distribution
+    /// (which stores pLDDT scores in predicted structures).
+    ///
+    /// Returns:
+    ///     True if structure appears to be AI-predicted
+    ///
+    /// Example:
+    ///     >>> if structure.is_predicted():
+    ///     ...     print("This is a predicted structure")
+    #[cfg(feature = "descriptors")]
+    fn is_predicted(&self) -> bool {
+        self.inner.is_predicted()
+    }
+
+    /// Get mean pLDDT score across all atoms.
+    ///
+    /// Only meaningful for predicted structures (AlphaFold, ESMFold, etc.)
+    /// where B-factors represent pLDDT confidence scores (0-100).
+    ///
+    /// Returns:
+    ///     Mean pLDDT score
+    ///
+    /// Example:
+    ///     >>> if structure.is_predicted():
+    ///     ...     print(f"Mean pLDDT: {structure.plddt_mean():.1f}")
+    #[cfg(feature = "descriptors")]
+    fn plddt_mean(&self) -> f64 {
+        self.inner.plddt_mean()
+    }
+
+    /// Get per-residue pLDDT scores.
+    ///
+    /// Returns:
+    ///     List of ResiduePlddt objects with confidence scores
+    ///
+    /// Example:
+    ///     >>> for res in structure.per_residue_plddt():
+    ///     ...     print(f"{res.chain_id}{res.residue_seq}: {res.plddt:.1f}")
+    #[cfg(feature = "descriptors")]
+    fn per_residue_plddt(&self) -> Vec<crate::descriptors::PyResiduePlddt> {
+        self.inner
+            .per_residue_plddt()
+            .into_iter()
+            .map(crate::descriptors::PyResiduePlddt::from)
+            .collect()
+    }
+
+    /// Get residues with low pLDDT confidence.
+    ///
+    /// Args:
+    ///     threshold: pLDDT threshold (default: 70.0)
+    ///
+    /// Returns:
+    ///     List of ResiduePlddt for residues below threshold
+    ///
+    /// Example:
+    ///     >>> disordered = structure.low_confidence_regions(50.0)
+    ///     >>> print(f"{len(disordered)} likely disordered residues")
+    #[cfg(feature = "descriptors")]
+    fn low_confidence_regions(&self, threshold: f64) -> Vec<crate::descriptors::PyResiduePlddt> {
+        self.inner
+            .low_confidence_regions(threshold)
+            .into_iter()
+            .map(crate::descriptors::PyResiduePlddt::from)
+            .collect()
+    }
+
+    /// Get residues with high pLDDT confidence.
+    ///
+    /// Args:
+    ///     threshold: pLDDT threshold (default: 70.0)
+    ///
+    /// Returns:
+    ///     List of ResiduePlddt for residues at or above threshold
+    #[cfg(feature = "descriptors")]
+    fn high_confidence_regions(&self, threshold: f64) -> Vec<crate::descriptors::PyResiduePlddt> {
+        self.inner
+            .high_confidence_regions(threshold)
+            .into_iter()
+            .map(crate::descriptors::PyResiduePlddt::from)
+            .collect()
+    }
+
+    /// Get fraction of residues in each pLDDT confidence category.
+    ///
+    /// Returns:
+    ///     Tuple of (very_high, confident, low, very_low) fractions
+    ///
+    /// Example:
+    ///     >>> vh, conf, low, vlow = structure.plddt_distribution()
+    ///     >>> print(f"Very high (>90): {vh*100:.1f}%")
+    ///     >>> print(f"Confident (70-90): {conf*100:.1f}%")
+    #[cfg(feature = "descriptors")]
+    fn plddt_distribution(&self) -> (f64, f64, f64, f64) {
+        self.inner.plddt_distribution()
+    }
+
+    // ==================== Dihedral/Ramachandran Methods (dssp + descriptors) ====================
+
+    /// Get backbone dihedral angles (phi, psi, omega) for all residues.
+    ///
+    /// Returns:
+    ///     List of ResidueDihedrals with angles and Ramachandran classification
+    ///
+    /// Example:
+    ///     >>> for d in structure.phi_psi_angles():
+    ///     ...     if d.phi is not None:
+    ///     ...         print(f"{d.residue_name}: phi={d.phi:.1f}, psi={d.psi:.1f}")
+    #[cfg(all(feature = "descriptors", feature = "dssp"))]
+    fn phi_psi_angles(&self) -> Vec<crate::descriptors::PyResidueDihedrals> {
+        self.inner
+            .phi_psi_angles()
+            .into_iter()
+            .map(crate::descriptors::PyResidueDihedrals::from)
+            .collect()
+    }
+
+    /// Get Ramachandran outliers.
+    ///
+    /// Returns:
+    ///     List of ResidueDihedrals for residues in outlier regions
+    ///
+    /// Example:
+    ///     >>> outliers = structure.ramachandran_outliers()
+    ///     >>> print(f"Found {len(outliers)} Ramachandran outliers")
+    #[cfg(all(feature = "descriptors", feature = "dssp"))]
+    fn ramachandran_outliers(&self) -> Vec<crate::descriptors::PyResidueDihedrals> {
+        self.inner
+            .ramachandran_outliers()
+            .into_iter()
+            .map(crate::descriptors::PyResidueDihedrals::from)
+            .collect()
+    }
+
+    /// Detect cis peptide bonds in the structure.
+    ///
+    /// Returns:
+    ///     List of (residue_i-1, residue_i) tuples as (chain, resid, resname) pairs
+    ///
+    /// Example:
+    ///     >>> cis = structure.cis_peptide_bonds()
+    ///     >>> for (r1, r2) in cis:
+    ///     ...     print(f"Cis: {r1[2]}-{r2[2]}")
+    #[cfg(all(feature = "descriptors", feature = "dssp"))]
+    fn cis_peptide_bonds(&self) -> Vec<((String, i32, String), (String, i32, String))> {
+        self.inner
+            .cis_peptide_bonds()
+            .into_iter()
+            .map(|(r1, r2)| {
+                (
+                    (r1.chain_id, r1.residue_seq, r1.residue_name),
+                    (r2.chain_id, r2.residue_seq, r2.residue_name),
+                )
+            })
+            .collect()
+    }
+
+    /// Get Ramachandran plot statistics for structure validation.
+    ///
+    /// Returns:
+    ///     RamachandranStats with favored/allowed/outlier fractions
+    ///
+    /// Example:
+    ///     >>> stats = structure.ramachandran_statistics()
+    ///     >>> print(f"Favored: {stats.favored_fraction*100:.1f}%")
+    #[cfg(all(feature = "descriptors", feature = "dssp"))]
+    fn ramachandran_statistics(&self) -> crate::descriptors::PyRamachandranStats {
+        crate::descriptors::PyRamachandranStats::from(self.inner.ramachandran_statistics())
+    }
+
+    // ==================== H-Bond Methods (dssp + descriptors) ====================
+
+    /// Get all mainchain (backbone) hydrogen bonds.
+    ///
+    /// Returns:
+    ///     List of MainchainHBond with donor/acceptor info and energy
+    ///
+    /// Example:
+    ///     >>> for hb in structure.mainchain_hbonds():
+    ///     ...     print(f"{hb.donor_resid}->{hb.acceptor_resid}: {hb.energy:.2f} kcal/mol")
+    #[cfg(all(feature = "descriptors", feature = "dssp"))]
+    fn mainchain_hbonds(&self) -> Vec<crate::descriptors::PyMainchainHBond> {
+        self.inner
+            .mainchain_hbonds()
+            .into_iter()
+            .map(crate::descriptors::PyMainchainHBond::from)
+            .collect()
+    }
+
+    /// Get H-bonds for a specific residue.
+    ///
+    /// Args:
+    ///     chain: Chain identifier
+    ///     resid: Residue sequence number
+    ///
+    /// Returns:
+    ///     ResidueHBonds with donated and accepted H-bonds
+    ///
+    /// Example:
+    ///     >>> hbonds = structure.hbonds_for_residue("A", 42)
+    ///     >>> print(f"Donates: {len(hbonds.donated)}, Accepts: {len(hbonds.accepted)}")
+    #[cfg(all(feature = "descriptors", feature = "dssp"))]
+    fn hbonds_for_residue(&self, chain: &str, resid: i32) -> crate::descriptors::PyResidueHBonds {
+        crate::descriptors::PyResidueHBonds::from(self.inner.hbonds_for_residue(chain, resid))
+    }
+
+    /// Get H-bond network statistics.
+    ///
+    /// Returns:
+    ///     HBondStats with counts by type and energy statistics
+    ///
+    /// Example:
+    ///     >>> stats = structure.hbond_statistics()
+    ///     >>> print(f"Total: {stats.total_hbonds}, Helical: {stats.intra_helical}")
+    #[cfg(all(feature = "descriptors", feature = "dssp"))]
+    fn hbond_statistics(&self) -> crate::descriptors::PyHBondStats {
+        crate::descriptors::PyHBondStats::from(self.inner.hbond_statistics())
+    }
+
+    // ==================== Protein-Ligand Interaction Methods (descriptors) ====================
+
+    /// Get the binding site around a ligand.
+    ///
+    /// Args:
+    ///     ligand_name: 3-letter code of the ligand (e.g., "ATP", "HEM")
+    ///     distance_cutoff: Maximum distance in Angstroms (typically 4.0-6.0)
+    ///
+    /// Returns:
+    ///     BindingSite with contact residues, or None if ligand not found
+    ///
+    /// Example:
+    ///     >>> site = structure.binding_site("ATP", 5.0)
+    ///     >>> if site:
+    ///     ...     print(f"Found {site.num_residues()} residues in binding site")
+    #[cfg(feature = "descriptors")]
+    fn binding_site(
+        &self,
+        ligand_name: &str,
+        distance_cutoff: f64,
+    ) -> Option<crate::descriptors::PyBindingSite> {
+        self.inner
+            .binding_site(ligand_name, distance_cutoff)
+            .map(crate::descriptors::PyBindingSite::from)
+    }
+
+    /// Analyze interactions between protein and a specific ligand.
+    ///
+    /// Detects H-bonds, salt bridges, and hydrophobic contacts.
+    ///
+    /// Args:
+    ///     ligand_name: 3-letter code of the ligand
+    ///
+    /// Returns:
+    ///     LigandInteractionProfile with all interactions, or None if not found
+    ///
+    /// Example:
+    ///     >>> profile = structure.ligand_interactions("ATP")
+    ///     >>> if profile:
+    ///     ...     print(f"H-bonds: {len(profile.hydrogen_bonds)}")
+    ///     ...     print(f"Salt bridges: {len(profile.salt_bridges)}")
+    #[cfg(feature = "descriptors")]
+    fn ligand_interactions(
+        &self,
+        ligand_name: &str,
+    ) -> Option<crate::descriptors::PyLigandInteractionProfile> {
+        self.inner
+            .ligand_interactions(ligand_name)
+            .map(crate::descriptors::PyLigandInteractionProfile::from)
+    }
+
+    /// Get interaction profiles for all ligands in the structure.
+    ///
+    /// Returns:
+    ///     List of LigandInteractionProfile for each ligand
+    ///
+    /// Example:
+    ///     >>> for profile in structure.all_ligand_interactions():
+    ///     ...     print(f"{profile.ligand_name}: {profile.total_interactions()} interactions")
+    #[cfg(feature = "descriptors")]
+    fn all_ligand_interactions(&self) -> Vec<crate::descriptors::PyLigandInteractionProfile> {
+        self.inner
+            .all_ligand_interactions()
+            .into_iter()
+            .map(crate::descriptors::PyLigandInteractionProfile::from)
+            .collect()
+    }
+
     // ==================== Magic Methods ====================
 
     fn __repr__(&self) -> String {
