@@ -463,6 +463,9 @@ The `pdbrust-python/examples/` directory contains Python examples:
 | `selection_language.py` | PyMOL/VMD-style selection language with boolean operators |
 | `secondary_structure.py` | DSSP secondary structure assignment and analysis |
 | `b_factor_analysis.py` | B-factor statistics, flexible/rigid residues, normalization |
+| `alphafold_analysis.py` | AlphaFold pLDDT confidence scores, disordered regions |
+| `ramachandran_analysis.py` | Phi/Psi dihedrals, Ramachandran validation, H-bond network |
+| `ligand_interactions.py` | Protein-ligand binding sites, H-bonds, salt bridges |
 | `quality_and_summary.py` | Quality reports, structure summaries, CSV export |
 | `batch_processing.py` | Process multiple files, quality filtering, dataset statistics |
 | `advanced_filtering.py` | Method chaining, normalization, centering, translation |
@@ -476,6 +479,9 @@ python numpy_integration.py
 python selection_language.py
 python secondary_structure.py
 python b_factor_analysis.py
+python alphafold_analysis.py
+python ramachandran_analysis.py
+python ligand_interactions.py
 ```
 
 ### Running Rust Examples
