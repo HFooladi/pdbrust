@@ -1,9 +1,7 @@
 //! Integration tests for dihedral angle analysis and Ramachandran classification.
 
-use pdbrust::{PdbStructure, parse_pdb_file};
-
 #[cfg(all(feature = "descriptors", feature = "dssp"))]
-use pdbrust::RamachandranRegion;
+use pdbrust::{PdbStructure, RamachandranRegion, parse_pdb_file};
 
 /// Create a simple test structure with backbone atoms for a helix
 #[cfg(all(feature = "descriptors", feature = "dssp"))]

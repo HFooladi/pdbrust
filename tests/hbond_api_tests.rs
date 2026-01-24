@@ -1,9 +1,7 @@
 //! Integration tests for hydrogen bond network analysis.
 
-use pdbrust::{PdbStructure, parse_pdb_file};
-
 #[cfg(all(feature = "descriptors", feature = "dssp"))]
-use pdbrust::HBondType;
+use pdbrust::{HBondType, PdbStructure, parse_pdb_file};
 
 /// Create a test structure with residues that should form H-bonds
 #[cfg(all(feature = "descriptors", feature = "dssp"))]

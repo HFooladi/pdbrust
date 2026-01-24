@@ -1,6 +1,7 @@
 //! Integration tests for protein-ligand interaction analysis.
 
-use pdbrust::{parse_pdb_string, PdbStructure};
+#[cfg(feature = "descriptors")]
+use pdbrust::{PdbStructure, parse_pdb_string};
 
 /// Create a structure with a protein and a ligand
 #[cfg(feature = "descriptors")]

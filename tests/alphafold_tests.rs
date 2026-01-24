@@ -1,9 +1,7 @@
 //! Integration tests for AlphaFold/pLDDT support.
 
-use pdbrust::{PdbStructure, parse_pdb_string};
-
 #[cfg(feature = "descriptors")]
-use pdbrust::ConfidenceCategory;
+use pdbrust::{ConfidenceCategory, PdbStructure, parse_pdb_string};
 
 /// Create a structure that looks like an AlphaFold prediction
 #[cfg(feature = "descriptors")]
