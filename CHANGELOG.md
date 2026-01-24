@@ -7,6 +7,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **AlphaFold/pLDDT confidence score support** (`descriptors` feature)
+  - `is_predicted()` - Detect AlphaFold/ESMFold predicted structures from metadata or B-factor patterns
+  - `plddt_mean()` - Mean pLDDT confidence score across the structure
+  - `plddt_scores()` - Raw pLDDT values (B-factors interpreted as confidence)
+  - `per_residue_plddt()` - Per-residue pLDDT with confidence categories (VeryHigh >90, Confident 70-90, Low 50-70, VeryLow <50)
+  - `low_confidence_regions(threshold)` - Identify disordered/uncertain regions
+  - `high_confidence_regions(threshold)` - Identify well-predicted regions
+  - `plddt_distribution()` - Fraction of residues in each confidence category
+  - `ResiduePlddt` struct with `is_confident()`, `is_disordered()` helper methods
+  - `ConfidenceCategory` enum with `is_reliable()`, `needs_caution()` methods
+  - Full Python bindings: `PyConfidenceCategory`, `PyResiduePlddt` classes
+
+- **Phi/Psi dihedral angles and Ramachandran analysis** (`descriptors` + `dssp` features)
+  - `phi_psi_angles()` - Backbone dihedral angles (φ, ψ, ω) for all residues
+  - `ramachandran_outliers()` - Identify residues with strained conformations
+  - `ramachandran_statistics()` - Favored/allowed/outlier fractions for structure validation
+  - `cis_peptide_bonds()` - Detect cis peptide bonds (ω ≈ 0°)
+  - `ResidueDihedrals` struct with phi, psi, omega angles and Ramachandran classification
+  - `RamachandranRegion` enum: Core, Allowed, Generous, Outlier, Glycine, Proline, PrePro
+  - `RamachandranStats` with favored_fraction, allowed_fraction, outlier_fraction, cis counts
+  - Proper IUPAC sign convention for dihedral angles
+  - Full Python bindings: `PyRamachandranRegion`, `PyResidueDihedrals`, `PyRamachandranStats`
+
+- **Hydrogen bond network API** (`descriptors` + `dssp` features)
+  - `mainchain_hbonds()` - All backbone hydrogen bonds with energy and geometry
+  - `hbonds_for_residue(chain, resid)` - H-bonds donated/accepted by specific residue
+  - `hbond_statistics()` - Network analysis (total, intra-helical, beta-sheet, turns, long-range)
+  - `MainchainHBond` struct with donor/acceptor info, energy (kcal/mol), N-O distance
+  - `HBondType` classification: IntraHelical, BetaSheet, Turn, LongRange, InterChain
+  - `ResidueHBonds` with donated and accepted H-bond lists
+  - `HBondStats` with counts by type and mean energy
+  - H-bond classification based on sequence separation and chain identity
+  - Full Python bindings: `PyHBondType`, `PyMainchainHBond`, `PyResidueHBonds`, `PyHBondStats`
+
+- **Protein-ligand interaction analysis** (`descriptors` feature)
+  - `binding_site(ligand_name, distance)` - Contact residues within distance of ligand
+  - `ligand_interactions(ligand_name)` - Full interaction profile with H-bonds, salt bridges, hydrophobic contacts
+  - `all_ligand_interactions()` - Analyze all ligands in structure
+  - `BindingSite` with contact residues sorted by distance, ligand info
+  - `LigandInteractionProfile` with categorized interactions and `total_interactions()`, `has_interactions()` methods
+  - `ContactResidue` with min_distance and contact count
+  - `ProteinLigandHBond` with donor/acceptor atoms and distance
+  - `SaltBridge` with charged residue and ligand atom info
+  - `HydrophobicContact` with non-polar atom contacts
+  - Detection thresholds: H-bonds ≤3.5Å, salt bridges ≤4.0Å, hydrophobic ≤4.0Å
+  - Full Python bindings: `PyBindingSite`, `PyLigandInteractionProfile`, `PyContactResidue`, `PyProteinLigandHBond`, `PySaltBridge`, `PyHydrophobicContact`
+
 ## [0.6.0] - 2025-01-21
 
 ### Added
