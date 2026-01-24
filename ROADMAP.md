@@ -80,48 +80,55 @@ Future development ideas for PDBRust. Priority will be determined based on user 
 - B-factor fields added to `StructureDescriptors`
 - Under existing `descriptors` feature flag
 
-## High Priority
-
-### AlphaFold/pLDDT Support
-- Detect AlphaFold/ESMFold predicted structures from metadata
+### AlphaFold/pLDDT Support ✅
+- Detect AlphaFold/ESMFold predicted structures from B-factor range heuristics
 - Interpret B-factor column as pLDDT confidence scores (0-100)
-- `structure.is_predicted()` to detect AI-predicted structures
-- `structure.plddt_mean()` for mean confidence score
-- `structure.low_confidence_regions(threshold)` to identify disordered regions
-- `structure.filter_by_plddt(min_plddt)` to extract high-confidence regions
-- Integration with QualityReport for predicted structure warnings
+- `structure.is_predicted()` → detect AI-predicted structures
+- `structure.plddt_mean()` → mean confidence score
+- `structure.per_residue_plddt()` → per-residue pLDDT with confidence categories
+- `structure.low_confidence_regions(threshold)` → identify disordered regions (pLDDT < threshold)
+- `structure.high_confidence_regions(threshold)` → identify well-predicted regions
+- `structure.plddt_distribution()` → fraction in each confidence category (VeryHigh, Confident, Low, VeryLow)
+- `ConfidenceCategory` enum with `is_reliable()` and `needs_caution()` methods
+- `ResiduePlddt` struct with plddt, plddt_min, plddt_max, confidence_category
+- Full Python bindings with `ConfidenceCategory`, `ResiduePlddt` classes
+- Under existing `descriptors` feature flag
 
-### Phi/Psi Dihedral Angles & Ramachandran Analysis
+### Phi/Psi Dihedral Angles & Ramachandran Analysis ✅
 - Expose DSSP's internal dihedral calculations to users
-- `structure.phi_psi_angles()` for all backbone dihedrals
-- `structure.ramachandran_outliers()` for structure validation
-- `structure.cis_peptide_bonds()` for cis/trans peptide detection
-- `structure.ramachandran_statistics()` for quality metrics
-- Ramachandran region classification (Favored, Allowed, Outlier)
+- `structure.phi_psi_angles()` → Vec<ResidueDihedrals> for all backbone dihedrals
+- `structure.ramachandran_outliers()` → residues in unfavored regions
+- `structure.ramachandran_statistics()` → RamachandranStats with favored/allowed/outlier counts and fractions
+- Cis peptide bond detection via `ResidueDihedrals.is_cis_peptide()` and `is_trans_peptide()`
+- `RamachandranRegion` enum: Core, Allowed, Generous, Outlier, Glycine, Proline, PrePro, Unknown
+- Proper IUPAC sign convention for phi/psi angles
+- Full Python bindings with `ResidueDihedrals`, `RamachandranRegion`, `RamachandranStats` classes
+- Requires both `descriptors` and `dssp` feature flags
 
-### Hydrogen Bond Network API
+### Hydrogen Bond Network API ✅
 - Expose DSSP's H-bond detection with user-friendly API
-- `structure.mainchain_hbonds()` for all backbone H-bonds
-- `structure.hbonds_for_residue(chain, resid)` for per-residue queries
-- `structure.hbond_statistics()` for network analysis
-- H-bond classification (intra-helical, beta-sheet, long-range)
-- Full Python bindings with energy and distance information
+- `structure.mainchain_hbonds()` → Vec<MainchainHBond> for all backbone H-bonds
+- `structure.hbonds_for_residue(chain, resid)` → ResidueHBonds with donated/accepted lists
+- `structure.hbond_statistics()` → HBondStats with counts by type and mean energy
+- `HBondType` enum: IntraHelical, BetaSheet, Turn, LongRange, InterChain
+- `MainchainHBond` struct with donor/acceptor info, energy, distance, sequence separation
+- Methods: `is_strong()` (E < -1.5), `is_helical()`, `is_beta_sheet()`
+- Full Python bindings with `MainchainHBond`, `ResidueHBonds`, `HBondStats`, `HBondType` classes
+- Requires both `descriptors` and `dssp` feature flags
 
-### Protein-Ligand Interaction Analysis
-- `structure.ligand_interactions(ligand_name)` for interaction fingerprinting
-- `structure.binding_site(ligand_name, distance)` for contact residues
-- Detection of H-bonds, salt bridges, hydrophobic contacts
-- Optional: π-stacking and cation-π interactions
-- Drug discovery and binding site characterization use cases
+### Protein-Ligand Interaction Analysis ✅
+- `structure.binding_site(ligand_name, distance)` → BindingSite with contact residues
+- `structure.ligand_interactions(ligand_name)` → LigandInteractionProfile
+- `structure.all_ligand_interactions()` → analyze all ligands in structure
+- Detection of H-bonds (≤3.5 Å), salt bridges (≤4.0 Å), hydrophobic contacts (≤4.0 Å)
+- `ContactResidue` with min_distance and num_contacts
+- `ProteinLigandHBond` with donor/acceptor identification
+- `SaltBridge` with charge polarity information
+- `HydrophobicContact` for non-polar interactions
+- Full Python bindings with all interaction types
+- Under existing `descriptors` feature flag
 
-## Medium Impact
-
-## Lower Priority
-
-### Binding Site Detection
-- Identify residues near ligands/HETATM
-- `structure.binding_site(ligand_name, distance_cutoff)`
-- Useful for drug discovery applications
+## Future Ideas
 
 ### Surface Area Calculation
 - Solvent accessible surface area (SASA)
