@@ -6,6 +6,7 @@ use pdbrust::{PdbStructure, parse_pdb_string};
 use pdbrust::ConfidenceCategory;
 
 /// Create a structure that looks like an AlphaFold prediction
+#[cfg(feature = "descriptors")]
 fn create_alphafold_like_structure() -> PdbStructure {
     let pdb_content = r#"HEADER    ALPHAFOLD MODEL
 ATOM      1  N   ALA A   1       0.000   0.000   0.000  1.00 95.50           N
@@ -26,6 +27,7 @@ END
 }
 
 /// Create a structure that looks like experimental (not predicted)
+#[cfg(feature = "descriptors")]
 fn create_experimental_structure() -> PdbStructure {
     let pdb_content = r#"HEADER    EXPERIMENTAL STRUCTURE
 ATOM      1  N   ALA A   1       0.000   0.000   0.000  1.00 15.50           N

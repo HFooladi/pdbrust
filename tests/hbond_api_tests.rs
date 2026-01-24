@@ -6,6 +6,7 @@ use pdbrust::{PdbStructure, parse_pdb_file};
 use pdbrust::HBondType;
 
 /// Create a test structure with residues that should form H-bonds
+#[cfg(all(feature = "descriptors", feature = "dssp"))]
 fn create_test_structure() -> PdbStructure {
     // This creates a minimal structure - real H-bonds need proper geometry
     let pdb_content = r#"

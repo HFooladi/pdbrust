@@ -6,6 +6,7 @@ use pdbrust::{PdbStructure, parse_pdb_file};
 use pdbrust::RamachandranRegion;
 
 /// Create a simple test structure with backbone atoms for a helix
+#[cfg(all(feature = "descriptors", feature = "dssp"))]
 fn create_helix_structure() -> PdbStructure {
     let pdb_content = r#"
 ATOM      1  N   ALA A   1       0.000   0.000   0.000  1.00 20.00           N

@@ -1,8 +1,9 @@
 //! Integration tests for protein-ligand interaction analysis.
 
-use pdbrust::{PdbStructure, parse_pdb_string};
+use pdbrust::{parse_pdb_string, PdbStructure};
 
 /// Create a structure with a protein and a ligand
+#[cfg(feature = "descriptors")]
 fn create_protein_ligand_structure() -> PdbStructure {
     let pdb_content = r#"
 ATOM      1  N   ALA A   1       0.000   0.000   0.000  1.00 20.00           N
@@ -28,6 +29,7 @@ END
 }
 
 /// Create a structure without ligands
+#[cfg(feature = "descriptors")]
 fn create_protein_only_structure() -> PdbStructure {
     let pdb_content = r#"
 ATOM      1  N   ALA A   1       0.000   0.000   0.000  1.00 20.00           N
