@@ -82,7 +82,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! pdbrust = { version = "0.5", features = ["dssp"] }
+//! pdbrust = { version = "0.6", features = ["dssp"] }
 //! ```
 //!
 //! # References

@@ -13,9 +13,15 @@
 //! | Example | Features | Description |
 //! |---------|----------|-------------|
 //! | `analysis_workflow.rs` | filter, descriptors, quality, summary | Complete load→clean→analyze→export pipeline |
-//! | `filtering_demo.rs` | filter | Fluent filtering API demonstration |
+//! | `filtering_demo.rs` | filter | Fluent filtering API and method chaining |
+//! | `selection_demo.rs` | filter | PyMOL/VMD-style selection language |
+//! | `geometry_demo.rs` | geometry | RMSD calculation and Kabsch alignment |
 //! | `rcsb_workflow.rs` | rcsb, descriptors | RCSB search and download workflows |
+//! | `async_download_demo.rs` | rcsb-async, descriptors | Concurrent bulk downloads with rate limiting |
 //! | `batch_processing.rs` | descriptors, summary | Multi-file processing with CSV export |
+//! | `b_factor_demo.rs` | descriptors | B-factor analysis and flexibility detection |
+//! | `secondary_structure_demo.rs` | dssp | DSSP-like secondary structure assignment |
+//! | `full_pdb_benchmark.rs` | gzip, parallel, descriptors, quality, summary | Full PDB archive benchmark |
 //!
 //! Run examples with:
 //! ```bash
@@ -29,27 +35,30 @@
 //!
 //! ```toml
 //! [dependencies]
-//! pdbrust = "0.3"
+//! pdbrust = "0.6"
 //! ```
 //!
 //! For additional features, enable them explicitly:
 //!
 //! ```toml
 //! [dependencies]
-//! pdbrust = { version = "0.3", features = ["filter", "descriptors", "quality", "summary", "rcsb"] }
+//! pdbrust = { version = "0.6", features = ["filter", "descriptors", "quality", "summary", "rcsb"] }
 //! ```
 //!
 //! ## Feature Flags
 //!
 //! | Feature | Description |
 //! |---------|-------------|
-//! | `filter` | Filtering, extraction, and structure cleaning |
-//! | `descriptors` | Structural descriptors (Rg, composition, geometry) |
+//! | `filter` | Filtering, extraction, cleaning, and selection language |
+//! | `descriptors` | Structural descriptors (Rg, composition, B-factor, pLDDT) |
 //! | `quality` | Quality assessment and reports |
 //! | `summary` | Unified summaries (requires `descriptors` + `quality`) |
 //! | `rcsb` | RCSB PDB search and download |
+//! | `rcsb-async` | Async/concurrent bulk downloads with rate limiting |
 //! | `parallel` | Parallel processing with Rayon |
-//! | `geometry` | Geometric analysis with nalgebra |
+//! | `geometry` | RMSD calculation and structure alignment (Kabsch) |
+//! | `dssp` | DSSP-like secondary structure assignment |
+//! | `gzip` | Parse gzip-compressed files (.ent.gz, .pdb.gz) |
 //! | `analysis` | All analysis features combined |
 //! | `full` | Everything |
 //!
@@ -142,6 +151,36 @@
 //! let (cx, cy, cz) = structure.get_centroid();
 //! ```
 //!
+//! ### Selection Language
+//!
+//! PDBRust supports PyMOL/VMD-style selection syntax:
+//!
+//! ```ignore
+//! // Basic selectors
+//! let chain_a = structure.select("chain A")?;
+//! let ca_atoms = structure.select("name CA")?;
+//! let alanines = structure.select("resname ALA")?;
+//! let residue_range = structure.select("resid 1:100")?;
+//!
+//! // Keywords
+//! let backbone = structure.select("backbone")?;       // N, CA, C, O
+//! let protein = structure.select("protein")?;         // Standard amino acids
+//! let water = structure.select("water")?;             // HOH, WAT
+//! let ligands = structure.select("hetero and not water")?;
+//!
+//! // Boolean operators
+//! let complex = structure.select("chain A and name CA")?;
+//! let either = structure.select("chain A or chain B")?;
+//! let exclude = structure.select("protein and not hydrogen")?;
+//!
+//! // Numeric comparisons
+//! let low_b = structure.select("bfactor < 30.0")?;
+//! let high_occ = structure.select("occupancy >= 0.5")?;
+//!
+//! // Validate syntax without executing
+//! PdbStructure::validate_selection("chain A and name CA")?;
+//! ```
+//!
 //! ## Structural Descriptors (feature: `descriptors`)
 //!
 //! Compute structural properties and metrics.
@@ -164,6 +203,8 @@
 //! let hydrophobic = structure.hydrophobic_ratio();
 //! let polar = structure.polar_ratio();
 //! let charged = structure.charged_ratio();
+//! let aromatic = structure.aromatic_ratio();   // PHE, TYR, TRP
+//! let small = structure.small_ratio();         // GLY, ALA, SER, PRO
 //!
 //! // Number of residues (based on CA count)
 //! let n_residues = structure.count_ca_residues();
@@ -207,6 +248,67 @@
 //! println!("Rg: {:.2} Å", descriptors.radius_of_gyration);
 //! println!("Hydrophobic: {:.1}%", descriptors.hydrophobic_ratio * 100.0);
 //! ```
+//!
+//! ### B-Factor Analysis
+//!
+//! Analyze crystallographic B-factors (temperature factors):
+//!
+//! ```ignore
+//! // Global statistics
+//! let mean_b = structure.b_factor_mean();
+//! let mean_ca = structure.b_factor_mean_ca();  // CA atoms only
+//! let min_b = structure.b_factor_min();
+//! let max_b = structure.b_factor_max();
+//! let std_b = structure.b_factor_std();
+//!
+//! // Per-residue B-factor profile
+//! let profile = structure.b_factor_profile();
+//! for res in &profile {
+//!     println!("{}{}: mean={:.1} min={:.1} max={:.1}",
+//!         res.chain_id, res.residue_seq, res.mean, res.min, res.max);
+//! }
+//!
+//! // Identify flexible/rigid regions
+//! let flexible = structure.flexible_residues(50.0);  // B > 50 Å²
+//! let rigid = structure.rigid_residues(20.0);        // B < 20 Å²
+//!
+//! // Normalize B-factors (z-score)
+//! let normalized = structure.normalize_b_factors();
+//! ```
+//!
+//! ### AlphaFold/pLDDT Analysis
+//!
+//! Analyze AlphaFold predicted structures and confidence scores:
+//!
+//! ```ignore
+//! // Detect if structure is from AlphaFold
+//! if structure.is_predicted() {
+//!     // pLDDT scores are stored in B-factor column
+//!     let mean_plddt = structure.plddt_mean();
+//!     println!("Mean pLDDT: {:.1}", mean_plddt);
+//!
+//!     // Per-residue pLDDT scores
+//!     let scores = structure.per_residue_plddt();
+//!     for score in &scores {
+//!         println!("{}{}: {:.1} ({})",
+//!             score.chain_id, score.residue_seq,
+//!             score.plddt, score.category);
+//!     }
+//!
+//!     // Find disordered/confident regions
+//!     let low = structure.low_confidence_regions(50.0);   // pLDDT < 50
+//!     let high = structure.high_confidence_regions(90.0); // pLDDT > 90
+//! }
+//! ```
+//!
+//! pLDDT confidence categories:
+//!
+//! | Range | Category | Interpretation |
+//! |-------|----------|----------------|
+//! | ≥90 | Very High | High accuracy, suitable for atomic details |
+//! | 70-90 | Confident | Good backbone prediction |
+//! | 50-70 | Low | Caution advised |
+//! | <50 | Very Low | May be disordered/unstructured |
 //!
 //! ## Quality Assessment (feature: `quality`)
 //!
@@ -329,6 +431,232 @@
 //!     .with_release_date_min("2020-01-01") // Released after
 //!     .with_release_date_max("2024-12-31") // Released before
 //!     .with_ec_number("2.7.11.1");         // Enzyme classification
+//! ```
+//!
+//! ### Async Downloads (feature: `rcsb-async`)
+//!
+//! Download multiple structures concurrently with rate limiting:
+//!
+//! ```ignore
+//! use pdbrust::rcsb::{download_multiple_async, AsyncDownloadOptions, FileFormat};
+//!
+//! // Download with default settings
+//! let pdb_ids = vec!["1UBQ", "8HM2", "4INS"];
+//! let results = download_multiple_async(&pdb_ids, FileFormat::Pdb, None).await;
+//!
+//! // With custom options
+//! let options = AsyncDownloadOptions::default()
+//!     .with_max_concurrent(10)   // Max concurrent downloads
+//!     .with_rate_limit_ms(50);   // Delay between requests
+//!
+//! let results = download_multiple_async(&pdb_ids, FileFormat::Cif, Some(options)).await;
+//!
+//! // Preset configurations
+//! let conservative = AsyncDownloadOptions::conservative(); // 2 concurrent, 500ms
+//! let fast = AsyncDownloadOptions::fast();                 // 20 concurrent, 25ms
+//!
+//! // Handle results
+//! for (pdb_id, result) in results {
+//!     match result {
+//!         Ok(structure) => println!("{}: {} atoms", pdb_id, structure.atoms.len()),
+//!         Err(e) => eprintln!("{}: {}", pdb_id, e),
+//!     }
+//! }
+//! ```
+//!
+//! ## Geometry and RMSD (feature: `geometry`)
+//!
+//! Calculate RMSD and align structures using the Kabsch algorithm.
+//!
+//! ### RMSD Calculation
+//!
+//! ```ignore
+//! use pdbrust::geometry::AtomSelection;
+//!
+//! // RMSD using CA atoms (default)
+//! let rmsd = structure1.rmsd_to(&structure2)?;
+//!
+//! // RMSD with different atom selections
+//! let rmsd_bb = structure1.rmsd_to_with_selection(&structure2, AtomSelection::Backbone)?;
+//! let rmsd_all = structure1.rmsd_to_with_selection(&structure2, AtomSelection::AllAtoms)?;
+//! ```
+//!
+//! ### Structure Alignment
+//!
+//! ```ignore
+//! // Align mobile to target (returns aligned structure and result)
+//! let (aligned, result) = mobile.align_to(&target)?;
+//! println!("RMSD after alignment: {:.4} Å", result.rmsd);
+//! println!("Atoms used: {}", result.num_atoms);
+//!
+//! // Align with specific atom selection
+//! let (aligned, result) = mobile.align_to_with_selection(&target, AtomSelection::Backbone)?;
+//! ```
+//!
+//! ### Per-Residue RMSD
+//!
+//! Identify flexible regions by computing per-residue RMSD:
+//!
+//! ```ignore
+//! let per_res = mobile.per_residue_rmsd_to(&target)?;
+//! for r in &per_res {
+//!     if r.rmsd > 2.0 {
+//!         println!("Flexible: {}{} RMSD={:.2} Å", r.residue_id.0, r.residue_id.1, r.rmsd);
+//!     }
+//! }
+//! ```
+//!
+//! ## Secondary Structure (feature: `dssp`)
+//!
+//! DSSP-like secondary structure assignment from hydrogen bond patterns.
+//!
+//! ```ignore
+//! // Complete secondary structure assignment
+//! let ss = structure.assign_secondary_structure();
+//!
+//! // Summary statistics
+//! println!("Helix: {:.1}%", ss.helix_fraction * 100.0);
+//! println!("Sheet: {:.1}%", ss.sheet_fraction * 100.0);
+//! println!("Coil:  {:.1}%", ss.coil_fraction * 100.0);
+//!
+//! // Compact string representation (e.g., "HHHHEEEECCCC")
+//! let ss_string = structure.secondary_structure_string();
+//!
+//! // Composition tuple (helix, sheet, coil)
+//! let (helix, sheet, coil) = structure.secondary_structure_composition();
+//!
+//! // Per-residue assignments
+//! for res in &ss.residue_assignments {
+//!     println!("{}{}: {} ({})",
+//!         res.chain_id, res.residue_seq, res.residue_name, res.ss.code());
+//! }
+//! ```
+//!
+//! Secondary structure codes (DSSP):
+//!
+//! | Code | Name | Description |
+//! |------|------|-------------|
+//! | H | α-helix | i → i+4 hydrogen bond pattern |
+//! | G | 3₁₀-helix | i → i+3 hydrogen bond pattern |
+//! | I | π-helix | i → i+5 hydrogen bond pattern |
+//! | P | κ-helix | PPII helix (polyproline II) |
+//! | E | Extended strand | Part of β-sheet |
+//! | B | Beta bridge | Isolated β-bridge |
+//! | T | Turn | Hydrogen-bonded turn |
+//! | S | Bend | High backbone curvature |
+//! | C | Coil | None of the above |
+//!
+//! ## Dihedral Angles (features: `descriptors` + `dssp`)
+//!
+//! Compute backbone dihedral angles for Ramachandran analysis.
+//!
+//! ```ignore
+//! // Compute phi/psi angles
+//! let dihedrals = structure.compute_dihedrals();
+//! for d in &dihedrals {
+//!     if let (Some(phi), Some(psi)) = (d.phi, d.psi) {
+//!         println!("{}{}: φ={:.1}° ψ={:.1}° ({})",
+//!             d.chain_id, d.residue_seq, phi, psi, d.region);
+//!     }
+//! }
+//!
+//! // Ramachandran region classification
+//! let stats = structure.ramachandran_stats();
+//! println!("Favored: {:.1}%", stats.favored_fraction * 100.0);
+//! println!("Allowed: {:.1}%", stats.allowed_fraction * 100.0);
+//! println!("Outliers: {:.1}%", stats.outlier_fraction * 100.0);
+//!
+//! // Find outliers
+//! let outliers = structure.ramachandran_outliers();
+//! for o in &outliers {
+//!     println!("Outlier: {}{} ({}) φ={:.1}° ψ={:.1}°",
+//!         o.chain_id, o.residue_seq, o.residue_name,
+//!         o.phi.unwrap_or(0.0), o.psi.unwrap_or(0.0));
+//! }
+//!
+//! // Detect cis peptide bonds
+//! let cis_peptides = structure.cis_peptides();
+//! ```
+//!
+//! ## Hydrogen Bond Network (features: `descriptors` + `dssp`)
+//!
+//! Detect mainchain hydrogen bonds.
+//!
+//! ```ignore
+//! // Get all mainchain H-bonds
+//! let hbonds = structure.mainchain_hbonds();
+//! for hb in &hbonds {
+//!     println!("H-bond: {}{} -> {}{} ({:.2} Å, {:.1}°)",
+//!         hb.donor_chain, hb.donor_seq,
+//!         hb.acceptor_chain, hb.acceptor_seq,
+//!         hb.distance, hb.angle);
+//! }
+//!
+//! // H-bonds for a specific residue
+//! let res_hbonds = structure.hbonds_for_residue("A", 50);
+//!
+//! // H-bond statistics
+//! let stats = structure.hbond_stats();
+//! println!("Total H-bonds: {}", stats.total_hbonds);
+//! println!("Helical: {}", stats.helical_hbonds);
+//! println!("Sheet: {}", stats.sheet_hbonds);
+//! ```
+//!
+//! ## Protein-Ligand Interactions (feature: `descriptors`)
+//!
+//! Analyze interactions between proteins and bound ligands.
+//!
+//! ```ignore
+//! // Find binding site residues around a ligand
+//! let site = structure.binding_site("ATP", 5.0);  // 5 Å cutoff
+//! for res in &site.residues {
+//!     println!("{}{} ({}) - distance: {:.2} Å",
+//!         res.chain_id, res.residue_seq, res.residue_name, res.distance);
+//! }
+//!
+//! // Detailed interaction profile
+//! let interactions = structure.ligand_interactions("ATP", 4.0);
+//!
+//! // Hydrogen bonds
+//! for hb in &interactions.hbonds {
+//!     println!("H-bond: {}{} {} - {} ({:.2} Å)",
+//!         hb.residue_chain, hb.residue_seq, hb.residue_name,
+//!         hb.ligand_atom, hb.distance);
+//! }
+//!
+//! // Salt bridges
+//! for sb in &interactions.salt_bridges {
+//!     println!("Salt bridge: {}{} - {} ({:.2} Å)",
+//!         sb.residue_chain, sb.residue_seq, sb.ligand_atom, sb.distance);
+//! }
+//!
+//! // Hydrophobic contacts
+//! for hc in &interactions.hydrophobic_contacts {
+//!     println!("Hydrophobic: {}{} - {} ({:.2} Å)",
+//!         hc.residue_chain, hc.residue_seq, hc.ligand_atom, hc.distance);
+//! }
+//!
+//! // Analyze all ligands at once
+//! let all_interactions = structure.all_ligand_interactions(4.0);
+//! ```
+//!
+//! ## Gzip Support (feature: `gzip`)
+//!
+//! Parse gzip-compressed structure files directly.
+//!
+//! ```ignore
+//! use pdbrust::{parse_gzip_structure_file, parse_gzip_pdb_file, parse_gzip_mmcif_file};
+//!
+//! // Auto-detect format within gzip
+//! let structure = parse_gzip_structure_file("pdb1ubq.ent.gz")?;
+//!
+//! // Explicit format
+//! let structure = parse_gzip_pdb_file("protein.pdb.gz")?;
+//! let structure = parse_gzip_mmcif_file("protein.cif.gz")?;
+//!
+//! // Write gzip-compressed mmCIF
+//! use pdbrust::write_gzip_mmcif_file;
+//! write_gzip_mmcif_file(&structure, "output.cif.gz")?;
 //! ```
 //!
 //! ## Working with Multi-Model Structures

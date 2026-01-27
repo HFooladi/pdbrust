@@ -34,12 +34,15 @@
 //! | Feature | Description | Default |
 //! |---------|-------------|---------|
 //! | `filter` | Structure filtering, extraction, and cleaning | No |
-//! | `descriptors` | Structural descriptors (Rg, composition, geometry) | No |
+//! | `descriptors` | Structural descriptors (Rg, composition, B-factor, pLDDT) | No |
 //! | `quality` | Quality assessment and reports | No |
 //! | `summary` | Unified summaries (requires descriptors + quality) | No |
 //! | `rcsb` | RCSB PDB search and download | No |
+//! | `rcsb-async` | Async/concurrent bulk downloads with rate limiting | No |
 //! | `parallel` | Parallel processing with Rayon | No |
-//! | `geometry` | Geometric analysis with nalgebra | No |
+//! | `geometry` | RMSD calculation and structure alignment (Kabsch) | No |
+//! | `dssp` | DSSP-like secondary structure assignment | No |
+//! | `gzip` | Parse gzip-compressed files (.ent.gz, .pdb.gz) | No |
 //! | `analysis` | All analysis features combined | No |
 //! | `full` | Everything | No |
 //!
@@ -47,7 +50,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! pdbrust = { version = "0.3", features = ["filter", "descriptors"] }
+//! pdbrust = { version = "0.6", features = ["filter", "descriptors"] }
 //! ```
 //!
 //! ## Core Features
@@ -115,6 +118,60 @@
 //!     .with_text("kinase")
 //!     .with_resolution_max(2.0);
 //! let results = rcsb_search(&query, 10)?;
+//! ```
+//!
+//! ### Async RCSB Downloads (`rcsb-async` feature)
+//!
+//! ```rust,ignore
+//! use pdbrust::rcsb::{download_multiple_async, AsyncDownloadOptions, FileFormat};
+//!
+//! // Download multiple structures concurrently
+//! let pdb_ids = vec!["1UBQ", "8HM2", "4INS"];
+//! let results = download_multiple_async(&pdb_ids, FileFormat::Pdb, None).await;
+//!
+//! // With rate limiting options
+//! let options = AsyncDownloadOptions::default()
+//!     .with_max_concurrent(10)
+//!     .with_rate_limit_ms(50);
+//! let results = download_multiple_async(&pdb_ids, FileFormat::Cif, Some(options)).await;
+//! ```
+//!
+//! ### Geometry (`geometry` feature)
+//!
+//! ```rust,ignore
+//! use pdbrust::geometry::AtomSelection;
+//!
+//! // Calculate RMSD between structures
+//! let rmsd = structure1.rmsd_to(&structure2)?;  // CA atoms by default
+//!
+//! // Align structures using Kabsch algorithm
+//! let (aligned, result) = mobile.align_to(&target)?;
+//! println!("RMSD: {:.4} Å ({} atoms)", result.rmsd, result.num_atoms);
+//!
+//! // Per-residue RMSD for flexibility analysis
+//! let per_res = mobile.per_residue_rmsd_to(&target)?;
+//! ```
+//!
+//! ### Secondary Structure (`dssp` feature)
+//!
+//! ```rust,ignore
+//! // DSSP-like secondary structure assignment
+//! let ss = structure.assign_secondary_structure();
+//! println!("Helix: {:.1}%", ss.helix_fraction * 100.0);
+//! println!("Sheet: {:.1}%", ss.sheet_fraction * 100.0);
+//!
+//! // Compact string representation (e.g., "HHHHEEEECCCC")
+//! let ss_string = structure.secondary_structure_string();
+//! ```
+//!
+//! ### Gzip Support (`gzip` feature)
+//!
+//! ```rust,ignore
+//! use pdbrust::{parse_gzip_structure_file, parse_gzip_pdb_file};
+//!
+//! // Parse gzip-compressed files directly
+//! let structure = parse_gzip_structure_file("pdb1ubq.ent.gz")?;
+//! let structure = parse_gzip_pdb_file("protein.pdb.gz")?;
 //! ```
 //!
 //! ## Format Support

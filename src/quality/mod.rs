@@ -38,7 +38,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! pdbrust = { version = "0.1", features = ["quality"] }
+//! pdbrust = { version = "0.6", features = ["quality"] }
 //! ```
 
 use crate::core::PdbStructure;
