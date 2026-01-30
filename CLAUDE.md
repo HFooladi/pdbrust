@@ -34,7 +34,7 @@ src/
 ├── quality/        # [feature: quality] Quality assessment
 ├── summary/        # [feature: summary] Unified structure summaries
 ├── rcsb/           # [feature: rcsb] RCSB PDB search and download
-├── geometry/       # [feature: geometry] RMSD and structure superposition
+├── geometry/       # [feature: geometry] RMSD, LDDT, and structure superposition
 └── dssp/           # [feature: dssp] Secondary structure assignment
 
 pdbrust-python/     # Python bindings (PyO3)
@@ -92,7 +92,7 @@ benchmark_results/      # Results from full PDB archive benchmark
 | `rcsb-async` | Async/concurrent bulk downloads with rate limiting | `rcsb`, `tokio`, `futures` |
 | `gzip` | Parse gzip-compressed files (.ent.gz, .pdb.gz) | `flate2` |
 | `parallel` | Parallel processing with Rayon | `rayon` |
-| `geometry` | Geometric analysis with nalgebra | `nalgebra` |
+| `geometry` | RMSD, LDDT, and geometric analysis with nalgebra | `nalgebra` |
 | `dssp` | DSSP-like secondary structure assignment | - |
 | `analysis` | All analysis features | `filter`, `descriptors`, `quality`, `summary`, `dssp` |
 | `full` | Everything | `parallel`, `geometry`, `analysis`, `rcsb`, `rcsb-async`, `gzip` |
@@ -255,7 +255,10 @@ Test files:
 - `AsyncDownloadOptions` (rcsb-async): Concurrency and rate limiting configuration
 - `AlignmentResult` (geometry): RMSD and transformation from alignment
 - `PerResidueRmsd` (geometry): Per-residue RMSD for flexibility analysis
-- `AtomSelection` (geometry): Atom selection for RMSD/alignment
+- `AtomSelection` (geometry): Atom selection for RMSD/alignment/LDDT
+- `LddtResult` (geometry): LDDT score and per-threshold statistics
+- `LddtOptions` (geometry): LDDT configuration (inclusion radius, thresholds)
+- `PerResidueLddt` (geometry): Per-residue LDDT for quality analysis
 - `SecondaryStructure` (dssp): 9-state SS classification (H, G, I, P, E, B, T, S, C)
 - `ResidueSSAssignment` (dssp): Per-residue secondary structure assignment
 - `SecondaryStructureAssignment` (dssp): Complete SS assignment with statistics
@@ -374,7 +377,7 @@ for (pdb_id, result) in results {
 
 ### Geometry (feature: geometry)
 ```rust
-use pdbrust::geometry::AtomSelection;
+use pdbrust::geometry::{AtomSelection, LddtOptions};
 
 // RMSD calculation (without alignment)
 let rmsd = structure1.rmsd_to(&structure2)?;  // CA atoms by default
@@ -393,7 +396,30 @@ for r in &per_res {
         println!("Flexible: {}{} {}", r.residue_id.0, r.residue_id.1, r.rmsd);
     }
 }
+
+// LDDT calculation (superposition-free, used in AlphaFold/CASP)
+let result = model.lddt_to(&reference)?;
+println!("LDDT: {:.4}", result.score);  // 0.0 (poor) to 1.0 (perfect)
+
+// LDDT with custom options
+let options = LddtOptions::default()
+    .with_inclusion_radius(10.0)
+    .with_thresholds(vec![0.5, 1.0, 2.0, 4.0]);
+let result = model.lddt_to_with_options(&reference, AtomSelection::Backbone, options)?;
+
+// Per-residue LDDT for quality analysis
+let per_res = model.per_residue_lddt_to(&reference)?;
+for r in per_res.iter().filter(|r| r.score < 0.7) {
+    println!("Low LDDT: {}{} = {:.2}", r.residue_id.0, r.residue_id.1, r.score);
+}
 ```
+
+**LDDT vs RMSD:**
+- **LDDT** is superposition-free (invariant to rotation/translation)
+- **RMSD** requires alignment for meaningful comparison
+- LDDT focuses on local distance preservation (default 15Å radius)
+- LDDT uses 4 thresholds: 0.5Å, 1.0Å, 2.0Å, 4.0Å
+- LDDT is used in AlphaFold (pLDDT) and CASP evaluations
 
 ### Secondary Structure (feature: dssp)
 ```rust
@@ -439,6 +465,7 @@ The `examples/` directory contains runnable examples demonstrating common workfl
 | `filtering_demo.rs` | filter | Fluent filtering API, method chaining, in-place modifications |
 | `selection_demo.rs` | filter | PyMOL/VMD-style selection language: chain A and name CA |
 | `geometry_demo.rs` | geometry | RMSD calculation, Kabsch alignment, per-residue RMSD |
+| `lddt_demo.rs` | geometry | LDDT calculation (superposition-free), per-residue LDDT |
 | `rcsb_workflow.rs` | rcsb, descriptors | RCSB search queries, download, analyze (requires network) |
 | `async_download_demo.rs` | rcsb-async, descriptors | Concurrent bulk downloads with rate limiting |
 | `batch_processing.rs` | descriptors, summary | Process multiple files, compute summaries, export CSV |
@@ -458,6 +485,7 @@ The `pdbrust-python/examples/` directory contains Python examples:
 | `basic_usage.py` | Parsing, accessing atoms/residues, basic filtering |
 | `writing_files.py` | Write PDB/mmCIF files, round-trip demonstration |
 | `geometry_rmsd.py` | RMSD calculation, structure alignment, per-residue RMSD |
+| `lddt_demo.py` | LDDT calculation (superposition-free), per-residue LDDT analysis |
 | `numpy_integration.py` | Coordinate arrays, distance matrices, contact maps |
 | `rcsb_search.py` | RCSB search queries and structure downloads |
 | `selection_language.py` | PyMOL/VMD-style selection language with boolean operators |

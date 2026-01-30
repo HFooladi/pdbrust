@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **LDDT (Local Distance Difference Test) calculation** (`geometry` feature)
+  - `lddt_to()` - Calculate LDDT score to a reference structure (superposition-free)
+  - `lddt_to_with_options()` - LDDT with custom atom selection and options
+  - `per_residue_lddt_to()` - Per-residue LDDT scores for quality analysis
+  - `per_residue_lddt_to_with_options()` - Per-residue LDDT with custom options
+  - `LddtOptions` struct with configurable `inclusion_radius` (default: 15.0 Å) and `thresholds` (default: [0.5, 1.0, 2.0, 4.0] Å)
+  - `LddtResult` struct with global score (0.0-1.0), per-threshold scores, pair counts
+  - `PerResidueLddt` struct for identifying poorly modeled regions
+  - Same metric used by AlphaFold (pLDDT) and CASP evaluations
+  - Translation and rotation invariant (superposition-free)
+  - Full Python bindings: `LddtOptions`, `LddtResult`, `PerResidueLddt` classes
+
 - **AlphaFold/pLDDT confidence score support** (`descriptors` feature)
   - `is_predicted()` - Detect AlphaFold/ESMFold predicted structures from metadata or B-factor patterns
   - `plddt_mean()` - Mean pLDDT confidence score across the structure

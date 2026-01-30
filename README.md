@@ -81,7 +81,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 | `descriptors` | Radius of gyration, amino acid composition, geometric metrics |
 | `quality` | Structure quality assessment (altlocs, missing residues, etc.) |
 | `summary` | Combined quality + descriptors in one call |
-| `geometry` | RMSD calculation, structure alignment (Kabsch), per-residue RMSD |
+| `geometry` | RMSD, LDDT (superposition-free), structure alignment (Kabsch) |
 | `dssp` | DSSP 4-like secondary structure assignment (H, G, I, P, E, B, T, S, C) |
 | `rcsb` | Search and download structures from RCSB PDB |
 | `rcsb-async` | Async/concurrent bulk downloads with rate limiting |
@@ -130,31 +130,35 @@ let structure = parse_gzip_pdb_file("pdb1ubq.ent.gz")?;
 println!("Atoms: {}", structure.atoms.len());
 ```
 
-### Geometry: RMSD and Alignment
+### Geometry: RMSD, LDDT, and Alignment
 
 ```rust
-use pdbrust::{parse_pdb_file, geometry::AtomSelection};
+use pdbrust::{parse_pdb_file, geometry::{AtomSelection, LddtOptions}};
 
-let structure1 = parse_pdb_file("model1.pdb")?;
-let structure2 = parse_pdb_file("model2.pdb")?;
+let model = parse_pdb_file("model.pdb")?;
+let reference = parse_pdb_file("reference.pdb")?;
 
 // Calculate RMSD (without alignment)
-let rmsd = structure1.rmsd_to(&structure2)?;
+let rmsd = model.rmsd_to(&reference)?;
 println!("RMSD: {:.3} Å", rmsd);
 
+// Calculate LDDT (superposition-free, used in AlphaFold/CASP)
+let lddt = model.lddt_to(&reference)?;
+println!("LDDT: {:.4}", lddt.score);  // 0.0 (poor) to 1.0 (perfect)
+
 // Align structures using Kabsch algorithm
-let (aligned, result) = structure1.align_to(&structure2)?;
+let (aligned, result) = model.align_to(&reference)?;
 println!("Alignment RMSD: {:.3} Å ({} atoms)", result.rmsd, result.num_atoms);
 
-// Per-residue RMSD for flexibility analysis
-let per_res = structure1.per_residue_rmsd_to(&structure2)?;
-for r in per_res.iter().filter(|r| r.rmsd > 2.0) {
-    println!("Flexible: {}{} {:.2} Å", r.chain_id, r.residue_seq, r.rmsd);
+// Per-residue LDDT for quality analysis
+let per_res = model.per_residue_lddt_to(&reference)?;
+for r in per_res.iter().filter(|r| r.score < 0.7) {
+    println!("Low LDDT: {}{} {:.2}", r.residue_id.0, r.residue_id.1, r.score);
 }
 
 // Different atom selections
-let rmsd_bb = structure1.rmsd_to_with_selection(&structure2, AtomSelection::Backbone)?;
-let rmsd_all = structure1.rmsd_to_with_selection(&structure2, AtomSelection::AllAtoms)?;
+let rmsd_bb = model.rmsd_to_with_selection(&reference, AtomSelection::Backbone)?;
+let lddt_bb = model.lddt_to_with_options(&reference, AtomSelection::Backbone, LddtOptions::default())?;
 ```
 
 ### Download from RCSB PDB
@@ -369,6 +373,7 @@ See the [examples/](examples/) directory for complete working code:
 | B-factor analysis | [b_factor_demo.rs](examples/b_factor_demo.rs) | descriptors |
 | Secondary structure (DSSP) | [secondary_structure_demo.rs](examples/secondary_structure_demo.rs) | dssp |
 | RMSD and structure alignment | [geometry_demo.rs](examples/geometry_demo.rs) | geometry |
+| LDDT (superposition-free) | [lddt_demo.rs](examples/lddt_demo.rs) | geometry |
 | Search and download from RCSB | [rcsb_workflow.rs](examples/rcsb_workflow.rs) | rcsb, descriptors |
 | Async bulk downloads | [async_download_demo.rs](examples/async_download_demo.rs) | rcsb-async, descriptors |
 | Process multiple files | [batch_processing.rs](examples/batch_processing.rs) | descriptors, summary |
@@ -377,6 +382,7 @@ See the [examples/](examples/) directory for complete working code:
 - `basic_usage.py` - Parsing and structure access
 - `writing_files.py` - Write PDB/mmCIF files
 - `geometry_rmsd.py` - RMSD and alignment
+- `lddt_demo.py` - LDDT calculation (superposition-free)
 - `numpy_integration.py` - Numpy arrays, distance matrices, contact maps
 - `rcsb_search.py` - RCSB search and download
 - `selection_language.py` - PyMOL/VMD-style selection language
@@ -395,6 +401,7 @@ cargo run --example selection_demo --features "filter"
 cargo run --example b_factor_demo --features "descriptors"
 cargo run --example secondary_structure_demo --features "dssp"
 cargo run --example geometry_demo --features "geometry"
+cargo run --example lddt_demo --features "geometry"
 cargo run --example rcsb_workflow --features "rcsb,descriptors"
 cargo run --example async_download_demo --features "rcsb-async,descriptors"
 cargo run --example batch_processing --features "descriptors,summary"

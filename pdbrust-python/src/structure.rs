@@ -912,6 +912,102 @@ impl PyPdbStructure {
             .map_err(convert_error)
     }
 
+    /// Calculate LDDT (Local Distance Difference Test) to a reference structure.
+    ///
+    /// LDDT is a superposition-free metric that measures the fraction of
+    /// inter-atomic distances that are preserved within specified thresholds.
+    /// It ranges from 0.0 (poor) to 1.0 (perfect).
+    ///
+    /// This is the same metric used by AlphaFold (pLDDT) and CASP evaluations.
+    ///
+    /// Args:
+    ///     reference: The reference structure (ground truth)
+    ///     selection: Atom selection (default: CA atoms only).
+    ///                Use AtomSelection.ca_only(), backbone(), all_atoms(), or custom()
+    ///     options: LDDT options (default: inclusion_radius=15.0, thresholds=[0.5, 1.0, 2.0, 4.0])
+    ///
+    /// Returns:
+    ///     LddtResult containing:
+    ///     - score: Global LDDT score (0.0 to 1.0)
+    ///     - num_pairs: Number of distance pairs evaluated
+    ///     - per_threshold_scores: Score for each threshold
+    ///     - num_residues: Number of residues evaluated
+    ///
+    /// Raises:
+    ///     ValueError: If structures have different numbers of selected atoms
+    ///
+    /// Example:
+    ///     >>> result = model.lddt_to(reference)
+    ///     >>> print(f"LDDT: {result.score:.4f}")
+    ///     >>> result = model.lddt_to(reference, AtomSelection.backbone())
+    ///     >>> result = model.lddt_to(reference, options=LddtOptions(inclusion_radius=10.0))
+    #[cfg(feature = "geometry")]
+    #[pyo3(signature = (reference, selection=None, options=None))]
+    fn lddt_to(
+        &self,
+        reference: &PyPdbStructure,
+        selection: Option<&crate::geometry::PyAtomSelection>,
+        options: Option<&crate::geometry::PyLddtOptions>,
+    ) -> PyResult<crate::geometry::PyLddtResult> {
+        let sel = selection
+            .map(|s| s.inner.clone())
+            .unwrap_or(pdbrust::geometry::AtomSelection::CaOnly);
+        let opts = options
+            .map(|o| o.inner.clone())
+            .unwrap_or_else(pdbrust::geometry::LddtOptions::default);
+        self.inner
+            .lddt_to_with_options(&reference.inner, sel, opts)
+            .map(crate::geometry::PyLddtResult::from)
+            .map_err(convert_error)
+    }
+
+    /// Get per-residue LDDT scores.
+    ///
+    /// Returns LDDT scores for each residue individually, useful for
+    /// identifying poorly modeled regions in predicted structures.
+    ///
+    /// Args:
+    ///     reference: The reference structure (ground truth)
+    ///     selection: Atom selection (default: CA atoms only)
+    ///     options: LDDT options (default: inclusion_radius=15.0, thresholds=[0.5, 1.0, 2.0, 4.0])
+    ///
+    /// Returns:
+    ///     List of PerResidueLddt containing:
+    ///     - chain_id: Chain identifier
+    ///     - residue_seq: Residue sequence number
+    ///     - residue_name: Residue name
+    ///     - score: LDDT score for this residue
+    ///     - num_pairs: Number of distance pairs involving this residue
+    ///
+    /// Example:
+    ///     >>> per_res = model.per_residue_lddt_to(reference)
+    ///     >>> for r in per_res:
+    ///     ...     if r.score < 0.7:
+    ///     ...         print(f"{r.chain_id}{r.residue_seq}: LDDT = {r.score:.2f}")
+    #[cfg(feature = "geometry")]
+    #[pyo3(signature = (reference, selection=None, options=None))]
+    fn per_residue_lddt_to(
+        &self,
+        reference: &PyPdbStructure,
+        selection: Option<&crate::geometry::PyAtomSelection>,
+        options: Option<&crate::geometry::PyLddtOptions>,
+    ) -> PyResult<Vec<crate::geometry::PyPerResidueLddt>> {
+        let sel = selection
+            .map(|s| s.inner.clone())
+            .unwrap_or(pdbrust::geometry::AtomSelection::CaOnly);
+        let opts = options
+            .map(|o| o.inner.clone())
+            .unwrap_or_else(pdbrust::geometry::LddtOptions::default);
+        self.inner
+            .per_residue_lddt_to_with_options(&reference.inner, sel, opts)
+            .map(|v| {
+                v.into_iter()
+                    .map(crate::geometry::PyPerResidueLddt::from)
+                    .collect()
+            })
+            .map_err(convert_error)
+    }
+
     // ==================== DSSP Methods (feature-gated) ====================
 
     /// Compute DSSP-like secondary structure assignment.

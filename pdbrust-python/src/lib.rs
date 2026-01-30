@@ -133,6 +133,10 @@ fn _pdbrust(m: &Bound<'_, PyModule>) -> PyResult<()> {
         m.add_class::<geometry::PyAtomSelection>()?;
         m.add_class::<geometry::PyAlignmentResult>()?;
         m.add_class::<geometry::PyPerResidueRmsd>()?;
+        // LDDT types
+        m.add_class::<geometry::PyLddtOptions>()?;
+        m.add_class::<geometry::PyLddtResult>()?;
+        m.add_class::<geometry::PyPerResidueLddt>()?;
     }
 
     // DSSP (feature-gated)

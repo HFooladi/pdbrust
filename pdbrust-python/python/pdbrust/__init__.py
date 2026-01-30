@@ -99,12 +99,16 @@ try:
 except ImportError:
     pass
 
-# Optional: geometry (RMSD, alignment)
+# Optional: geometry (RMSD, alignment, LDDT)
 try:
     from pdbrust._pdbrust import (
         AtomSelection,
         AlignmentResult,
         PerResidueRmsd,
+        # LDDT types
+        LddtOptions,
+        LddtResult,
+        PerResidueLddt,
     )
 except ImportError:
     pass
@@ -169,6 +173,10 @@ __all__ = [
     "AtomSelection",
     "AlignmentResult",
     "PerResidueRmsd",
+    # LDDT (optional)
+    "LddtOptions",
+    "LddtResult",
+    "PerResidueLddt",
     # DSSP (optional)
     "SecondaryStructure",
     "ResidueSSAssignment",

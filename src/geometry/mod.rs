@@ -1,7 +1,7 @@
 //! Geometric analysis and structure superposition.
 //!
-//! This module provides RMSD calculation and structure alignment using
-//! the Kabsch algorithm. It requires the `geometry` feature flag.
+//! This module provides RMSD calculation, LDDT scoring, and structure alignment
+//! using the Kabsch algorithm. It requires the `geometry` feature flag.
 //!
 //! # Feature Flag
 //!
@@ -17,60 +17,82 @@
 //! The main functionality includes:
 //!
 //! - **RMSD Calculation**: Compute root mean square deviation between structures
+//! - **LDDT Calculation**: Compute Local Distance Difference Test (superposition-free)
 //! - **Structure Alignment**: Optimal superposition using Kabsch algorithm
-//! - **Per-Residue RMSD**: Identify flexible regions in proteins
+//! - **Per-Residue Analysis**: Identify flexible or poorly modeled regions
 //!
 //! # Quick Start
 //!
 //! ```rust,ignore
 //! use pdbrust::{parse_pdb_file, PdbStructure};
-//! use pdbrust::geometry::AtomSelection;
+//! use pdbrust::geometry::{AtomSelection, LddtOptions};
 //!
 //! // Parse two structures
-//! let structure1 = parse_pdb_file("model1.pdb")?;
-//! let structure2 = parse_pdb_file("model2.pdb")?;
+//! let model = parse_pdb_file("model.pdb")?;
+//! let reference = parse_pdb_file("reference.pdb")?;
 //!
 //! // Calculate RMSD (without alignment)
-//! let rmsd = structure1.rmsd_to(&structure2)?;
+//! let rmsd = model.rmsd_to(&reference)?;
 //! println!("Direct RMSD: {:.2} Angstroms", rmsd);
 //!
+//! // Calculate LDDT (superposition-free)
+//! let lddt = model.lddt_to(&reference)?;
+//! println!("LDDT: {:.4}", lddt.score);
+//!
 //! // Align structures and get aligned RMSD
-//! let (aligned, result) = structure1.align_to(&structure2)?;
+//! let (aligned, result) = model.align_to(&reference)?;
 //! println!("Aligned RMSD: {:.4} Angstroms", result.rmsd);
 //!
 //! // Get per-residue RMSD for flexibility analysis
-//! let per_res = structure1.per_residue_rmsd_to(&structure2)?;
+//! let per_res = model.per_residue_rmsd_to(&reference)?;
 //! for r in &per_res {
 //!     if r.rmsd > 2.0 {
 //!         println!("Flexible: {}{} - {:.2} A", r.residue_id.0, r.residue_id.1, r.rmsd);
 //!     }
 //! }
+//!
+//! // Get per-residue LDDT for quality analysis
+//! let per_res_lddt = model.per_residue_lddt_to(&reference)?;
+//! for r in per_res_lddt.iter().filter(|r| r.score < 0.7) {
+//!     println!("Low LDDT: {}{} = {:.2}", r.residue_id.0, r.residue_id.1, r.score);
+//! }
 //! ```
 //!
 //! # Atom Selection
 //!
-//! By default, RMSD and alignment use CA (alpha-carbon) atoms only.
+//! By default, RMSD, LDDT, and alignment use CA (alpha-carbon) atoms only.
 //! You can customize this with [`AtomSelection`]:
 //!
 //! ```rust,ignore
 //! use pdbrust::geometry::AtomSelection;
 //!
 //! // Use backbone atoms (N, CA, C, O)
-//! let rmsd = structure1.rmsd_to_with_selection(&structure2, AtomSelection::Backbone)?;
+//! let rmsd = model.rmsd_to_with_selection(&reference, AtomSelection::Backbone)?;
 //!
 //! // Use all atoms (requires exact correspondence)
-//! let rmsd = structure1.rmsd_to_with_selection(&structure2, AtomSelection::AllAtoms)?;
+//! let rmsd = model.rmsd_to_with_selection(&reference, AtomSelection::AllAtoms)?;
 //!
 //! // Use custom atom set
 //! let selection = AtomSelection::Custom(vec!["CA".into(), "CB".into()]);
-//! let rmsd = structure1.rmsd_to_with_selection(&structure2, selection)?;
+//! let rmsd = model.rmsd_to_with_selection(&reference, selection)?;
 //! ```
+//!
+//! # LDDT vs RMSD
+//!
+//! LDDT (Local Distance Difference Test) complements RMSD:
+//!
+//! - **LDDT** is superposition-free and focuses on local structure quality
+//! - **RMSD** requires alignment and measures global deviation
+//! - LDDT is used in AlphaFold (pLDDT) and CASP evaluations
+//! - For comparing predicted structures, LDDT is often preferred
 
+mod lddt;
 mod rmsd;
 mod superposition;
 mod transform;
 
 // Re-export public types
+pub use lddt::{LddtOptions, LddtResult, PerResidueLddt, calculate_lddt, per_residue_lddt};
 pub use rmsd::{calculate_rmsd, calculate_rmsd_chain, rmsd_from_coords};
 pub use superposition::{
     AlignmentResult, PerResidueRmsd, align_structures, calculate_alignment, per_residue_rmsd,
@@ -248,6 +270,132 @@ impl PdbStructure {
     ) -> Result<Vec<PerResidueRmsd>, PdbError> {
         per_residue_rmsd(self, target, selection)
     }
+
+    // ==================== LDDT Methods ====================
+
+    /// Calculate LDDT (Local Distance Difference Test) to a reference structure.
+    ///
+    /// LDDT is a superposition-free metric that measures the fraction of
+    /// inter-atomic distances that are preserved within specified thresholds.
+    /// It ranges from 0.0 (poor) to 1.0 (perfect).
+    ///
+    /// This is the same metric used by AlphaFold (pLDDT) and CASP evaluations.
+    ///
+    /// # Arguments
+    /// * `reference` - The reference structure (ground truth)
+    ///
+    /// # Returns
+    /// [`LddtResult`] containing the global score and per-threshold scores
+    ///
+    /// # Errors
+    /// - `AtomCountMismatch` if structures have different numbers of CA atoms
+    /// - `NoAtomsSelected` if either structure has no CA atoms
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// let result = model.lddt_to(&reference)?;
+    /// println!("LDDT: {:.4}", result.score);
+    /// println!("Evaluated {} distance pairs", result.num_pairs);
+    /// ```
+    pub fn lddt_to(&self, reference: &PdbStructure) -> Result<LddtResult, PdbError> {
+        calculate_lddt(
+            self,
+            reference,
+            AtomSelection::CaOnly,
+            LddtOptions::default(),
+        )
+    }
+
+    /// Calculate LDDT with custom atom selection and options.
+    ///
+    /// # Arguments
+    /// * `reference` - The reference structure (ground truth)
+    /// * `selection` - Atom selection criteria (e.g., CA only, backbone)
+    /// * `options` - LDDT options (inclusion radius, thresholds)
+    ///
+    /// # Returns
+    /// [`LddtResult`] containing the global score and per-threshold scores
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// use pdbrust::geometry::{AtomSelection, LddtOptions};
+    ///
+    /// let options = LddtOptions::default()
+    ///     .with_inclusion_radius(10.0)
+    ///     .with_thresholds(vec![0.5, 1.0, 2.0, 4.0]);
+    ///
+    /// let result = model.lddt_to_with_options(
+    ///     &reference,
+    ///     AtomSelection::Backbone,
+    ///     options
+    /// )?;
+    /// ```
+    pub fn lddt_to_with_options(
+        &self,
+        reference: &PdbStructure,
+        selection: AtomSelection,
+        options: LddtOptions,
+    ) -> Result<LddtResult, PdbError> {
+        calculate_lddt(self, reference, selection, options)
+    }
+
+    /// Get per-residue LDDT scores.
+    ///
+    /// Returns LDDT scores for each residue individually, useful for
+    /// identifying poorly modeled regions in predicted structures.
+    ///
+    /// # Arguments
+    /// * `reference` - The reference structure (ground truth)
+    ///
+    /// # Returns
+    /// Vector of [`PerResidueLddt`] containing LDDT for each residue
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// let per_res = model.per_residue_lddt_to(&reference)?;
+    ///
+    /// // Find poorly modeled regions (LDDT < 0.7)
+    /// for r in per_res.iter().filter(|r| r.score < 0.7) {
+    ///     println!("{}{} {}: LDDT = {:.2}",
+    ///         r.residue_id.0,
+    ///         r.residue_id.1,
+    ///         r.residue_name,
+    ///         r.score
+    ///     );
+    /// }
+    /// ```
+    pub fn per_residue_lddt_to(
+        &self,
+        reference: &PdbStructure,
+    ) -> Result<Vec<PerResidueLddt>, PdbError> {
+        per_residue_lddt(
+            self,
+            reference,
+            AtomSelection::CaOnly,
+            LddtOptions::default(),
+        )
+    }
+
+    /// Get per-residue LDDT with custom atom selection and options.
+    ///
+    /// # Arguments
+    /// * `reference` - The reference structure (ground truth)
+    /// * `selection` - Atom selection criteria
+    /// * `options` - LDDT options (inclusion radius, thresholds)
+    ///
+    /// # Returns
+    /// Vector of [`PerResidueLddt`] containing LDDT for each residue
+    pub fn per_residue_lddt_to_with_options(
+        &self,
+        reference: &PdbStructure,
+        selection: AtomSelection,
+        options: LddtOptions,
+    ) -> Result<Vec<PerResidueLddt>, PdbError> {
+        per_residue_lddt(self, reference, selection, options)
+    }
 }
 
 #[cfg(test)]
@@ -338,6 +486,105 @@ mod tests {
         for r in &per_res {
             // After alignment, all per-residue RMSDs should be ~0
             assert!(r.rmsd < 1e-6);
+        }
+    }
+
+    // ==================== LDDT Tests ====================
+
+    #[test]
+    fn test_pdbstructure_lddt_to_self() {
+        let structure = create_test_structure();
+        let result = structure.lddt_to(&structure).unwrap();
+
+        // Self-comparison should have perfect LDDT
+        assert!(
+            (result.score - 1.0).abs() < 1e-10,
+            "Self-LDDT should be 1.0, got {}",
+            result.score
+        );
+    }
+
+    #[test]
+    fn test_pdbstructure_lddt_translation_invariant() {
+        let reference = create_test_structure();
+        let mut model = reference.clone();
+
+        // Translate the model
+        for atom in &mut model.atoms {
+            atom.x += 100.0;
+            atom.y += 50.0;
+            atom.z += 25.0;
+        }
+
+        let result = model.lddt_to(&reference).unwrap();
+
+        // LDDT should be invariant to translation
+        assert!(
+            (result.score - 1.0).abs() < 1e-10,
+            "LDDT should be translation invariant, got {}",
+            result.score
+        );
+    }
+
+    #[test]
+    fn test_pdbstructure_lddt_rotation_invariant() {
+        let reference = create_test_structure();
+        let mut model = reference.clone();
+
+        // Rotate 90 degrees around z-axis
+        for atom in &mut model.atoms {
+            let x = atom.x;
+            let y = atom.y;
+            atom.x = -y;
+            atom.y = x;
+        }
+
+        let result = model.lddt_to(&reference).unwrap();
+
+        // LDDT should be invariant to rotation
+        assert!(
+            (result.score - 1.0).abs() < 1e-10,
+            "LDDT should be rotation invariant, got {}",
+            result.score
+        );
+    }
+
+    #[test]
+    fn test_pdbstructure_lddt_perturbed() {
+        let reference = create_test_structure();
+        let mut model = reference.clone();
+
+        // Perturb one atom
+        model.atoms[1].y += 5.0;
+
+        let result = model.lddt_to(&reference).unwrap();
+
+        // Perturbed structure should have LDDT < 1.0
+        assert!(
+            result.score < 1.0,
+            "Perturbed LDDT should be < 1.0, got {}",
+            result.score
+        );
+        assert!(
+            result.score > 0.0,
+            "Perturbed LDDT should be > 0.0, got {}",
+            result.score
+        );
+    }
+
+    #[test]
+    fn test_pdbstructure_per_residue_lddt() {
+        let reference = create_test_structure();
+        let model = reference.clone();
+
+        let per_res = model.per_residue_lddt_to(&reference).unwrap();
+
+        assert_eq!(per_res.len(), 4, "Should have 4 residues");
+        for r in &per_res {
+            assert!(
+                (r.score - 1.0).abs() < 1e-10,
+                "Self per-residue LDDT should be 1.0"
+            );
         }
     }
 }

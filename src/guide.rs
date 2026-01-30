@@ -16,6 +16,7 @@
 //! | `filtering_demo.rs` | filter | Fluent filtering API and method chaining |
 //! | `selection_demo.rs` | filter | PyMOL/VMD-style selection language |
 //! | `geometry_demo.rs` | geometry | RMSD calculation and Kabsch alignment |
+//! | `lddt_demo.rs` | geometry | LDDT calculation (superposition-free) |
 //! | `rcsb_workflow.rs` | rcsb, descriptors | RCSB search and download workflows |
 //! | `async_download_demo.rs` | rcsb-async, descriptors | Concurrent bulk downloads with rate limiting |
 //! | `batch_processing.rs` | descriptors, summary | Multi-file processing with CSV export |
@@ -56,7 +57,7 @@
 //! | `rcsb` | RCSB PDB search and download |
 //! | `rcsb-async` | Async/concurrent bulk downloads with rate limiting |
 //! | `parallel` | Parallel processing with Rayon |
-//! | `geometry` | RMSD calculation and structure alignment (Kabsch) |
+//! | `geometry` | RMSD, LDDT (superposition-free), structure alignment (Kabsch) |
 //! | `dssp` | DSSP-like secondary structure assignment |
 //! | `gzip` | Parse gzip-compressed files (.ent.gz, .pdb.gz) |
 //! | `analysis` | All analysis features combined |
@@ -464,9 +465,9 @@
 //! }
 //! ```
 //!
-//! ## Geometry and RMSD (feature: `geometry`)
+//! ## Geometry: RMSD, LDDT, and Alignment (feature: `geometry`)
 //!
-//! Calculate RMSD and align structures using the Kabsch algorithm.
+//! Calculate RMSD, LDDT, and align structures using the Kabsch algorithm.
 //!
 //! ### RMSD Calculation
 //!
@@ -480,6 +481,38 @@
 //! let rmsd_bb = structure1.rmsd_to_with_selection(&structure2, AtomSelection::Backbone)?;
 //! let rmsd_all = structure1.rmsd_to_with_selection(&structure2, AtomSelection::AllAtoms)?;
 //! ```
+//!
+//! ### LDDT Calculation (Superposition-Free)
+//!
+//! LDDT (Local Distance Difference Test) is a superposition-free metric widely used
+//! in AlphaFold (pLDDT) and CASP evaluations. It measures the fraction of inter-atomic
+//! distances preserved within specified thresholds.
+//!
+//! ```ignore
+//! use pdbrust::geometry::{AtomSelection, LddtOptions};
+//!
+//! // LDDT using CA atoms (default)
+//! let result = model.lddt_to(&reference)?;
+//! println!("LDDT: {:.4}", result.score);  // 0.0 (poor) to 1.0 (perfect)
+//!
+//! // LDDT with custom options
+//! let options = LddtOptions::default()
+//!     .with_inclusion_radius(10.0)
+//!     .with_thresholds(vec![0.5, 1.0, 2.0, 4.0]);
+//! let result = model.lddt_to_with_options(&reference, AtomSelection::Backbone, options)?;
+//!
+//! // Per-residue LDDT for quality analysis
+//! let per_res = model.per_residue_lddt_to(&reference)?;
+//! for r in per_res.iter().filter(|r| r.score < 0.7) {
+//!     println!("Low LDDT: {}{} {:.2}", r.residue_id.0, r.residue_id.1, r.score);
+//! }
+//! ```
+//!
+//! Key properties of LDDT:
+//! - Superposition-free: Invariant to rotation and translation
+//! - Local: Focuses on distance preservation within 15Å (configurable)
+//! - Multi-threshold: Uses 0.5Å, 1.0Å, 2.0Å, 4.0Å by default
+//! - Range: 0.0 (poor) to 1.0 (perfect)
 //!
 //! ### Structure Alignment
 //!
