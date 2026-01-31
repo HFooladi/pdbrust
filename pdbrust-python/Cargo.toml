@@ -2,7 +2,7 @@
 name = "pdbrust-python"
 version = "0.6.0"
 edition = "2021"
-rust-version = "1.70.0"
+rust-version = "1.85.0"
 authors = ["Hosein Fooladi <fooladi.hosein@gmail.com>"]
 description = "Python bindings for PDBRust - High-performance PDB/mmCIF parsing and analysis"
 license = "MIT"

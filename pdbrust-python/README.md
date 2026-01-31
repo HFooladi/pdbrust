@@ -230,7 +230,7 @@ PDBRust provides **40-260x speedups** over pure Python implementations:
 
 ## Requirements
 
-- Python >= 3.9
+- Python 3.9-3.13
 - No runtime dependencies (Rust code is compiled into the package)
 
 ## License

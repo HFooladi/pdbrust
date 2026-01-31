@@ -547,7 +547,7 @@ cargo run --example read_pdb -- examples/pdb_files/1UBQ.pdb
 - Examples: `examples/`
 - Documentation: `docs/GETTING_STARTED.md`
 - Benchmarks: `benchmarks/`
-- MSRV: 1.70.0
+- MSRV: 1.85.0
 - CI: Ubuntu, Windows, macOS + stable, MSRV
 
 ## Performance Notes

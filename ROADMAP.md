@@ -8,7 +8,7 @@ Future development ideas for PDBRust. Priority will be determined based on user 
 - Created `pdbrust-python` package, published to PyPI (`pip install pdbrust`)
 - Full API: parsing, filtering, descriptors, quality, RCSB search/download
 - Numpy integration: `get_coords_array()`, `get_ca_coords_array()`
-- Multi-platform wheels: Linux, macOS, Windows (Python 3.9-3.12)
+- Multi-platform wheels: Linux, macOS, Windows (Python 3.9-3.13)
 - GitHub Actions CI/CD for automated releases
 
 ### Contact Maps / Distance Matrices ✅
