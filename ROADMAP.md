@@ -142,20 +142,74 @@ Future development ideas for PDBRust. Priority will be determined based on user 
 
 ## Future Ideas
 
-### Surface Area Calculation
-- Solvent accessible surface area (SASA)
+### High Priority
+
+#### Surface Area Calculation (SASA)
+- Solvent accessible surface area using Shrake-Rupley rolling ball algorithm
 - Per-residue and per-atom breakdown
-- Requires rolling ball algorithm
+- Buried vs exposed residue classification
+- Essential for binding site analysis, protein-protein interfaces, stability predictions
+- `structure.sasa()` → total SASA in Å²
+- `structure.per_residue_sasa()` → Vec<ResidueSasa>
+- `structure.buried_residues(threshold)` → residues with low solvent exposure
 
-### Symmetry Operations
-- Parse and apply BIOMT records
-- Generate biological assemblies
-- `structure.biological_assembly()`
+#### Symmetry Operations / Biological Assemblies
+- Parse and apply BIOMT records (PDB) / `_pdbx_struct_oper_list` (mmCIF)
+- Generate biological assemblies from asymmetric unit
+- Critical for homo-oligomers (most proteins function as multimers)
+- `structure.biological_assembly()` → full biological unit
+- `structure.symmetry_mates()` → crystallographic neighbors
 
-### Trajectory Support
+#### Clashscore / Steric Clashes
+- VDW radii-based contact detection for structure validation
+- Classify contacts as clashes vs acceptable
+- Per-residue clashscore for model quality assessment
+- Important for refinement quality and model building
+- `structure.clashscore()` → clashes per 1000 atoms
+- `structure.steric_clashes()` → Vec<Clash> with atom pairs and overlap
+
+### Medium Priority
+
+#### Sequence Alignment Integration
+- Simple Needleman-Wunsch for structure-to-structure sequence mapping
+- Enable comparison of different conformations
+- Foundation for homology analysis and mutation effects
+- `structure.align_sequence_to(other)` → SequenceAlignment
+- `structure.rmsd_aligned(other)` → RMSD after sequence alignment
+
+#### Electrostatics / Partial Charges
+- Assign partial charges from residue templates (AMBER, CHARMM)
+- Compute electrostatic potential at grid points
+- Foundation for pKa predictions and ligand binding affinity
+- `structure.assign_charges()` → structure with partial charges
+- `structure.electrostatic_potential(point)` → potential at coordinate
+
+#### mmCIF Dictionary Validation
+- Validate structures against official PDBx/mmCIF dictionary
+- Check category and item compliance
+- Error reporting for non-compliant files
+- `structure.validate_mmcif()` → ValidationReport
+
+### Lower Priority
+
+#### Trajectory Support
 - Parse multi-frame trajectories (e.g., from MD simulations)
 - Memory-efficient streaming for large trajectories
 - Basic trajectory analysis (RMSD over time, etc.)
+- Support for common formats (DCD, XTC, TRR)
+- High complexity - requires careful memory management
+
+#### Symmetry-Expanded RMSD/LDDT
+- Compare structures considering symmetry mates
+- Apply symmetry operations before comparison
+- Useful for crystallographic analysis
+- `structure.rmsd_symmetric(other)` → best RMSD across symmetry
+
+#### Domain Detection
+- Automatic identification of structural domains
+- Useful for large multi-domain proteins
+- Foundation for domain-based alignment
+- `structure.detect_domains()` → Vec<Domain>
 
 ## Community Requested
 
