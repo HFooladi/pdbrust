@@ -28,7 +28,7 @@ With optional features:
 
 ```toml
 [dependencies]
-pdbrust = { version = "0.5", features = ["filter", "descriptors", "rcsb", "gzip"] }
+pdbrust = { version = "0.6", features = ["filter", "descriptors", "rcsb", "gzip"] }
 ```
 
 ## Quick Start
@@ -388,6 +388,9 @@ See the [examples/](examples/) directory for complete working code:
 - `selection_language.py` - PyMOL/VMD-style selection language
 - `secondary_structure.py` - DSSP secondary structure assignment
 - `b_factor_analysis.py` - B-factor statistics and flexibility analysis
+- `alphafold_analysis.py` - AlphaFold pLDDT confidence scores and disordered regions
+- `ramachandran_analysis.py` - Phi/Psi dihedrals and Ramachandran validation
+- `ligand_interactions.py` - Protein-ligand binding sites and interactions
 - `quality_and_summary.py` - Quality reports and structure summaries
 - `batch_processing.py` - Process multiple files with CSV export
 - `advanced_filtering.py` - Filtering, normalization, and manipulation

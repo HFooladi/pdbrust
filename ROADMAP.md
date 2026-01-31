@@ -128,6 +128,18 @@ Future development ideas for PDBRust. Priority will be determined based on user 
 - Full Python bindings with all interaction types
 - Under existing `descriptors` feature flag
 
+### LDDT (Local Distance Difference Test) ✅
+- `structure.lddt_to(reference)` → f64 (0.0 to 1.0, higher is better)
+- `structure.lddt_to_with_options(reference, selection, options)` → LddtResult with detailed statistics
+- `structure.per_residue_lddt_to(reference)` → Vec<PerResidueLddt> for quality analysis
+- Superposition-free metric (invariant to rotation/translation)
+- Configurable inclusion radius (default: 15.0 Å) and thresholds (default: 0.5, 1.0, 2.0, 4.0 Å)
+- Same metric used by AlphaFold (pLDDT) and CASP structure prediction evaluations
+- `LddtResult` with global score, per-threshold scores, and pair counts
+- `PerResidueLddt` for identifying poorly modeled regions
+- Full Python bindings: `LddtOptions`, `LddtResult`, `PerResidueLddt` classes
+- Under `geometry` feature flag (requires nalgebra)
+
 ## Future Ideas
 
 ### Surface Area Calculation
