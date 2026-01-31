@@ -32,10 +32,15 @@ pub struct Atom {
     pub element: String,
     /// Insertion code.
     pub ins_code: Option<char>,
+    /// Whether this atom is from a HETATM record (ligands, waters, ions, etc.).
+    pub is_hetatm: bool,
 }
 
 impl Atom {
     /// Creates a new Atom with the given parameters.
+    ///
+    /// By default, creates an ATOM record (is_hetatm = false).
+    /// Use `new_hetatm()` to create a HETATM record.
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         serial: i32,
@@ -66,38 +71,93 @@ impl Atom {
             temp_factor,
             element,
             ins_code,
+            is_hetatm: false,
+        }
+    }
+
+    /// Creates a new HETATM Atom (ligand, water, ion, etc.).
+    #[allow(clippy::too_many_arguments)]
+    pub fn new_hetatm(
+        serial: i32,
+        name: String,
+        alt_loc: Option<char>,
+        residue_name: String,
+        chain_id: String,
+        residue_seq: i32,
+        x: f64,
+        y: f64,
+        z: f64,
+        occupancy: f64,
+        temp_factor: f64,
+        element: String,
+        ins_code: Option<char>,
+    ) -> Self {
+        Self {
+            serial,
+            name,
+            alt_loc,
+            residue_name,
+            chain_id,
+            residue_seq,
+            x,
+            y,
+            z,
+            occupancy,
+            temp_factor,
+            element,
+            ins_code,
+            is_hetatm: true,
         }
     }
 
     /// Creates a new Atom from a PDB ATOM/HETATM record line.
+    ///
+    /// Automatically detects whether the line is an ATOM or HETATM record
+    /// and sets `is_hetatm` accordingly.
     pub fn from_pdb_line(line: &str) -> Result<Self, crate::error::PdbError> {
-        if line.len() < 80 {
+        if line.len() < 54 {
             return Err(crate::error::PdbError::InvalidRecord(
                 "Line too short for ATOM/HETATM record".to_string(),
             ));
         }
 
+        let is_hetatm = line.starts_with("HETATM");
+
         let serial = line[6..11].trim().parse().unwrap_or(0);
         let name = line[12..16].trim().to_string();
-        let alt_loc = if line[16..17].trim().is_empty() {
-            None
+        let alt_loc = if line.len() > 16 {
+            let c = line.chars().nth(16).unwrap_or(' ');
+            if c == ' ' { None } else { Some(c) }
         } else {
-            Some(line[16..17].chars().next().unwrap())
+            None
         };
         let residue_name = line[17..20].trim().to_string();
         let chain_id = line[21..22].trim().to_string();
         let residue_seq = line[22..26].trim().parse().unwrap_or(0);
-        let ins_code = if line[26..27].trim().is_empty() {
-            None
+        let ins_code = if line.len() > 26 {
+            let c = line.chars().nth(26).unwrap_or(' ');
+            if c == ' ' { None } else { Some(c) }
         } else {
-            Some(line[26..27].chars().next().unwrap())
+            None
         };
         let x = line[30..38].trim().parse().unwrap_or(0.0);
         let y = line[38..46].trim().parse().unwrap_or(0.0);
         let z = line[46..54].trim().parse().unwrap_or(0.0);
-        let occupancy = line[54..60].trim().parse().unwrap_or(1.0);
-        let temp_factor = line[60..66].trim().parse().unwrap_or(0.0);
-        let element = line[76..78].trim().to_string();
+        let occupancy = if line.len() >= 60 {
+            line[54..60].trim().parse().unwrap_or(1.0)
+        } else {
+            1.0
+        };
+        let temp_factor = if line.len() >= 66 {
+            line[60..66].trim().parse().unwrap_or(0.0)
+        } else {
+            0.0
+        };
+        let element = if line.len() >= 78 {
+            line[76..78].trim().to_string()
+        } else {
+            "".to_string()
+        };
 
         Ok(Self {
             serial,
@@ -113,6 +173,7 @@ impl Atom {
             temp_factor,
             element,
             ins_code,
+            is_hetatm,
         })
     }
 

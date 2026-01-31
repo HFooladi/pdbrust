@@ -402,6 +402,7 @@ mod test_helpers {
             temp_factor: 0.0,
             element: "C".to_string(),
             ins_code: None,
+            is_hetatm: false,
         }
     }
 }

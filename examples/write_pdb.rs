@@ -31,6 +31,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             temp_factor: 20.0,
             element: "N".to_string(),
             ins_code: None,
+            is_hetatm: false,
         },
         Atom {
             serial: 2,
@@ -46,6 +47,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             temp_factor: 20.0,
             element: "C".to_string(),
             ins_code: None,
+            is_hetatm: false,
         },
         Atom {
             serial: 3,
@@ -61,6 +63,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             temp_factor: 20.0,
             element: "C".to_string(),
             ins_code: None,
+            is_hetatm: false,
         },
         Atom {
             serial: 4,
@@ -76,6 +79,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             temp_factor: 20.0,
             element: "O".to_string(),
             ins_code: None,
+            is_hetatm: false,
         },
     ];
     structure.atoms.extend(atoms);

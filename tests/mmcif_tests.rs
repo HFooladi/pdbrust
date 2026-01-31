@@ -765,7 +765,7 @@ fn test_write_mmcif_with_hetatm() {
     ));
 
     // Water (should be HETATM)
-    structure.atoms.push(Atom::new(
+    structure.atoms.push(Atom::new_hetatm(
         2,
         "O".to_string(),
         None,

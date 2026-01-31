@@ -9,25 +9,6 @@ use flate2::Compression;
 #[cfg(feature = "gzip")]
 use flate2::write::GzEncoder;
 
-/// Standard amino acid residue names (3-letter codes) for ATOM/HETATM distinction.
-const STANDARD_AMINO_ACIDS: &[&str] = &[
-    "ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS", "ILE", "LEU", "LYS", "MET",
-    "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL",
-];
-
-/// Standard nucleotide residue names for ATOM/HETATM distinction.
-const STANDARD_NUCLEOTIDES: &[&str] = &[
-    "A", "C", "G", "U", // RNA
-    "DA", "DC", "DG", "DT", // DNA
-];
-
-/// Check if a residue name is a standard biological residue (amino acid or nucleotide).
-#[inline]
-fn is_standard_residue(residue_name: &str) -> bool {
-    let name = residue_name.trim();
-    STANDARD_AMINO_ACIDS.contains(&name) || STANDARD_NUCLEOTIDES.contains(&name)
-}
-
 /// Writes a PDB structure to a file.
 pub fn write_pdb_file<P: AsRef<Path>>(structure: &PdbStructure, path: P) -> Result<(), PdbError> {
     let file = File::create(path)?;
@@ -128,14 +109,16 @@ pub fn write_pdb<W: Write>(structure: &PdbStructure, mut writer: W) -> Result<()
     Ok(())
 }
 
-/// Helper function to write an ATOM record
+/// Helper function to write an ATOM or HETATM record
 fn write_atom_record<W: Write>(writer: &mut W, atom: &crate::records::Atom) -> io::Result<()> {
     let alt_loc = atom.alt_loc.unwrap_or(' ');
     let ins_code = atom.ins_code.unwrap_or(' ');
+    let record_type = if atom.is_hetatm { "HETATM" } else { "ATOM  " };
 
     writeln!(
         writer,
-        "ATOM  {:5} {:4}{}{:3} {}{:4}{}   {:8.3}{:8.3}{:8.3}{:6.2}{:6.2}      {:2}  ",
+        "{}{:5} {:4}{}{:3} {}{:4}{}   {:8.3}{:8.3}{:8.3}{:6.2}{:6.2}      {:2}  ",
+        record_type,
         atom.serial,
         atom.name,
         alt_loc,
@@ -349,12 +332,12 @@ fn write_mmcif_atom_record<W: Write>(
     atom: &crate::records::Atom,
     model_num: i32,
 ) -> io::Result<()> {
-    // Determine ATOM or HETATM and set label_seq_id accordingly
+    // Use is_hetatm field to determine record type
     // Per mmCIF convention: HETATM records have "." for label_seq_id
-    let (group_pdb, label_seq_id) = if is_standard_residue(&atom.residue_name) {
-        ("ATOM", atom.residue_seq.to_string())
-    } else {
+    let (group_pdb, label_seq_id) = if atom.is_hetatm {
         ("HETATM", ".".to_string())
+    } else {
+        ("ATOM", atom.residue_seq.to_string())
     };
 
     // auth_seq_id always has the numeric residue sequence

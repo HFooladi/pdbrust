@@ -46,7 +46,8 @@ pub fn parse_pdb_reader<R: BufRead>(reader: R) -> Result<PdbStructure, PdbError>
 
         match record_type {
             "ATOM" | "HETATM" => {
-                let atom = parse_atom_record(&line)?;
+                let is_hetatm = record_type == "HETATM";
+                let atom = parse_atom_record(&line, is_hetatm)?;
 
                 // Add to current model if we're in a model, otherwise add to structure
                 if let Some(model) = &mut current_model {
@@ -134,7 +135,7 @@ pub fn parse_pdb_reader<R: BufRead>(reader: R) -> Result<PdbStructure, PdbError>
 }
 
 /// Parses an ATOM or HETATM record.
-fn parse_atom_record(line: &str) -> Result<Atom, PdbError> {
+fn parse_atom_record(line: &str, is_hetatm: bool) -> Result<Atom, PdbError> {
     if line.len() < 54 {
         return Err(PdbError::InvalidRecord(
             "ATOM/HETATM record too short".to_string(),
@@ -197,6 +198,7 @@ fn parse_atom_record(line: &str) -> Result<Atom, PdbError> {
         temp_factor,
         element,
         ins_code,
+        is_hetatm,
     })
 }
 

@@ -17,6 +17,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         chain_id: "A".to_string(),
         residue_seq: 1,
         ins_code: None,
+        is_hetatm: false,
         x: 0.0,
         y: 0.0,
         z: 0.0,

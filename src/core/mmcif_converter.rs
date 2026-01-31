@@ -164,6 +164,7 @@ fn parse_atom_row(row: &[String], indices: &AtomColumnIndices) -> Result<Atom, P
         indices.cartn_x,
         indices.cartn_y,
         indices.cartn_z,
+        indices.group_pdb,
     ]
     .into_iter()
     .max()
@@ -258,6 +259,9 @@ fn parse_atom_row(row: &[String], indices: &AtomColumnIndices) -> Result<Atom, P
 
     let element = row[indices.type_symbol].clone();
 
+    // Determine if this is a HETATM record from group_PDB column
+    let is_hetatm = row[indices.group_pdb] == "HETATM";
+
     Ok(Atom {
         serial,
         name,
@@ -272,6 +276,7 @@ fn parse_atom_row(row: &[String], indices: &AtomColumnIndices) -> Result<Atom, P
         temp_factor,
         element,
         ins_code,
+        is_hetatm,
     })
 }
 

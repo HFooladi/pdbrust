@@ -382,6 +382,7 @@ mod tests {
             chain_id: chain_id.to_string(),
             residue_seq,
             ins_code: None,
+            is_hetatm: false,
             x,
             y,
             z,
