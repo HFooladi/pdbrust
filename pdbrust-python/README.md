@@ -8,6 +8,52 @@ High-performance Python bindings for [PDBRust](https://github.com/HFooladi/pdbru
 pip install pdbrust
 ```
 
+## Development Installation
+
+To build and install from source (useful for development or testing latest changes):
+
+### Prerequisites
+- Python 3.9+
+- Rust toolchain (1.85.0+)
+- [uv](https://github.com/astral-sh/uv) (fast Python package manager)
+- [maturin](https://github.com/PyO3/maturin) (Rust-Python build tool)
+
+### Setup
+
+1. Clone the repository and navigate to the Python bindings:
+   ```bash
+   cd pdbrust-python
+   ```
+
+2. Create a virtual environment with uv:
+   ```bash
+   uv venv
+   ```
+
+3. Activate the virtual environment:
+   ```bash
+   # Linux/macOS
+   source .venv/bin/activate
+
+   # Windows
+   .venv\Scripts\activate
+   ```
+
+4. Install maturin (if not already installed):
+   ```bash
+   uv pip install maturin
+   ```
+
+5. Build and install pdbrust in development mode:
+   ```bash
+   maturin develop --release
+   ```
+
+6. (Optional) Install numpy for array support:
+   ```bash
+   uv pip install numpy
+   ```
+
 ## Quick Start
 
 ```python
@@ -216,6 +262,48 @@ ca_centroid = structure.get_ca_centroid()
 # Translate structure
 structure.translate(10.0, 0.0, 0.0)
 ```
+
+## Running Examples
+
+The `examples/` directory contains Python scripts demonstrating various features.
+
+### Setup
+1. Navigate to the pdbrust-python directory and activate your virtual environment:
+   ```bash
+   cd pdbrust-python
+   source .venv/bin/activate  # Linux/macOS
+   ```
+
+2. Navigate to the examples directory:
+   ```bash
+   cd examples
+   ```
+
+3. Run any example:
+   ```bash
+   python basic_usage.py
+   python geometry_rmsd.py
+   python numpy_integration.py
+   ```
+
+### Available Examples
+| Example | Description |
+|---------|-------------|
+| `basic_usage.py` | Parsing, accessing atoms/residues, basic filtering |
+| `writing_files.py` | Write PDB/mmCIF files |
+| `geometry_rmsd.py` | RMSD calculation, structure alignment |
+| `lddt_demo.py` | LDDT calculation (superposition-free) |
+| `numpy_integration.py` | Coordinate arrays, distance matrices |
+| `rcsb_search.py` | RCSB search queries and downloads |
+| `selection_language.py` | PyMOL/VMD-style selection language |
+| `secondary_structure.py` | DSSP secondary structure assignment |
+| `b_factor_analysis.py` | B-factor statistics and analysis |
+| `alphafold_analysis.py` | AlphaFold pLDDT confidence analysis |
+| `quality_and_summary.py` | Quality reports, structure summaries |
+| `batch_processing.py` | Process multiple files |
+| `advanced_filtering.py` | Method chaining, normalization |
+
+> **Note:** Some examples require sample PDB files. You can download test structures from RCSB or use the files in `../examples/pdb_files/`.
 
 ## Performance
 
