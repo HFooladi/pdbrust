@@ -16,7 +16,7 @@ name = "_pdbrust"
 crate-type = ["cdylib"]
 
 [dependencies]
-pyo3 = { version = "0.24", features = ["extension-module"] }
+pyo3 = { version = "0.28", features = ["extension-module"] }
 pdbrust = { path = "..", features = ["filter", "descriptors", "quality", "summary", "gzip", "geometry", "dssp", "ligand-quality"] }
 numpy = { version = "0.24", optional = true }
 tokio = { version = "1.0", features = ["rt-multi-thread"], optional = true }
