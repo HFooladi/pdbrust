@@ -243,6 +243,37 @@ for pdb_id in results.pdb_ids:
     print(f"  {pdb_id}")
 ```
 
+### Ligand Pose Quality (PoseBusters-style Checks)
+
+```python
+structure = pdbrust.parse_pdb_file("protein_ligand.pdb")
+
+# List all ligands in the structure
+ligands = structure.get_ligand_names()
+print(f"Ligands: {ligands}")
+
+# Validate a specific ligand
+report = structure.ligand_pose_quality("LIG")
+if report:
+    print(f"Ligand: {report.ligand_name}")
+    print(f"Min distance: {report.min_protein_ligand_distance:.2f} Å")
+    print(f"Clashes: {report.num_clashes}")
+    print(f"Volume overlap: {report.protein_volume_overlap_pct:.1f}%")
+
+    if report.is_geometry_valid:
+        print("✓ Pose passes geometry checks")
+    else:
+        print("✗ Pose fails geometry checks")
+        for clash in report.clashes[:3]:
+            print(f"  Clash: {clash.protein_residue_name} {clash.protein_atom_name} - "
+                  f"{clash.ligand_atom_name}: {clash.distance:.2f}Å")
+
+# Validate all ligands
+for report in structure.all_ligand_pose_quality():
+    status = "PASS" if report.is_geometry_valid else "FAIL"
+    print(f"{report.ligand_name}: {status}")
+```
+
 ### Additional Structure Methods
 
 ```python

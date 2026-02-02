@@ -37,6 +37,7 @@ pdbrust = { version = "0.6", features = ["full"] }
 | Filter atoms, extract chains, clean structures | `filter` |
 | Use selection language (chain A and name CA) | `filter` |
 | Compute Rg, composition, B-factor analysis | `descriptors` |
+| Validate ligand pose geometry (clashes, overlap) | `ligand-quality` |
 | Assess structure quality | `quality` |
 | Get all metrics in one call | `summary` |
 | Calculate RMSD and align structures | `geometry` |
@@ -262,6 +263,46 @@ for res in &ss.residue_assignments {
 }
 ```
 
+### 8. Ligand Pose Quality (requires `ligand-quality` feature)
+
+```rust
+let structure = parse_pdb_file("protein_ligand.pdb")?;
+
+// List all ligands in the structure
+let ligands = structure.get_ligand_names();
+println!("Found ligands: {:?}", ligands);
+
+// Validate a specific ligand
+if let Some(report) = structure.ligand_pose_quality("LIG") {
+    println!("Ligand: {} ({}{})", report.ligand_name,
+             report.ligand_chain_id, report.ligand_residue_seq);
+    println!("Atoms: {}", report.ligand_atom_count);
+    println!("Min distance to protein: {:.2} Å", report.min_protein_ligand_distance);
+    println!("Protein clashes: {}", report.num_clashes);
+    println!("Volume overlap: {:.1}%", report.protein_volume_overlap_pct);
+
+    if report.is_geometry_valid {
+        println!("✓ Pose passes geometry checks");
+    } else {
+        println!("✗ Pose fails geometry checks");
+        // Show clash details
+        for clash in report.clashes.iter().take(3) {
+            println!("  Clash: {} {} - {} {}: {:.2}Å (expected >{:.2}Å)",
+                clash.protein_residue_name, clash.protein_atom_name,
+                clash.ligand_atom_name, clash.ligand_element,
+                clash.distance, clash.expected_min_distance);
+        }
+    }
+}
+
+// Validate all ligands at once
+let reports = structure.all_ligand_pose_quality();
+for report in &reports {
+    let status = if report.is_geometry_valid { "PASS" } else { "FAIL" };
+    println!("{}: {}", report.ligand_name, status);
+}
+```
+
 ## Common Workflows
 
 ### Workflow 1: Clean Structure for MD
@@ -340,6 +381,9 @@ cargo run --example b_factor_demo --features "descriptors"
 
 # Secondary structure (DSSP)
 cargo run --example secondary_structure_demo --features "dssp"
+
+# Ligand pose quality (PoseBusters-style checks)
+cargo run --example ligand_quality_demo --features "ligand-quality"
 
 # RMSD and structure alignment
 cargo run --example geometry_demo --features "geometry"

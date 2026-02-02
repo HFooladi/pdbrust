@@ -8,6 +8,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Ligand pose quality validation** (`ligand-quality` feature)
+  - PoseBusters-style geometry checks for protein-ligand complexes
+  - `ligand_pose_quality(ligand_name)` - Validate a specific ligand's geometry
+  - `all_ligand_pose_quality()` - Validate all ligands in structure
+  - `get_ligand_names()` - List all ligand residue names
+  - VDW radii-based clash detection with 0.75 × sum(vdW radii) threshold
+  - Grid-based volume overlap calculation with 7.5% threshold
+  - Cofactor clash detection with metal coordination support (more permissive thresholds)
+  - CONECT record handling for covalent ligands (excludes bonded pairs from clash detection)
+  - Water molecule exclusion (HOH, WAT, H2O, DOD)
+  - `LigandPoseReport` with comprehensive validation results:
+    - `min_protein_ligand_distance` - Closest approach in Angstroms
+    - `clashes` - List of `AtomClash` with severity scoring
+    - `protein_volume_overlap_pct` - Percentage of ligand volume overlapping protein
+    - `passes_distance_check`, `passes_overlap_check`, `is_geometry_valid` - Pass/fail verdicts
+  - `AtomClash` struct with protein/ligand atom details, distance, expected minimum, severity
+  - Van der Waals radii table (Bondi/Alvarez radii for ~30 elements)
+  - Covalent radii table (Cordero radii for metal coordination)
+  - Helper functions: `vdw_radius()`, `covalent_radius()`, `is_metal()`
+  - Full Python bindings: `PyLigandPoseReport`, `PyAtomClash` classes
+  - New feature flag: `ligand-quality` (included in `analysis` feature group)
+
 - **LDDT (Local Distance Difference Test) calculation** (`geometry` feature)
   - `lddt_to()` - Calculate LDDT score to a reference structure (superposition-free)
   - `lddt_to_with_options()` - LDDT with custom atom selection and options

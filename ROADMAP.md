@@ -128,6 +128,21 @@ Future development ideas for PDBRust. Priority will be determined based on user 
 - Full Python bindings with all interaction types
 - Under existing `descriptors` feature flag
 
+### Ligand Pose Quality (PoseBusters-style Geometry Checks) ✅
+- Validate protein-ligand complex geometry using PoseBusters-inspired criteria
+- VDW radii-based clash detection (0.75 × sum of vdW radii threshold)
+- Grid-based volume overlap calculation (7.5% threshold, 0.8 vdW scaling)
+- Cofactor clash detection with metal coordination support
+- CONECT record handling for covalent ligands
+- `structure.ligand_pose_quality(ligand_name)` → Option<LigandPoseReport>
+- `structure.all_ligand_pose_quality()` → Vec<LigandPoseReport>
+- `structure.get_ligand_names()` → Vec<String>
+- `LigandPoseReport` with clashes, overlap %, and pass/fail verdicts
+- `AtomClash` with severity scoring and detailed atom information
+- Van der Waals radii (Bondi/Alvarez) and covalent radii (Cordero) tables
+- Full Python bindings: `PyLigandPoseReport`, `PyAtomClash` classes
+- Under `ligand-quality` feature flag (included in `analysis`)
+
 ### LDDT (Local Distance Difference Test) ✅
 - `structure.lddt_to(reference)` → f64 (0.0 to 1.0, higher is better)
 - `structure.lddt_to_with_options(reference, selection, options)` → LddtResult with detailed statistics
