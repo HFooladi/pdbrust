@@ -268,6 +268,7 @@ fn build_connectivity_set(structure: &PdbStructure) -> HashSet<(i32, i32)> {
 mod tests {
     use super::*;
 
+    #[allow(clippy::too_many_arguments)]
     fn create_test_atom(
         serial: i32,
         name: &str,

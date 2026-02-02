@@ -8,6 +8,7 @@ use pdbrust::PdbStructure;
 use pdbrust::records::Atom;
 
 /// Helper to create a test atom
+#[allow(clippy::too_many_arguments)]
 fn create_atom(
     serial: i32,
     name: &str,

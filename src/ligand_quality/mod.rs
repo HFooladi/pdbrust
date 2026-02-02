@@ -220,6 +220,7 @@ mod tests {
     use super::*;
     use crate::records::Atom;
 
+    #[allow(clippy::too_many_arguments)]
     fn create_test_atom(
         serial: i32,
         name: &str,
