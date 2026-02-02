@@ -137,20 +137,19 @@ cargo audit
 ```
 
 ### GitHub Actions / CI
-**Important:** Use `gh_cli` instead of `gh` for GitHub CLI commands in this environment.
 
 ```bash
 # List recent workflow runs
-gh_cli run list --limit 5
+gh run list --limit 5
 
 # Watch a specific run (with exit status)
-gh_cli run watch <run_id> --exit-status
+gh run watch <run_id> --exit-status
 
 # View logs for failed jobs
-gh_cli run view <run_id> --log-failed
+gh run view <run_id> --log-failed
 
 # Rerun failed jobs
-gh_cli run rerun <run_id> --failed
+gh run rerun <run_id> --failed
 ```
 
 ### Benchmarking
@@ -173,11 +172,15 @@ This project follows Gitflow branching strategy to protect the main branch.
 
 ### Workflow for New Features
 
+When starting work on a new feature from the roadmap or a GitHub issue:
+
 1. **Create feature branch from main:**
    ```bash
    git checkout main
    git pull origin main
+   # Use descriptive branch name, optionally reference issue number
    git checkout -b feature/feature-name
+   # Or with issue reference: git checkout -b feature/123-feature-name
    ```
 
 2. **Develop and commit on feature branch:**
@@ -187,24 +190,41 @@ This project follows Gitflow branching strategy to protect the main branch.
    git commit -m "feat: description"
    ```
 
-3. **Run all tests before merging:**
+3. **Run tests locally (optional but recommended):**
    ```bash
    cargo test --all-features
    cargo clippy --all-targets --all-features -- -D warnings
    cargo fmt --check
    ```
 
-4. **Merge to main (after all tests pass):**
+4. **Push feature branch and create Pull Request:**
+   ```bash
+   git push -u origin feature/feature-name
+   # Create PR (use "Closes #123" in body to auto-close linked issue)
+   gh pr create --title "feat: description" --body "Description of changes
+
+   Closes #123"
+   ```
+
+5. **Merge PR after CI passes:**
+   - Wait for GitHub Actions CI to complete
+   - Review the changes in the PR
+   - Merge via GitHub UI or CLI:
+   ```bash
+   gh pr merge --squash --delete-branch
+   ```
+
+6. **Update local main branch:**
    ```bash
    git checkout main
-   git merge feature/feature-name
-   git push origin main
-   git branch -d feature/feature-name
+   git pull origin main
    ```
 
 ### Branch Naming Convention
 - `feature/alphafold-plddt` - New features
+- `feature/42-alphafold-plddt` - New feature linked to issue #42
 - `fix/parsing-bug` - Bug fixes
+- `fix/15-mmcif-parsing` - Bug fix linked to issue #15
 - `refactor/dssp-cleanup` - Code refactoring
 - `docs/api-examples` - Documentation updates
 
