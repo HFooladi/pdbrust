@@ -56,8 +56,9 @@ rcsb = ["reqwest", "serde", "serde_json"]
 rcsb-async = ["rcsb", "tokio", "futures"]
 gzip = ["flate2"]
 dssp = []
+ligand-quality = []
 # Convenience feature for all analysis features
-analysis = ["filter", "descriptors", "quality", "summary", "dssp"]
+analysis = ["filter", "descriptors", "quality", "summary", "dssp", "ligand-quality"]
 # Full feature set
 full = ["parallel", "geometry", "analysis", "rcsb", "rcsb-async", "gzip"]
 

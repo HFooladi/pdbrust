@@ -315,6 +315,13 @@ pub mod geometry;
 #[cfg(feature = "dssp")]
 pub mod dssp;
 
+#[cfg(feature = "ligand-quality")]
+pub mod ligand_quality;
+
+// Re-export ligand quality types for convenience
+#[cfg(feature = "ligand-quality")]
+pub use ligand_quality::{AtomClash, LigandPoseReport};
+
 // Re-exports for convenience
 pub use core::PdbStructure;
 pub use error::PdbError;

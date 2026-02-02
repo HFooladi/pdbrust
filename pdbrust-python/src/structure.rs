@@ -1358,6 +1358,72 @@ impl PyPdbStructure {
             .collect()
     }
 
+    // ==================== Ligand Quality Methods (feature-gated) ====================
+
+    /// Assess the pose quality of a specific ligand.
+    ///
+    /// Evaluates the geometric validity of a ligand pose using PoseBusters-style
+    /// criteria including steric clash detection and volume overlap calculation.
+    ///
+    /// Args:
+    ///     ligand_name: The residue name of the ligand (e.g., "LIG", "ATP", "NAG")
+    ///
+    /// Returns:
+    ///     LigandPoseReport if the ligand exists, None otherwise
+    ///
+    /// Example:
+    ///     >>> report = structure.ligand_pose_quality("LIG")
+    ///     >>> if report:
+    ///     ...     print(f"Clashes: {report.num_clashes}")
+    ///     ...     print(f"Overlap: {report.protein_volume_overlap_pct:.1f}%")
+    ///     ...     print(f"Valid: {report.is_geometry_valid}")
+    #[cfg(feature = "ligand-quality")]
+    fn ligand_pose_quality(
+        &self,
+        ligand_name: &str,
+    ) -> Option<crate::ligand_quality::PyLigandPoseReport> {
+        self.inner
+            .ligand_pose_quality(ligand_name)
+            .map(crate::ligand_quality::PyLigandPoseReport::from)
+    }
+
+    /// Assess the pose quality of all ligands in the structure.
+    ///
+    /// Evaluates the geometric validity of all HETATM residues (excluding water)
+    /// using PoseBusters-style criteria.
+    ///
+    /// Returns:
+    ///     List of LigandPoseReport for each unique ligand in the structure
+    ///
+    /// Example:
+    ///     >>> reports = structure.all_ligand_pose_quality()
+    ///     >>> for report in reports:
+    ///     ...     status = "PASS" if report.is_geometry_valid else "FAIL"
+    ///     ...     print(f"{report.ligand_name}: {status}")
+    #[cfg(feature = "ligand-quality")]
+    fn all_ligand_pose_quality(&self) -> Vec<crate::ligand_quality::PyLigandPoseReport> {
+        self.inner
+            .all_ligand_pose_quality()
+            .into_iter()
+            .map(crate::ligand_quality::PyLigandPoseReport::from)
+            .collect()
+    }
+
+    /// Get a list of all unique ligand names in the structure.
+    ///
+    /// Returns the residue names of all HETATM residues excluding water.
+    ///
+    /// Returns:
+    ///     Sorted list of unique ligand residue names
+    ///
+    /// Example:
+    ///     >>> ligands = structure.get_ligand_names()
+    ///     >>> print(f"Found {len(ligands)} ligands: {ligands}")
+    #[cfg(feature = "ligand-quality")]
+    fn get_ligand_names(&self) -> Vec<String> {
+        self.inner.get_ligand_names()
+    }
+
     // ==================== Magic Methods ====================
 
     fn __repr__(&self) -> String {

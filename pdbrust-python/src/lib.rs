@@ -28,6 +28,9 @@ mod geometry;
 #[cfg(feature = "dssp")]
 mod dssp;
 
+#[cfg(feature = "ligand-quality")]
+mod ligand_quality;
+
 #[cfg(feature = "numpy")]
 pub mod numpy_support;
 
@@ -145,6 +148,15 @@ fn _pdbrust(m: &Bound<'_, PyModule>) -> PyResult<()> {
         m.add_class::<dssp::PySecondaryStructure>()?;
         m.add_class::<dssp::PyResidueSSAssignment>()?;
         m.add_class::<dssp::PySecondaryStructureAssignment>()?;
+    }
+
+    // Ligand Quality (feature-gated)
+    #[cfg(feature = "ligand-quality")]
+    {
+        m.add_class::<ligand_quality::PyAtomClash>()?;
+        m.add_class::<ligand_quality::PyLigandPoseReport>()?;
+        m.add_function(wrap_pyfunction!(ligand_quality::vdw_radius, m)?)?;
+        m.add_function(wrap_pyfunction!(ligand_quality::covalent_radius, m)?)?;
     }
 
     Ok(())

@@ -35,7 +35,8 @@ src/
 ├── summary/        # [feature: summary] Unified structure summaries
 ├── rcsb/           # [feature: rcsb] RCSB PDB search and download
 ├── geometry/       # [feature: geometry] RMSD, LDDT, and structure superposition
-└── dssp/           # [feature: dssp] Secondary structure assignment
+├── dssp/           # [feature: dssp] Secondary structure assignment
+└── ligand_quality/ # [feature: ligand-quality] PoseBusters-style pose validation
 
 pdbrust-python/     # Python bindings (PyO3)
 ├── Cargo.toml          # Rust dependencies for Python bindings
@@ -53,6 +54,7 @@ pdbrust-python/     # Python bindings (PyO3)
 │   ├── rcsb.rs         # RCSB search/download bindings
 │   ├── geometry.rs     # RMSD/alignment bindings
 │   ├── dssp.rs         # Secondary structure bindings
+│   ├── ligand_quality.rs # Ligand pose quality bindings
 │   └── numpy_support.rs # Numpy array integration
 └── python/pdbrust/
     ├── __init__.py     # Python exports
@@ -94,7 +96,8 @@ benchmark_results/      # Results from full PDB archive benchmark
 | `parallel` | Parallel processing with Rayon | `rayon` |
 | `geometry` | RMSD, LDDT, and geometric analysis with nalgebra | `nalgebra` |
 | `dssp` | DSSP-like secondary structure assignment | - |
-| `analysis` | All analysis features | `filter`, `descriptors`, `quality`, `summary`, `dssp` |
+| `ligand-quality` | PoseBusters-style ligand pose validation | - |
+| `analysis` | All analysis features | `filter`, `descriptors`, `quality`, `summary`, `dssp`, `ligand-quality` |
 | `full` | Everything | `parallel`, `geometry`, `analysis`, `rcsb`, `rcsb-async`, `gzip` |
 
 ## Development Commands
@@ -253,6 +256,7 @@ Test files:
 - `tests/rcsb_tests.rs` - 28 tests (11 network tests ignored by default)
 - `tests/rcsb_async_tests.rs` - 24 tests (12 unit tests + 12 network tests ignored)
 - `tests/dssp_tests.rs` - 34 tests (secondary structure assignment)
+- `tests/ligand_quality_tests.rs` - 21 tests (PoseBusters-style pose validation)
 
 ## Key Data Structures
 
@@ -282,6 +286,8 @@ Test files:
 - `SecondaryStructure` (dssp): 9-state SS classification (H, G, I, P, E, B, T, S, C)
 - `ResidueSSAssignment` (dssp): Per-residue secondary structure assignment
 - `SecondaryStructureAssignment` (dssp): Complete SS assignment with statistics
+- `LigandPoseReport` (ligand-quality): PoseBusters-style ligand pose validation report
+- `AtomClash` (ligand-quality): Steric clash between protein and ligand atoms
 
 ## Common Patterns
 
@@ -475,6 +481,60 @@ for res in &ss.residue_assignments {
 - `S`: Bend (high backbone curvature)
 - `C`: Coil (none of the above)
 
+### Ligand Pose Quality (feature: ligand-quality)
+```rust
+use pdbrust::PdbStructure;
+
+// Check quality of a specific ligand pose
+if let Some(report) = structure.ligand_pose_quality("LIG") {
+    println!("Ligand: {} ({}{})",
+             report.ligand_name, report.ligand_chain_id, report.ligand_residue_seq);
+
+    // Steric clash detection
+    println!("Clashes: {}", report.num_clashes);
+    if report.has_protein_clash {
+        println!("WARNING: {} clashes detected", report.num_clashes);
+        for clash in &report.clashes {
+            println!("  {:.2}Å < expected {:.2}Å",
+                     clash.distance, clash.expected_min_distance);
+        }
+    }
+
+    // Volume overlap check (PoseBusters threshold: <7.5%)
+    println!("Volume overlap: {:.1}%", report.protein_volume_overlap_pct);
+
+    // Overall verdict
+    if report.is_geometry_valid {
+        println!("Pose passes geometry checks");
+    }
+}
+
+// Check all ligands at once
+let reports = structure.all_ligand_pose_quality();
+for report in &reports {
+    let status = if report.is_geometry_valid { "PASS" } else { "FAIL" };
+    println!("{}: {}", report.ligand_name, status);
+}
+
+// Get list of ligands (excluding water)
+let ligands = structure.get_ligand_names();
+println!("Found {} ligands: {:?}", ligands.len(), ligands);
+```
+
+**PoseBusters-style checks:**
+- **Distance check**: Detects atom pairs closer than 0.75 × sum of van der Waals radii
+- **Volume overlap**: Calculates percentage of ligand volume overlapping with protein (<7.5% threshold)
+- **Cofactor clashes**: Checks for clashes with other HETATM atoms
+
+**VdW radii functions:**
+```rust
+use pdbrust::ligand_quality::{vdw_radius, covalent_radius};
+
+let r_carbon = vdw_radius("C");    // 1.70 Å
+let r_oxygen = vdw_radius("O");    // 1.52 Å
+let r_cov = covalent_radius("FE"); // 1.52 Å
+```
+
 ## Examples
 
 The `examples/` directory contains runnable examples demonstrating common workflows:
@@ -486,6 +546,7 @@ The `examples/` directory contains runnable examples demonstrating common workfl
 | `selection_demo.rs` | filter | PyMOL/VMD-style selection language: chain A and name CA |
 | `geometry_demo.rs` | geometry | RMSD calculation, Kabsch alignment, per-residue RMSD |
 | `lddt_demo.rs` | geometry | LDDT calculation (superposition-free), per-residue LDDT |
+| `ligand_quality_demo.rs` | ligand-quality | PoseBusters-style ligand pose validation |
 | `rcsb_workflow.rs` | rcsb, descriptors | RCSB search queries, download, analyze (requires network) |
 | `async_download_demo.rs` | rcsb-async, descriptors | Concurrent bulk downloads with rate limiting |
 | `batch_processing.rs` | descriptors, summary | Process multiple files, compute summaries, export CSV |

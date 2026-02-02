@@ -17,7 +17,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 pyo3 = { version = "0.22", features = ["extension-module"] }
-pdbrust = { path = "..", features = ["filter", "descriptors", "quality", "summary", "gzip", "geometry", "dssp"] }
+pdbrust = { path = "..", features = ["filter", "descriptors", "quality", "summary", "gzip", "geometry", "dssp", "ligand-quality"] }
 numpy = { version = "0.22", optional = true }
 tokio = { version = "1.0", features = ["rt-multi-thread"], optional = true }
 
@@ -32,8 +32,9 @@ rcsb-async = ["rcsb", "pdbrust/rcsb-async", "tokio"]
 gzip = []
 geometry = []
 dssp = []
+ligand-quality = []
 numpy = ["dep:numpy"]
 # Core features (work on all platforms including Linux)
-core = ["filter", "descriptors", "quality", "summary", "gzip", "geometry", "dssp", "numpy"]
+core = ["filter", "descriptors", "quality", "summary", "gzip", "geometry", "dssp", "ligand-quality", "numpy"]
 # Full features (includes RCSB, works on macOS/Windows)
 full = ["core", "rcsb", "rcsb-async"]
