@@ -528,7 +528,7 @@ pub fn download_multiple(
     let format = format.inner;
 
     // Release GIL during async I/O
-    py.allow_threads(|| {
+    py.detach(|| {
         // Create a new tokio runtime for this call
         let runtime = tokio::runtime::Runtime::new()
             .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;

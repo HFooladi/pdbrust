@@ -1,7 +1,9 @@
 //! Python bindings for unified structure summaries
 
 use pdbrust::summary::StructureSummary;
+use pyo3::conversion::IntoPyObjectExt;
 use pyo3::prelude::*;
+use pyo3::Py;
 use std::collections::HashMap;
 
 /// Unified structure summary combining quality and descriptors
@@ -172,70 +174,88 @@ impl PyStructureSummary {
     }
 
     /// Convert to dictionary
-    fn to_dict(&self) -> HashMap<String, PyObject> {
-        Python::with_gil(|py| {
+    fn to_dict(&self) -> HashMap<String, Py<PyAny>> {
+        Python::attach(|py| {
             let mut dict = HashMap::new();
             // Quality
             dict.insert(
                 "has_ca_only".to_string(),
-                self.inner.has_ca_only.into_py(py),
+                self.inner.has_ca_only.into_py_any(py).unwrap(),
             );
             dict.insert(
                 "has_multiple_models".to_string(),
-                self.inner.has_multiple_models.into_py(py),
+                self.inner.has_multiple_models.into_py_any(py).unwrap(),
             );
             dict.insert(
                 "has_altlocs".to_string(),
-                self.inner.has_altlocs.into_py(py),
+                self.inner.has_altlocs.into_py_any(py).unwrap(),
             );
-            dict.insert("num_chains".to_string(), self.inner.num_chains.into_py(py));
-            dict.insert("num_models".to_string(), self.inner.num_models.into_py(py));
-            dict.insert("has_hetatm".to_string(), self.inner.has_hetatm.into_py(py));
+            dict.insert(
+                "num_chains".to_string(),
+                self.inner.num_chains.into_py_any(py).unwrap(),
+            );
+            dict.insert(
+                "num_models".to_string(),
+                self.inner.num_models.into_py_any(py).unwrap(),
+            );
+            dict.insert(
+                "has_hetatm".to_string(),
+                self.inner.has_hetatm.into_py_any(py).unwrap(),
+            );
             dict.insert(
                 "has_hydrogens".to_string(),
-                self.inner.has_hydrogens.into_py(py),
+                self.inner.has_hydrogens.into_py_any(py).unwrap(),
             );
             dict.insert(
                 "has_ssbonds".to_string(),
-                self.inner.has_ssbonds.into_py(py),
+                self.inner.has_ssbonds.into_py_any(py).unwrap(),
             );
             // Size
             dict.insert(
                 "num_residues".to_string(),
-                self.inner.num_residues.into_py(py),
+                self.inner.num_residues.into_py_any(py).unwrap(),
             );
-            dict.insert("num_atoms".to_string(), self.inner.num_atoms.into_py(py));
+            dict.insert(
+                "num_atoms".to_string(),
+                self.inner.num_atoms.into_py_any(py).unwrap(),
+            );
             dict.insert(
                 "missing_residue_ratio".to_string(),
-                self.inner.missing_residue_ratio.into_py(py),
+                self.inner.missing_residue_ratio.into_py_any(py).unwrap(),
             );
             // Composition
             dict.insert(
                 "glycine_ratio".to_string(),
-                self.inner.glycine_ratio.into_py(py),
+                self.inner.glycine_ratio.into_py_any(py).unwrap(),
             );
             dict.insert(
                 "hydrophobic_ratio".to_string(),
-                self.inner.hydrophobic_ratio.into_py(py),
+                self.inner.hydrophobic_ratio.into_py_any(py).unwrap(),
             );
             // Geometry
             dict.insert(
                 "radius_of_gyration".to_string(),
-                self.inner.radius_of_gyration.into_py(py),
+                self.inner.radius_of_gyration.into_py_any(py).unwrap(),
             );
             dict.insert(
                 "max_ca_distance".to_string(),
-                self.inner.max_ca_distance.into_py(py),
+                self.inner.max_ca_distance.into_py_any(py).unwrap(),
             );
             dict.insert(
                 "secondary_structure_ratio".to_string(),
-                self.inner.secondary_structure_ratio.into_py(py),
+                self.inner
+                    .secondary_structure_ratio
+                    .into_py_any(py)
+                    .unwrap(),
             );
             dict.insert(
                 "compactness_index".to_string(),
-                self.inner.compactness_index.into_py(py),
+                self.inner.compactness_index.into_py_any(py).unwrap(),
             );
-            dict.insert("ca_density".to_string(), self.inner.ca_density.into_py(py));
+            dict.insert(
+                "ca_density".to_string(),
+                self.inner.ca_density.into_py_any(py).unwrap(),
+            );
             dict
         })
     }

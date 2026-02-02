@@ -4,7 +4,9 @@ use pdbrust::descriptors::{
     BindingSite, ConfidenceCategory, ContactResidue, HydrophobicContact, LigandInteractionProfile,
     ProteinLigandHBond, ResidueBFactor, ResiduePlddt, SaltBridge, StructureDescriptors,
 };
+use pyo3::conversion::IntoPyObjectExt;
 use pyo3::prelude::*;
+use pyo3::Py;
 use std::collections::HashMap;
 
 #[cfg(feature = "dssp")]
@@ -83,35 +85,41 @@ impl PyResidueBFactor {
     }
 
     /// Convert to dictionary
-    fn to_dict(&self) -> HashMap<String, PyObject> {
-        Python::with_gil(|py| {
+    fn to_dict(&self) -> HashMap<String, Py<PyAny>> {
+        Python::attach(|py| {
             let mut dict = HashMap::new();
             dict.insert(
                 "chain_id".to_string(),
-                self.inner.chain_id.clone().into_py(py),
+                self.inner.chain_id.clone().into_py_any(py).unwrap(),
             );
             dict.insert(
                 "residue_seq".to_string(),
-                self.inner.residue_seq.into_py(py),
+                self.inner.residue_seq.into_py_any(py).unwrap(),
             );
-            dict.insert("ins_code".to_string(), self.inner.ins_code.into_py(py));
+            dict.insert(
+                "ins_code".to_string(),
+                self.inner.ins_code.into_py_any(py).unwrap(),
+            );
             dict.insert(
                 "residue_name".to_string(),
-                self.inner.residue_name.clone().into_py(py),
+                self.inner.residue_name.clone().into_py_any(py).unwrap(),
             );
             dict.insert(
                 "b_factor_mean".to_string(),
-                self.inner.b_factor_mean.into_py(py),
+                self.inner.b_factor_mean.into_py_any(py).unwrap(),
             );
             dict.insert(
                 "b_factor_min".to_string(),
-                self.inner.b_factor_min.into_py(py),
+                self.inner.b_factor_min.into_py_any(py).unwrap(),
             );
             dict.insert(
                 "b_factor_max".to_string(),
-                self.inner.b_factor_max.into_py(py),
+                self.inner.b_factor_max.into_py_any(py).unwrap(),
             );
-            dict.insert("atom_count".to_string(), self.inner.atom_count.into_py(py));
+            dict.insert(
+                "atom_count".to_string(),
+                self.inner.atom_count.into_py_any(py).unwrap(),
+            );
             dict
         })
     }
@@ -248,62 +256,71 @@ impl PyStructureDescriptors {
     }
 
     /// Convert to dictionary
-    fn to_dict(&self) -> HashMap<String, PyObject> {
-        Python::with_gil(|py| {
+    fn to_dict(&self) -> HashMap<String, Py<PyAny>> {
+        Python::attach(|py| {
             let mut dict = HashMap::new();
             dict.insert(
                 "num_residues".to_string(),
-                self.inner.num_residues.into_py(py),
+                self.inner.num_residues.into_py_any(py).unwrap(),
             );
-            dict.insert("num_atoms".to_string(), self.inner.num_atoms.into_py(py));
+            dict.insert(
+                "num_atoms".to_string(),
+                self.inner.num_atoms.into_py_any(py).unwrap(),
+            );
             dict.insert(
                 "radius_of_gyration".to_string(),
-                self.inner.radius_of_gyration.into_py(py),
+                self.inner.radius_of_gyration.into_py_any(py).unwrap(),
             );
             dict.insert(
                 "max_ca_distance".to_string(),
-                self.inner.max_ca_distance.into_py(py),
+                self.inner.max_ca_distance.into_py_any(py).unwrap(),
             );
             dict.insert(
                 "hydrophobic_ratio".to_string(),
-                self.inner.hydrophobic_ratio.into_py(py),
+                self.inner.hydrophobic_ratio.into_py_any(py).unwrap(),
             );
             dict.insert(
                 "glycine_ratio".to_string(),
-                self.inner.glycine_ratio.into_py(py),
+                self.inner.glycine_ratio.into_py_any(py).unwrap(),
             );
             dict.insert(
                 "missing_residue_ratio".to_string(),
-                self.inner.missing_residue_ratio.into_py(py),
+                self.inner.missing_residue_ratio.into_py_any(py).unwrap(),
             );
             dict.insert(
                 "secondary_structure_ratio".to_string(),
-                self.inner.secondary_structure_ratio.into_py(py),
+                self.inner
+                    .secondary_structure_ratio
+                    .into_py_any(py)
+                    .unwrap(),
             );
             dict.insert(
                 "compactness_index".to_string(),
-                self.inner.compactness_index.into_py(py),
+                self.inner.compactness_index.into_py_any(py).unwrap(),
             );
-            dict.insert("ca_density".to_string(), self.inner.ca_density.into_py(py));
+            dict.insert(
+                "ca_density".to_string(),
+                self.inner.ca_density.into_py_any(py).unwrap(),
+            );
             dict.insert(
                 "b_factor_mean".to_string(),
-                self.inner.b_factor_mean.into_py(py),
+                self.inner.b_factor_mean.into_py_any(py).unwrap(),
             );
             dict.insert(
                 "b_factor_mean_ca".to_string(),
-                self.inner.b_factor_mean_ca.into_py(py),
+                self.inner.b_factor_mean_ca.into_py_any(py).unwrap(),
             );
             dict.insert(
                 "b_factor_min".to_string(),
-                self.inner.b_factor_min.into_py(py),
+                self.inner.b_factor_min.into_py_any(py).unwrap(),
             );
             dict.insert(
                 "b_factor_max".to_string(),
-                self.inner.b_factor_max.into_py(py),
+                self.inner.b_factor_max.into_py_any(py).unwrap(),
             );
             dict.insert(
                 "b_factor_std".to_string(),
-                self.inner.b_factor_std.into_py(py),
+                self.inner.b_factor_std.into_py_any(py).unwrap(),
             );
             dict
         })

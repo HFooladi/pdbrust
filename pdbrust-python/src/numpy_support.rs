@@ -13,7 +13,7 @@ pub fn get_coords_array<'py>(
     let n = atoms.len();
 
     // Create array and fill it
-    let array = PyArray2::zeros_bound(py, [n, 3], false);
+    let array = PyArray2::zeros(py, [n, 3], false);
 
     unsafe {
         let ptr: *mut f64 = array.as_raw_array_mut().as_mut_ptr();
@@ -38,7 +38,7 @@ pub fn get_ca_coords_array<'py>(
     let coords: Vec<(f64, f64, f64)> = structure.get_ca_coords(chain_id);
 
     let n = coords.len();
-    let array = PyArray2::zeros_bound(py, [n, 3], false);
+    let array = PyArray2::zeros(py, [n, 3], false);
 
     unsafe {
         let ptr: *mut f64 = array.as_raw_array_mut().as_mut_ptr();
@@ -70,11 +70,11 @@ pub fn get_backbone_coords_array<'py>(
 pub fn vec2d_to_array2<'py>(py: Python<'py>, data: &[Vec<f64>]) -> Bound<'py, PyArray2<f64>> {
     let n = data.len();
     if n == 0 {
-        return PyArray2::zeros_bound(py, [0, 0], false);
+        return PyArray2::zeros(py, [0, 0], false);
     }
 
     let m = data[0].len();
-    let array = PyArray2::zeros_bound(py, [n, m], false);
+    let array = PyArray2::zeros(py, [n, m], false);
 
     unsafe {
         let ptr: *mut f64 = array.as_raw_array_mut().as_mut_ptr();
@@ -98,11 +98,11 @@ pub fn vec2d_bool_to_array2<'py>(
 ) -> Bound<'py, PyArray2<bool>> {
     let n = data.len();
     if n == 0 {
-        return PyArray2::zeros_bound(py, [0, 0], false);
+        return PyArray2::zeros(py, [0, 0], false);
     }
 
     let m = data[0].len();
-    let array = PyArray2::zeros_bound(py, [n, m], false);
+    let array = PyArray2::zeros(py, [n, m], false);
 
     unsafe {
         let ptr: *mut bool = array.as_raw_array_mut().as_mut_ptr();

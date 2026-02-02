@@ -1,7 +1,9 @@
 //! Python bindings for structure quality assessment
 
 use pdbrust::quality::QualityReport;
+use pyo3::conversion::IntoPyObjectExt;
 use pyo3::prelude::*;
+use pyo3::Py;
 use std::collections::HashMap;
 
 /// Quality assessment report for a PDB structure
@@ -118,43 +120,61 @@ impl PyQualityReport {
     }
 
     /// Convert to dictionary
-    fn to_dict(&self) -> HashMap<String, PyObject> {
-        Python::with_gil(|py| {
+    fn to_dict(&self) -> HashMap<String, Py<PyAny>> {
+        Python::attach(|py| {
             let mut dict = HashMap::new();
             dict.insert(
                 "has_ca_only".to_string(),
-                self.inner.has_ca_only.into_py(py),
+                self.inner.has_ca_only.into_py_any(py).unwrap(),
             );
             dict.insert(
                 "has_multiple_models".to_string(),
-                self.inner.has_multiple_models.into_py(py),
+                self.inner.has_multiple_models.into_py_any(py).unwrap(),
             );
             dict.insert(
                 "has_altlocs".to_string(),
-                self.inner.has_altlocs.into_py(py),
+                self.inner.has_altlocs.into_py_any(py).unwrap(),
             );
-            dict.insert("num_chains".to_string(), self.inner.num_chains.into_py(py));
-            dict.insert("num_models".to_string(), self.inner.num_models.into_py(py));
-            dict.insert("num_atoms".to_string(), self.inner.num_atoms.into_py(py));
+            dict.insert(
+                "num_chains".to_string(),
+                self.inner.num_chains.into_py_any(py).unwrap(),
+            );
+            dict.insert(
+                "num_models".to_string(),
+                self.inner.num_models.into_py_any(py).unwrap(),
+            );
+            dict.insert(
+                "num_atoms".to_string(),
+                self.inner.num_atoms.into_py_any(py).unwrap(),
+            );
             dict.insert(
                 "num_residues".to_string(),
-                self.inner.num_residues.into_py(py),
+                self.inner.num_residues.into_py_any(py).unwrap(),
             );
-            dict.insert("has_hetatm".to_string(), self.inner.has_hetatm.into_py(py));
+            dict.insert(
+                "has_hetatm".to_string(),
+                self.inner.has_hetatm.into_py_any(py).unwrap(),
+            );
             dict.insert(
                 "has_hydrogens".to_string(),
-                self.inner.has_hydrogens.into_py(py),
+                self.inner.has_hydrogens.into_py_any(py).unwrap(),
             );
             dict.insert(
                 "has_ssbonds".to_string(),
-                self.inner.has_ssbonds.into_py(py),
+                self.inner.has_ssbonds.into_py_any(py).unwrap(),
             );
-            dict.insert("has_conect".to_string(), self.inner.has_conect.into_py(py));
+            dict.insert(
+                "has_conect".to_string(),
+                self.inner.has_conect.into_py_any(py).unwrap(),
+            );
             dict.insert(
                 "is_analysis_ready".to_string(),
-                self.inner.is_analysis_ready().into_py(py),
+                self.inner.is_analysis_ready().into_py_any(py).unwrap(),
             );
-            dict.insert("is_clean".to_string(), self.inner.is_clean().into_py(py));
+            dict.insert(
+                "is_clean".to_string(),
+                self.inner.is_clean().into_py_any(py).unwrap(),
+            );
             dict
         })
     }
