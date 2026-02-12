@@ -9,7 +9,7 @@
 //! ```
 
 use pdbrust::dockq::{ChainMappingStrategy, DockQOptions};
-use pdbrust::{PdbStructure, parse_pdb_file};
+use pdbrust::parse_pdb_file;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let base = "tests/dockq_validation";
@@ -22,8 +22,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("--- Test 1: dimer_dimer (perfect match) ---");
     println!("Expected: Total DockQ = 1.000, 4 interfaces, all DockQ = 1.000\n");
 
-    let model = parse_pdb_file(&format!("{}/dimer_model.pdb", base))?;
-    let native = parse_pdb_file(&format!("{}/dimer_native.pdb", base))?;
+    let model = parse_pdb_file(format!("{}/dimer_model.pdb", base))?;
+    let native = parse_pdb_file(format!("{}/dimer_native.pdb", base))?;
 
     println!(
         "Model:  {} atoms, chains: {:?}",
@@ -67,8 +67,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("--- Test 2: model.pdb vs native.pdb ---");
     println!("Expected: DockQ=0.700, fnat=0.533, iRMSD=1.232, LRMSD=1.516\n");
 
-    let model = parse_pdb_file(&format!("{}/model.pdb", base))?;
-    let native = parse_pdb_file(&format!("{}/native.pdb", base))?;
+    let model = parse_pdb_file(format!("{}/model.pdb", base))?;
+    let native = parse_pdb_file(format!("{}/native.pdb", base))?;
 
     println!(
         "Model:  {} atoms, chains: {:?}",
@@ -126,8 +126,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("--- Test 3: 1A2K trimeric complex ---");
     println!("Expected: Total DockQ=0.653, 3 interfaces\n");
 
-    let model = parse_pdb_file(&format!("{}/1A2K_model.pdb", base))?;
-    let native = parse_pdb_file(&format!("{}/1A2K_native.pdb", base))?;
+    let model = parse_pdb_file(format!("{}/1A2K_model.pdb", base))?;
+    let native = parse_pdb_file(format!("{}/1A2K_native.pdb", base))?;
 
     println!(
         "Model:  {} atoms, chains: {:?}",
@@ -177,8 +177,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("--- Test 4: 1EXB octameric complex ---");
     println!("Expected: Total DockQ=0.852, 16 interfaces\n");
 
-    let model = parse_pdb_file(&format!("{}/1EXB_model.pdb", base))?;
-    let native = parse_pdb_file(&format!("{}/1EXB_native.pdb", base))?;
+    let model = parse_pdb_file(format!("{}/1EXB_model.pdb", base))?;
+    let native = parse_pdb_file(format!("{}/1EXB_native.pdb", base))?;
 
     println!(
         "Model:  {} atoms, chains: {:?}",

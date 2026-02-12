@@ -18,8 +18,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // ========================================================================
     println!("=== Test 1: dimer_dimer (self-match) ===");
     {
-        let model = parse_pdb_file(&format!("{}/dimer_model.pdb", base))?;
-        let native = parse_pdb_file(&format!("{}/dimer_native.pdb", base))?;
+        let model = parse_pdb_file(format!("{}/dimer_model.pdb", base))?;
+        let native = parse_pdb_file(format!("{}/dimer_native.pdb", base))?;
         let result = model.dockq_to(&native)?;
 
         // Reference: 4 interfaces, all DockQ=1.000
@@ -76,8 +76,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // ========================================================================
     println!("\n=== Test 2: model.pdb vs native.pdb ===");
     {
-        let model = parse_pdb_file(&format!("{}/model.pdb", base))?;
-        let native = parse_pdb_file(&format!("{}/native.pdb", base))?;
+        let model = parse_pdb_file(format!("{}/model.pdb", base))?;
+        let native = parse_pdb_file(format!("{}/native.pdb", base))?;
         let options = DockQOptions {
             chain_mapping: ChainMappingStrategy::Explicit(vec![
                 ("A".to_string(), "A".to_string()),
@@ -142,8 +142,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // ========================================================================
     println!("\n=== Test 3: 1EXB octamer (explicit mapping) ===");
     {
-        let model = parse_pdb_file(&format!("{}/1EXB_model.pdb", base))?;
-        let native = parse_pdb_file(&format!("{}/1EXB_native.pdb", base))?;
+        let model = parse_pdb_file(format!("{}/1EXB_model.pdb", base))?;
+        let native = parse_pdb_file(format!("{}/1EXB_native.pdb", base))?;
         let options = DockQOptions {
             chain_mapping: ChainMappingStrategy::Explicit(vec![
                 ("B".to_string(), "A".to_string()),
@@ -253,8 +253,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // ========================================================================
     println!("\n=== Test 4: 1A2K trimer (reference mapping BAC:ABC) ===");
     {
-        let model = parse_pdb_file(&format!("{}/1A2K_model.pdb", base))?;
-        let native = parse_pdb_file(&format!("{}/1A2K_native.pdb", base))?;
+        let model = parse_pdb_file(format!("{}/1A2K_model.pdb", base))?;
+        let native = parse_pdb_file(format!("{}/1A2K_native.pdb", base))?;
 
         // Reference mapping: BAC:ABC (model B->native A, model A->native B, model C->native C)
         let options = DockQOptions {
