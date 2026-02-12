@@ -83,6 +83,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 | `summary` | Combined quality + descriptors in one call |
 | `geometry` | RMSD, LDDT (superposition-free), structure alignment (Kabsch) |
 | `dssp` | DSSP 4-like secondary structure assignment (H, G, I, P, E, B, T, S, C) |
+| `dockq` | DockQ v2 interface quality assessment for protein-protein complexes |
 | `rcsb` | Search and download structures from RCSB PDB |
 | `rcsb-async` | Async/concurrent bulk downloads with rate limiting |
 | `gzip` | Parse gzip-compressed files (.ent.gz, .pdb.gz, .cif.gz) |
@@ -374,6 +375,7 @@ See the [examples/](examples/) directory for complete working code:
 | Secondary structure (DSSP) | [secondary_structure_demo.rs](examples/secondary_structure_demo.rs) | dssp |
 | RMSD and structure alignment | [geometry_demo.rs](examples/geometry_demo.rs) | geometry |
 | LDDT (superposition-free) | [lddt_demo.rs](examples/lddt_demo.rs) | geometry |
+| DockQ interface quality | [dockq_demo.rs](examples/dockq_demo.rs) | dockq |
 | Search and download from RCSB | [rcsb_workflow.rs](examples/rcsb_workflow.rs) | rcsb, descriptors |
 | Async bulk downloads | [async_download_demo.rs](examples/async_download_demo.rs) | rcsb-async, descriptors |
 | Process multiple files | [batch_processing.rs](examples/batch_processing.rs) | descriptors, summary |
@@ -405,6 +407,7 @@ cargo run --example b_factor_demo --features "descriptors"
 cargo run --example secondary_structure_demo --features "dssp"
 cargo run --example geometry_demo --features "geometry"
 cargo run --example lddt_demo --features "geometry"
+cargo run --example dockq_demo --features "dockq"
 cargo run --example rcsb_workflow --features "rcsb,descriptors"
 cargo run --example async_download_demo --features "rcsb-async,descriptors"
 cargo run --example batch_processing --features "descriptors,summary"
