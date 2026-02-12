@@ -94,6 +94,7 @@ mod transform;
 // Re-export public types
 pub use lddt::{LddtOptions, LddtResult, PerResidueLddt, calculate_lddt, per_residue_lddt};
 pub use rmsd::{calculate_rmsd, calculate_rmsd_chain, rmsd_from_coords};
+pub(crate) use superposition::superpose_coords;
 pub use superposition::{
     AlignmentResult, PerResidueRmsd, align_structures, calculate_alignment, per_residue_rmsd,
 };

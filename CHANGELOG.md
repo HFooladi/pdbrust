@@ -8,6 +8,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **DockQ v2 interface quality assessment** (`dockq` feature)
+  - Standard metric for CAPRI/CASP-multimer protein-protein interface evaluation
+  - `dockq_to(native)` - Compute DockQ with automatic chain mapping
+  - `dockq_to_with_options(native, options)` - Compute with custom options
+  - `find_chain_mapping(model, native)` - Auto-detect chain correspondence via sequence alignment
+  - `calculate_interface_dockq(model, native, chains, options)` - Score specific interfaces
+  - Needleman-Wunsch sequence alignment for chain and residue matching
+  - Interface contact detection (fnat, fnonnat, F1)
+  - Interface RMSD (iRMSD) with Kabsch superposition of interface backbone atoms
+  - Ligand RMSD (LRMSD) after receptor alignment
+  - DockQ formula: (fnat + 1/(1+(iRMSD/1.5)^2) + 1/(1+(LRMSD/8.5)^2)) / 3
+  - Quality classification: Incorrect (<0.23), Acceptable (0.23-0.49), Medium (0.49-0.80), High (>=0.80)
+  - Multi-interface support with contact-weighted averaging
+  - Automatic chain permutation search (optimal for <=8 chains, greedy for larger)
+  - `DockQResult`, `InterfaceResult`, `DockQOptions`, `DockQQuality` types
+  - 21 integration tests + unit tests in each submodule
+  - `dockq_demo.rs` example
 - **Ligand pose quality validation** (`ligand-quality` feature)
   - PoseBusters-style geometry checks for protein-ligand complexes
   - `ligand_pose_quality(ligand_name)` - Validate a specific ligand's geometry

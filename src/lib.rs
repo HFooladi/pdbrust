@@ -42,6 +42,7 @@
 //! | `parallel` | Parallel processing with Rayon | No |
 //! | `geometry` | RMSD calculation and structure alignment (Kabsch) | No |
 //! | `dssp` | DSSP-like secondary structure assignment | No |
+//! | `dockq` | DockQ v2 interface quality for protein complexes | No |
 //! | `gzip` | Parse gzip-compressed files (.ent.gz, .pdb.gz) | No |
 //! | `analysis` | All analysis features combined | No |
 //! | `full` | Everything | No |
@@ -317,6 +318,9 @@ pub mod dssp;
 
 #[cfg(feature = "ligand-quality")]
 pub mod ligand_quality;
+
+#[cfg(feature = "dockq")]
+pub mod dockq;
 
 // Re-export ligand quality types for convenience
 #[cfg(feature = "ligand-quality")]

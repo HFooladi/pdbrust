@@ -119,7 +119,10 @@ fn kabsch_rotation(p: &[Vector3<f64>], q: &[Vector3<f64>]) -> Matrix3<f64> {
 ///
 /// # Returns
 /// Tuple of (aligned_coords, AlignmentResult)
-fn superpose_coords(mobile_coords: &[Point3D], target_coords: &[Point3D]) -> SuperposeResult {
+pub(crate) fn superpose_coords(
+    mobile_coords: &[Point3D],
+    target_coords: &[Point3D],
+) -> SuperposeResult {
     // Validate input
     if mobile_coords.is_empty() || target_coords.is_empty() {
         return Err(PdbError::NoAtomsSelected(

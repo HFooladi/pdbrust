@@ -155,6 +155,23 @@ Future development ideas for PDBRust. Priority will be determined based on user 
 - Full Python bindings: `LddtOptions`, `LddtResult`, `PerResidueLddt` classes
 - Under `geometry` feature flag (requires nalgebra)
 
+### DockQ v2 Interface Quality Assessment ✅
+- Standard metric for CAPRI/CASP-multimer protein-protein interface evaluation
+- `structure.dockq_to(native)` → DockQResult with per-interface scores and overall DockQ
+- `structure.dockq_to_with_options(native, options)` → DockQResult with custom thresholds/mapping
+- `find_chain_mapping(model, native)` → auto-detect chain correspondence via sequence alignment
+- `calculate_interface_dockq(model, native, chains, options)` → score specific interfaces
+- Needleman-Wunsch sequence alignment for chain and residue matching
+- Interface contact detection: fnat (fraction native contacts), fnonnat, F1 score
+- iRMSD (interface RMSD) with Kabsch superposition of interface backbone atoms
+- LRMSD (ligand RMSD) after receptor alignment
+- DockQ formula: (fnat + 1/(1+(iRMSD/1.5)²) + 1/(1+(LRMSD/8.5)²)) / 3
+- Quality classification: Incorrect (<0.23), Acceptable (0.23–0.49), Medium (0.49–0.80), High (≥0.80)
+- Multi-interface support with contact-weighted averaging
+- Automatic chain permutation search (optimal for ≤8 chains, greedy for larger)
+- `DockQResult`, `InterfaceResult`, `DockQOptions`, `DockQQuality`, `ChainMappingStrategy` types
+- Under `dockq` feature flag (requires `geometry`/nalgebra, included in `analysis`)
+
 ## Future Ideas
 
 ### High Priority

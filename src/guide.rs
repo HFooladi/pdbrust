@@ -22,6 +22,7 @@
 //! | `batch_processing.rs` | descriptors, summary | Multi-file processing with CSV export |
 //! | `b_factor_demo.rs` | descriptors | B-factor analysis and flexibility detection |
 //! | `secondary_structure_demo.rs` | dssp | DSSP-like secondary structure assignment |
+//! | `dockq_demo.rs` | dockq | DockQ v2 interface quality assessment |
 //! | `full_pdb_benchmark.rs` | gzip, parallel, descriptors, quality, summary | Full PDB archive benchmark |
 //!
 //! Run examples with:
@@ -59,6 +60,7 @@
 //! | `parallel` | Parallel processing with Rayon |
 //! | `geometry` | RMSD, LDDT (superposition-free), structure alignment (Kabsch) |
 //! | `dssp` | DSSP-like secondary structure assignment |
+//! | `dockq` | DockQ v2 interface quality for protein-protein complexes |
 //! | `gzip` | Parse gzip-compressed files (.ent.gz, .pdb.gz) |
 //! | `analysis` | All analysis features combined |
 //! | `full` | Everything |

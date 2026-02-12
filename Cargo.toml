@@ -57,8 +57,9 @@ rcsb-async = ["rcsb", "tokio", "futures"]
 gzip = ["flate2"]
 dssp = []
 ligand-quality = []
+dockq = ["geometry"]
 # Convenience feature for all analysis features
-analysis = ["filter", "descriptors", "quality", "summary", "dssp", "ligand-quality"]
+analysis = ["filter", "descriptors", "quality", "summary", "dssp", "ligand-quality", "dockq"]
 # Full feature set
 full = ["parallel", "geometry", "analysis", "rcsb", "rcsb-async", "gzip"]
 

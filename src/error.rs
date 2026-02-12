@@ -24,6 +24,10 @@ pub enum PdbError {
     NoAtomsSelected(String),
     /// Insufficient atoms for the operation (need at least 3 for alignment).
     InsufficientAtoms(String),
+    /// No valid chain mapping found between model and native.
+    NoChainMapping(String),
+    /// No interface contacts found between specified chains.
+    NoInterfaceContacts(String),
 }
 
 impl fmt::Display for PdbError {
@@ -41,6 +45,8 @@ impl fmt::Display for PdbError {
             }
             PdbError::NoAtomsSelected(msg) => write!(f, "No atoms selected: {}", msg),
             PdbError::InsufficientAtoms(msg) => write!(f, "Insufficient atoms: {}", msg),
+            PdbError::NoChainMapping(msg) => write!(f, "No chain mapping: {}", msg),
+            PdbError::NoInterfaceContacts(msg) => write!(f, "No interface contacts: {}", msg),
         }
     }
 }

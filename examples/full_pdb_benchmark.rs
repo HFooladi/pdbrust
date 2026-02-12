@@ -57,10 +57,12 @@ impl From<&PdbError> for ErrorCategory {
             PdbError::IoError(_) => ErrorCategory::IoError,
             PdbError::InvalidRecord(_) => ErrorCategory::InvalidRecord,
             PdbError::ParseError(_) => ErrorCategory::ParseError,
-            // These errors are from geometry operations, not parsing
+            // These errors are from geometry/dockq operations, not parsing
             PdbError::AtomCountMismatch { .. }
             | PdbError::NoAtomsSelected(_)
-            | PdbError::InsufficientAtoms(_) => ErrorCategory::InvalidRecord,
+            | PdbError::InsufficientAtoms(_)
+            | PdbError::NoChainMapping(_)
+            | PdbError::NoInterfaceContacts(_) => ErrorCategory::InvalidRecord,
         }
     }
 }

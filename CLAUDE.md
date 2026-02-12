@@ -36,7 +36,8 @@ src/
 ├── rcsb/           # [feature: rcsb] RCSB PDB search and download
 ├── geometry/       # [feature: geometry] RMSD, LDDT, and structure superposition
 ├── dssp/           # [feature: dssp] Secondary structure assignment
-└── ligand_quality/ # [feature: ligand-quality] PoseBusters-style pose validation
+├── ligand_quality/ # [feature: ligand-quality] PoseBusters-style pose validation
+└── dockq/          # [feature: dockq] DockQ v2 interface quality assessment
 
 pdbrust-python/     # Python bindings (PyO3)
 ├── Cargo.toml          # Rust dependencies for Python bindings
@@ -97,7 +98,8 @@ benchmark_results/      # Results from full PDB archive benchmark
 | `geometry` | RMSD, LDDT, and geometric analysis with nalgebra | `nalgebra` |
 | `dssp` | DSSP-like secondary structure assignment | - |
 | `ligand-quality` | PoseBusters-style ligand pose validation | - |
-| `analysis` | All analysis features | `filter`, `descriptors`, `quality`, `summary`, `dssp`, `ligand-quality` |
+| `dockq` | DockQ v2 interface quality for protein-protein complexes | `geometry` |
+| `analysis` | All analysis features | `filter`, `descriptors`, `quality`, `summary`, `dssp`, `ligand-quality`, `dockq` |
 | `full` | Everything | `parallel`, `geometry`, `analysis`, `rcsb`, `rcsb-async`, `gzip` |
 
 ## Development Commands
@@ -257,6 +259,7 @@ Test files:
 - `tests/rcsb_async_tests.rs` - 24 tests (12 unit tests + 12 network tests ignored)
 - `tests/dssp_tests.rs` - 34 tests (secondary structure assignment)
 - `tests/ligand_quality_tests.rs` - 21 tests (PoseBusters-style pose validation)
+- `tests/dockq_tests.rs` - 21 tests (DockQ v2 interface quality assessment)
 
 ## Key Data Structures
 
@@ -288,6 +291,11 @@ Test files:
 - `SecondaryStructureAssignment` (dssp): Complete SS assignment with statistics
 - `LigandPoseReport` (ligand-quality): PoseBusters-style ligand pose validation report
 - `AtomClash` (ligand-quality): Steric clash between protein and ligand atoms
+- `DockQResult` (dockq): Overall DockQ result with per-interface scores
+- `InterfaceResult` (dockq): Per-interface fnat, iRMSD, LRMSD, DockQ score
+- `DockQOptions` (dockq): Configuration for DockQ calculation
+- `DockQQuality` (dockq): Quality classification (Incorrect/Acceptable/Medium/High)
+- `ChainMappingStrategy` (dockq): Auto or explicit chain correspondence
 
 ## Common Patterns
 
@@ -535,6 +543,44 @@ let r_oxygen = vdw_radius("O");    // 1.52 Å
 let r_cov = covalent_radius("FE"); // 1.52 Å
 ```
 
+### DockQ Interface Quality (feature: dockq)
+```rust
+use pdbrust::PdbStructure;
+use pdbrust::dockq::{DockQOptions, ChainMappingStrategy};
+
+// Compute DockQ with automatic chain mapping
+let result = model.dockq_to(&native)?;
+println!("DockQ: {:.4} ({} interfaces)", result.total_dockq, result.num_interfaces);
+
+for iface in &result.interfaces {
+    println!("Interface {}-{}: DockQ={:.3} fnat={:.3} iRMSD={:.2} LRMSD={:.2} ({})",
+        iface.native_chains.0, iface.native_chains.1,
+        iface.dockq, iface.fnat, iface.irmsd, iface.lrmsd, iface.quality);
+}
+
+// With explicit chain mapping
+let options = DockQOptions {
+    chain_mapping: ChainMappingStrategy::Explicit(vec![
+        ("A".to_string(), "A".to_string()),
+        ("B".to_string(), "B".to_string()),
+    ]),
+    ..Default::default()
+};
+let result = model.dockq_to_with_options(&native, options)?;
+```
+
+**DockQ score components:**
+- **fnat**: Fraction of native contacts (heavy atoms within 5.0 A)
+- **iRMSD**: Interface RMSD (backbone atoms at interface, within 10.0 A)
+- **LRMSD**: Ligand RMSD (smaller chain RMSD after receptor alignment)
+- **DockQ** = (fnat + 1/(1+(iRMSD/1.5)^2) + 1/(1+(LRMSD/8.5)^2)) / 3
+
+**Quality classification:**
+- Incorrect: DockQ < 0.23
+- Acceptable: 0.23 <= DockQ < 0.49
+- Medium: 0.49 <= DockQ < 0.80
+- High: DockQ >= 0.80
+
 ## Examples
 
 The `examples/` directory contains runnable examples demonstrating common workflows:
@@ -547,6 +593,7 @@ The `examples/` directory contains runnable examples demonstrating common workfl
 | `geometry_demo.rs` | geometry | RMSD calculation, Kabsch alignment, per-residue RMSD |
 | `lddt_demo.rs` | geometry | LDDT calculation (superposition-free), per-residue LDDT |
 | `ligand_quality_demo.rs` | ligand-quality | PoseBusters-style ligand pose validation |
+| `dockq_demo.rs` | dockq | DockQ v2 interface quality assessment |
 | `rcsb_workflow.rs` | rcsb, descriptors | RCSB search queries, download, analyze (requires network) |
 | `async_download_demo.rs` | rcsb-async, descriptors | Concurrent bulk downloads with rate limiting |
 | `batch_processing.rs` | descriptors, summary | Process multiple files, compute summaries, export CSV |
@@ -603,6 +650,9 @@ cargo run --example filtering_demo --features "filter"
 
 # Geometry: RMSD and alignment
 cargo run --example geometry_demo --features "geometry"
+
+# DockQ interface quality
+cargo run --example dockq_demo --features "dockq"
 
 # RCSB search and download
 cargo run --example rcsb_workflow --features "rcsb,descriptors"
