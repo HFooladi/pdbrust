@@ -485,7 +485,7 @@ If you use PDBRust in your research, please cite it using the metadata in our [C
 @software{pdbrust,
   author = {Fooladi, Hosein},
   title = {PDBRust: A High-Performance Rust Library for PDB/mmCIF Parsing and Analysis},
-  year = {2025},
+  year = {2026},
   publisher = {Zenodo},
   doi = {10.5281/zenodo.18232203},
   url = {https://doi.org/10.5281/zenodo.18232203},
@@ -495,7 +495,7 @@ If you use PDBRust in your research, please cite it using the metadata in our [C
 
 Or in text format:
 
-> Fooladi, H. (2025). PDBRust: A High-Performance Rust Library for PDB/mmCIF Parsing and Analysis. Zenodo. https://doi.org/10.5281/zenodo.18232203
+> Fooladi, H. (2026). PDBRust: A High-Performance Rust Library for PDB/mmCIF Parsing and Analysis. Zenodo. https://doi.org/10.5281/zenodo.18232203
 
 ## License
 
