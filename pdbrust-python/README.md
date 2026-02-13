@@ -333,6 +333,7 @@ The `examples/` directory contains Python scripts demonstrating various features
 | `quality_and_summary.py` | Quality reports, structure summaries |
 | `batch_processing.py` | Process multiple files |
 | `advanced_filtering.py` | Method chaining, normalization |
+| `dockq_demo.py` | DockQ v2 interface quality assessment |
 
 > **Note:** Some examples require sample PDB files. You can download test structures from RCSB or use the files in `../examples/pdb_files/`.
 

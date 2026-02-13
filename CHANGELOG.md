@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-02-13
+
 ### Added
 - **DockQ v2 interface quality assessment** (`dockq` feature)
   - Standard metric for CAPRI/CASP-multimer protein-protein interface evaluation
@@ -25,6 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `DockQResult`, `InterfaceResult`, `DockQOptions`, `DockQQuality` types
   - 21 integration tests + unit tests in each submodule
   - `dockq_demo.rs` example
+- **Python bindings for DockQ v2**: `DockQResult`, `InterfaceResult`, `DockQQuality`, `DockQOptions`, `ChainMappingStrategy` types and `dockq_to()`/`dockq_to_with_options()` methods on `PdbStructure`
+  - `dockq_demo.py` Python example
 - **Ligand pose quality validation** (`ligand-quality` feature)
   - PoseBusters-style geometry checks for protein-ligand complexes
   - `ligand_pose_quality(ligand_name)` - Validate a specific ligand's geometry
@@ -105,6 +109,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `HydrophobicContact` with non-polar atom contacts
   - Detection thresholds: H-bonds ≤3.5Å, salt bridges ≤4.0Å, hydrophobic ≤4.0Å
   - Full Python bindings: `PyBindingSite`, `PyLigandInteractionProfile`, `PyContactResidue`, `PyProteinLigandHBond`, `PySaltBridge`, `PyHydrophobicContact`
+
+### Changed
+- Updated PyO3 to 0.27 and numpy to 0.27
+- `analysis` feature now includes `dockq` and `ligand-quality` features
+
+### Fixed
+- Security fix: updated PyO3 to address RUSTSEC-2025-0020
 
 ## [0.6.0] - 2025-01-21
 

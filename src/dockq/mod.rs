@@ -10,7 +10,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! pdbrust = { version = "0.6", features = ["dockq"] }
+//! pdbrust = { version = "0.7", features = ["dockq"] }
 //! ```
 //!
 //! # Quick Start

@@ -44,7 +44,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! pdbrust = { version = "0.6", features = ["rcsb"] }
+//! pdbrust = { version = "0.7", features = ["rcsb"] }
 //! ```
 
 mod download;

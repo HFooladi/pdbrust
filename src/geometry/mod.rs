@@ -9,7 +9,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! pdbrust = { version = "0.6", features = ["geometry"] }
+//! pdbrust = { version = "0.7", features = ["geometry"] }
 //! ```
 //!
 //! # Overview

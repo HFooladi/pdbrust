@@ -21,14 +21,14 @@ pip install pdbrust
 
 ```toml
 [dependencies]
-pdbrust = "0.6"
+pdbrust = "0.7"
 ```
 
 With optional features:
 
 ```toml
 [dependencies]
-pdbrust = { version = "0.6", features = ["filter", "descriptors", "rcsb", "gzip"] }
+pdbrust = { version = "0.7", features = ["filter", "descriptors", "rcsb", "gzip"] }
 ```
 
 ## Quick Start
@@ -396,6 +396,7 @@ See the [examples/](examples/) directory for complete working code:
 - `quality_and_summary.py` - Quality reports and structure summaries
 - `batch_processing.py` - Process multiple files with CSV export
 - `advanced_filtering.py` - Filtering, normalization, and manipulation
+- `dockq_demo.py` - DockQ v2 interface quality assessment
 
 Run Rust examples with:
 
@@ -488,7 +489,7 @@ If you use PDBRust in your research, please cite it using the metadata in our [C
   publisher = {Zenodo},
   doi = {10.5281/zenodo.18232203},
   url = {https://doi.org/10.5281/zenodo.18232203},
-  version = {0.6.0}
+  version = {0.7.0}
 }
 ```
 

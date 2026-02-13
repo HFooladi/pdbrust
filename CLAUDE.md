@@ -625,6 +625,7 @@ The `pdbrust-python/examples/` directory contains Python examples:
 | `quality_and_summary.py` | Quality reports, structure summaries, CSV export |
 | `batch_processing.py` | Process multiple files, quality filtering, dataset statistics |
 | `advanced_filtering.py` | Method chaining, normalization, centering, translation |
+| `dockq_demo.py` | DockQ v2 interface quality assessment |
 
 Run Python examples:
 ```bash

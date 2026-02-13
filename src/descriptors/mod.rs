@@ -39,7 +39,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! pdbrust = { version = "0.6", features = ["descriptors"] }
+//! pdbrust = { version = "0.7", features = ["descriptors"] }
 //! ```
 
 mod bfactor;

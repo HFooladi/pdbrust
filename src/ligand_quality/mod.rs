@@ -64,7 +64,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! pdbrust = { version = "0.6", features = ["ligand-quality"] }
+//! pdbrust = { version = "0.7", features = ["ligand-quality"] }
 //! ```
 //!
 //! # References

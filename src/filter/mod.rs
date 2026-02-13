@@ -33,7 +33,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! pdbrust = { version = "0.6", features = ["filter"] }
+//! pdbrust = { version = "0.7", features = ["filter"] }
 //! ```
 
 mod cleaning;

@@ -8,7 +8,7 @@ Add PDBRust to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-pdbrust = "0.6"
+pdbrust = "0.7"
 ```
 
 ### Choosing Features
@@ -17,16 +17,16 @@ PDBRust uses feature flags to keep the core library lightweight. Enable only wha
 
 ```toml
 # Minimal: just parsing
-pdbrust = "0.6"
+pdbrust = "0.7"
 
 # Common setup: parsing + filtering + analysis
-pdbrust = { version = "0.6", features = ["filter", "descriptors", "quality"] }
+pdbrust = { version = "0.7", features = ["filter", "descriptors", "quality"] }
 
 # Full analysis suite
-pdbrust = { version = "0.6", features = ["analysis"] }
+pdbrust = { version = "0.7", features = ["analysis"] }
 
 # Everything including RCSB download
-pdbrust = { version = "0.6", features = ["full"] }
+pdbrust = { version = "0.7", features = ["full"] }
 ```
 
 ### Which Features Do I Need?
@@ -38,6 +38,7 @@ pdbrust = { version = "0.6", features = ["full"] }
 | Use selection language (chain A and name CA) | `filter` |
 | Compute Rg, composition, B-factor analysis | `descriptors` |
 | Validate ligand pose geometry (clashes, overlap) | `ligand-quality` |
+| Assess protein-protein docking quality (DockQ) | `dockq` |
 | Assess structure quality | `quality` |
 | Get all metrics in one call | `summary` |
 | Calculate RMSD and align structures | `geometry` |
@@ -455,7 +456,7 @@ let ca_count = structure.atoms.iter()
 Make sure you've enabled the required feature in `Cargo.toml`:
 
 ```toml
-pdbrust = { version = "0.6", features = ["filter", "descriptors"] }
+pdbrust = { version = "0.7", features = ["filter", "descriptors"] }
 ```
 
 ### Network errors with RCSB
