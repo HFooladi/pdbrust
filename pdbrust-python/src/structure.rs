@@ -1424,6 +1424,64 @@ impl PyPdbStructure {
         self.inner.get_ligand_names()
     }
 
+    // ==================== DockQ Methods (feature-gated) ====================
+
+    /// Compute DockQ between this (model) and a reference (native) complex.
+    ///
+    /// Automatically detects chain mapping using sequence alignment and
+    /// evaluates all interfaces with contacts.
+    ///
+    /// Args:
+    ///     native: The reference (native/crystal) structure
+    ///
+    /// Returns:
+    ///     DockQResult containing per-interface scores and overall DockQ
+    ///
+    /// Raises:
+    ///     ValueError: If no chain mapping can be found or no interface contacts exist
+    ///
+    /// Example:
+    ///     >>> result = model.dockq_to(native)
+    ///     >>> print(f"DockQ: {result.total_dockq:.4f}")
+    ///     >>> for iface in result.interfaces:
+    ///     ...     print(f"  {iface.native_receptor_chain}-{iface.native_ligand_chain}: {iface.dockq:.3f}")
+    #[cfg(feature = "dockq")]
+    fn dockq_to(&self, native: &PyPdbStructure) -> PyResult<crate::dockq::PyDockQResult> {
+        self.inner
+            .dockq_to(&native.inner)
+            .map(crate::dockq::PyDockQResult::from)
+            .map_err(convert_error)
+    }
+
+    /// Compute DockQ with custom options.
+    ///
+    /// Args:
+    ///     native: The reference (native/crystal) structure
+    ///     options: DockQ options for thresholds and chain mapping (default: automatic)
+    ///
+    /// Returns:
+    ///     DockQResult containing per-interface scores and overall DockQ
+    ///
+    /// Raises:
+    ///     ValueError: If no chain mapping can be found or no interface contacts exist
+    ///
+    /// Example:
+    ///     >>> options = DockQOptions(chain_mapping=ChainMappingStrategy.explicit([("A", "A"), ("B", "B")]))
+    ///     >>> result = model.dockq_to_with_options(native, options)
+    #[cfg(feature = "dockq")]
+    #[pyo3(signature = (native, options=None))]
+    fn dockq_to_with_options(
+        &self,
+        native: &PyPdbStructure,
+        options: Option<&crate::dockq::PyDockQOptions>,
+    ) -> PyResult<crate::dockq::PyDockQResult> {
+        let opts = options.map(|o| o.inner.clone()).unwrap_or_default();
+        self.inner
+            .dockq_to_with_options(&native.inner, opts)
+            .map(crate::dockq::PyDockQResult::from)
+            .map_err(convert_error)
+    }
+
     // ==================== Magic Methods ====================
 
     fn __repr__(&self) -> String {

@@ -20,6 +20,12 @@ pub fn convert_error(err: PdbError) -> PyErr {
         PdbError::InsufficientAtoms(msg) => {
             PyValueError::new_err(format!("Insufficient atoms: {}", msg))
         }
+        PdbError::NoChainMapping(msg) => {
+            PyValueError::new_err(format!("No chain mapping: {}", msg))
+        }
+        PdbError::NoInterfaceContacts(msg) => {
+            PyValueError::new_err(format!("No interface contacts: {}", msg))
+        }
     }
 }
 

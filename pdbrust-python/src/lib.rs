@@ -31,6 +31,9 @@ mod dssp;
 #[cfg(feature = "ligand-quality")]
 mod ligand_quality;
 
+#[cfg(feature = "dockq")]
+mod dockq;
+
 #[cfg(feature = "numpy")]
 pub mod numpy_support;
 
@@ -157,6 +160,16 @@ fn _pdbrust(m: &Bound<'_, PyModule>) -> PyResult<()> {
         m.add_class::<ligand_quality::PyLigandPoseReport>()?;
         m.add_function(wrap_pyfunction!(ligand_quality::vdw_radius, m)?)?;
         m.add_function(wrap_pyfunction!(ligand_quality::covalent_radius, m)?)?;
+    }
+
+    // DockQ (feature-gated)
+    #[cfg(feature = "dockq")]
+    {
+        m.add_class::<dockq::PyDockQQuality>()?;
+        m.add_class::<dockq::PyInterfaceResult>()?;
+        m.add_class::<dockq::PyDockQResult>()?;
+        m.add_class::<dockq::PyDockQOptions>()?;
+        m.add_class::<dockq::PyChainMappingStrategy>()?;
     }
 
     Ok(())

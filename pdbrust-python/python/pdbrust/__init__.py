@@ -123,6 +123,18 @@ try:
 except ImportError:
     pass
 
+# Optional: DockQ interface quality
+try:
+    from pdbrust._pdbrust import (
+        DockQResult,
+        InterfaceResult,
+        DockQQuality,
+        DockQOptions,
+        ChainMappingStrategy,
+    )
+except ImportError:
+    pass
+
 __version__ = "0.6.0"
 __all__ = [
     # Core types
@@ -181,4 +193,10 @@ __all__ = [
     "SecondaryStructure",
     "ResidueSSAssignment",
     "SecondaryStructureAssignment",
+    # DockQ (optional)
+    "DockQResult",
+    "InterfaceResult",
+    "DockQQuality",
+    "DockQOptions",
+    "ChainMappingStrategy",
 ]
