@@ -687,6 +687,26 @@ impl PyPdbStructure {
         crate::quality::PyQualityReport::from(self.inner.quality_report())
     }
 
+    // ==================== Molecular Inventory ====================
+
+    /// Get a complete breakdown of molecular contents.
+    ///
+    /// Returns a MolecularInventory describing every chain, ligand,
+    /// water group, and ion present, with atom and residue counts.
+    ///
+    /// Example:
+    ///     >>> inv = structure.molecular_inventory()
+    ///     >>> print(inv)
+    ///     >>> print(f"Protein chains: {inv.num_protein_chains}")
+    ///     >>> for lig in inv.ligands:
+    ///     ...     print(f"  {lig.name} in chain {lig.chain_id}")
+    ///
+    /// Returns:
+    ///     MolecularInventory with per-chain and per-ligand details
+    fn molecular_inventory(&self) -> crate::inventory::PyMolecularInventory {
+        crate::inventory::PyMolecularInventory::from(self.inner.molecular_inventory())
+    }
+
     // ==================== Summary Methods (feature-gated) ====================
 
     /// Get unified structure summary (quality + descriptors)

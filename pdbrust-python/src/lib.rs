@@ -6,6 +6,7 @@ use pyo3::prelude::*;
 
 mod atom;
 mod error;
+mod inventory;
 mod parsing;
 mod records;
 mod structure;
@@ -50,6 +51,12 @@ fn _pdbrust(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<records::PyConect>()?;
     m.add_class::<records::PyRemark>()?;
     m.add_class::<records::PyModel>()?;
+
+    // Molecular inventory (always available)
+    m.add_class::<inventory::PyMolecularInventory>()?;
+    m.add_class::<inventory::PyChainInventory>()?;
+    m.add_class::<inventory::PyChainType>()?;
+    m.add_class::<inventory::PyLigandInfo>()?;
 
     // Parsing functions
     m.add_function(wrap_pyfunction!(parsing::parse_pdb_file, m)?)?;
