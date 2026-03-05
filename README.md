@@ -31,6 +31,29 @@ With optional features:
 pdbrust = { version = "0.7", features = ["filter", "descriptors", "rcsb", "gzip"] }
 ```
 
+### From Source
+
+#### Rust
+
+```bash
+git clone https://github.com/HFooladi/pdbrust.git
+cd pdbrust
+cargo build --release --all-features
+cargo test --all-features
+```
+
+#### Python
+
+Requires Rust 1.85+ and [maturin](https://github.com/PyO3/maturin):
+
+```bash
+cd pdbrust-python
+pip install maturin
+maturin develop --release
+```
+
+See [pdbrust-python/README.md](pdbrust-python/README.md) for full development setup (virtual environments, uv, etc.).
+
 ## Quick Start
 
 ### Python
@@ -91,24 +114,129 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ## Examples
 
+### Molecular Inventory
+
+One-call breakdown of everything in a structure — chains, ligands, water, ions.
+
+#### Rust
+
+```rust
+use pdbrust::parse_pdb_file;
+
+let structure = parse_pdb_file("complex.pdb")?;
+let inv = structure.molecular_inventory();
+
+println!("Protein chains: {}", inv.num_protein_chains);
+println!("Water molecules: {}", inv.num_water_molecules);
+for lig in &inv.ligands {
+    println!("Ligand: {} (chain {}, {} atoms)", lig.name, lig.chain_id, lig.num_atoms);
+}
+println!("{}", inv);  // Pretty-printed summary
+```
+
+#### Python
+
+```python
+import pdbrust
+
+structure = pdbrust.parse_pdb_file("complex.pdb")
+inv = structure.molecular_inventory()
+
+print(f"Protein chains: {inv.num_protein_chains}")
+print(f"Water molecules: {inv.num_water_molecules}")
+for lig in inv.ligands:
+    print(f"Ligand: {lig.name} (chain {lig.chain_id}, {lig.num_atoms} atoms)")
+print(inv)  # Pretty-printed summary
+```
+
 ### Filter and Clean Structures
+
+Fluent API for extracting chains, removing ligands, and cleaning structures.
+
+#### Rust
 
 ```rust
 use pdbrust::parse_pdb_file;
 
 let structure = parse_pdb_file("protein.pdb")?;
 
-// Extract CA coordinates
-let ca_coords = structure.get_ca_coords(None);
-
 // Chain operations with fluent API
 let chain_a = structure
     .remove_ligands()
     .keep_only_chain("A")
     .keep_only_ca();
+
+// Extract CA coordinates
+let ca_coords = structure.get_ca_coords(None);
 ```
 
-### Compute Structural Descriptors
+#### Python
+
+```python
+import pdbrust
+
+structure = pdbrust.parse_pdb_file("protein.pdb")
+
+# Same fluent API in Python
+chain_a = structure.remove_ligands().keep_only_chain("A").keep_only_ca()
+print(f"CA atoms in chain A: {chain_a.num_atoms}")
+```
+
+### Selection Language (PyMOL/VMD-style)
+
+Select atoms using familiar PyMOL/VMD syntax with boolean operators.
+
+#### Rust
+
+```rust
+use pdbrust::parse_pdb_file;
+
+let structure = parse_pdb_file("protein.pdb")?;
+
+// Basic selections
+let chain_a = structure.select("chain A")?;
+let ca_atoms = structure.select("name CA")?;
+let backbone = structure.select("backbone")?;
+
+// Residue selections
+let res_range = structure.select("resid 1:100")?;
+let alanines = structure.select("resname ALA")?;
+
+// Boolean operators
+let chain_a_ca = structure.select("chain A and name CA")?;
+let heavy_atoms = structure.select("protein and not hydrogen")?;
+let complex = structure.select("(chain A or chain B) and backbone")?;
+
+// Numeric comparisons
+let low_bfactor = structure.select("bfactor < 30.0")?;
+let high_occ = structure.select("occupancy >= 0.5")?;
+
+// Validate without executing
+pdbrust::PdbStructure::validate_selection("chain A and name CA")?;
+```
+
+#### Python
+
+```python
+import pdbrust
+
+structure = pdbrust.parse_pdb_file("protein.pdb")
+
+# Select atoms using familiar syntax
+chain_a = structure.select("chain A")
+ca_atoms = structure.select("name CA")
+backbone = structure.select("backbone and not hydrogen")
+
+# Complex selections
+active_site = structure.select("resid 50:60 and chain A")
+flexible = structure.select("chain A and bfactor > 40.0")
+```
+
+### Structural Descriptors
+
+Radius of gyration, amino acid composition, and geometric metrics.
+
+#### Rust
 
 ```rust
 let structure = parse_pdb_file("protein.pdb")?;
@@ -121,17 +249,126 @@ let composition = structure.aa_composition();
 let descriptors = structure.structure_descriptors();
 ```
 
-### Parse Gzip-Compressed Files
+#### Python
+
+```python
+import pdbrust
+
+structure = pdbrust.parse_pdb_file("protein.pdb")
+
+rg = structure.radius_of_gyration()
+max_dist = structure.max_ca_distance()
+composition = structure.aa_composition()
+print(f"Rg: {rg:.2f} Å, Max CA dist: {max_dist:.2f} Å")
+
+# Or get everything at once
+desc = structure.structure_descriptors()
+```
+
+### B-factor Analysis
+
+Per-residue B-factor statistics, flexible/rigid regions, normalization.
+
+#### Rust
 
 ```rust
-use pdbrust::parse_gzip_pdb_file;
+use pdbrust::parse_pdb_file;
 
-// Parse gzip-compressed PDB files from the PDB archive
-let structure = parse_gzip_pdb_file("pdb1ubq.ent.gz")?;
-println!("Atoms: {}", structure.atoms.len());
+let structure = parse_pdb_file("protein.pdb")?;
+
+// B-factor statistics
+let mean_b = structure.b_factor_mean();
+let mean_b_ca = structure.b_factor_mean_ca();
+let std_b = structure.b_factor_std();
+println!("Mean B-factor: {:.2} Å²", mean_b);
+println!("Std deviation: {:.2} Å²", std_b);
+
+// Per-residue B-factor profile
+let profile = structure.b_factor_profile();
+for res in &profile {
+    println!("{}{}: mean={:.2}, max={:.2}",
+        res.chain_id, res.residue_seq, res.mean, res.max);
+}
+
+// Identify flexible/rigid regions
+let flexible = structure.flexible_residues(50.0);  // B > 50 Å²
+let rigid = structure.rigid_residues(15.0);        // B < 15 Å²
+
+// Normalize for cross-structure comparison
+let normalized = structure.normalize_b_factors();
+```
+
+#### Python
+
+```python
+import pdbrust
+
+structure = pdbrust.parse_pdb_file("protein.pdb")
+
+# B-factor statistics
+print(f"Mean B-factor: {structure.b_factor_mean():.2f} Å²")
+print(f"CA mean: {structure.b_factor_mean_ca():.2f} Å²")
+
+# Per-residue profile
+profile = structure.b_factor_profile()
+for res in profile:
+    print(f"{res.chain_id}{res.residue_seq}: {res.mean:.2f} Å²")
+
+# Flexible regions
+flexible = structure.flexible_residues(50.0)
+print(f"Found {len(flexible)} flexible residues")
+```
+
+### Secondary Structure Assignment (DSSP)
+
+DSSP-like secondary structure assignment with 9-state classification.
+
+#### Rust
+
+```rust
+use pdbrust::parse_pdb_file;
+
+let structure = parse_pdb_file("protein.pdb")?;
+
+// Compute DSSP-like secondary structure
+let ss = structure.assign_secondary_structure();
+println!("Helix: {:.1}%", ss.helix_fraction * 100.0);
+println!("Sheet: {:.1}%", ss.sheet_fraction * 100.0);
+println!("Coil:  {:.1}%", ss.coil_fraction * 100.0);
+
+// Get as compact string (e.g., "HHHHEEEECCCC")
+let ss_string = structure.secondary_structure_string();
+
+// Get composition tuple
+let (helix, sheet, coil) = structure.secondary_structure_composition();
+```
+
+#### Python
+
+```python
+import pdbrust
+
+structure = pdbrust.parse_pdb_file("protein.pdb")
+
+# Get secondary structure assignment
+ss = structure.assign_secondary_structure()
+print(f"Helix: {ss.helix_fraction*100:.1f}%")
+print(f"Sheet: {ss.sheet_fraction*100:.1f}%")
+
+# Compact string representation
+ss_string = structure.secondary_structure_string()
+print(f"SS: {ss_string}")  # e.g., "CCCCHHHHHHHCCEEEEEECCC"
+
+# Iterate over residue assignments
+for res in ss:
+    print(f"{res.chain_id}{res.residue_seq}: {res.ss.code()}")
 ```
 
 ### Geometry: RMSD, LDDT, and Alignment
+
+RMSD calculation, Kabsch alignment, and LDDT (superposition-free, used in AlphaFold/CASP).
+
+#### Rust
 
 ```rust
 use pdbrust::{parse_pdb_file, geometry::{AtomSelection, LddtOptions}};
@@ -162,7 +399,74 @@ let rmsd_bb = model.rmsd_to_with_selection(&reference, AtomSelection::Backbone)?
 let lddt_bb = model.lddt_to_with_options(&reference, AtomSelection::Backbone, LddtOptions::default())?;
 ```
 
+#### Python
+
+```python
+import pdbrust
+from pdbrust import AtomSelection
+
+model = pdbrust.parse_pdb_file("model.pdb")
+reference = pdbrust.parse_pdb_file("reference.pdb")
+
+# RMSD (CA atoms by default)
+rmsd = model.rmsd_to(reference)
+print(f"RMSD: {rmsd:.3f} Å")
+
+# LDDT (superposition-free)
+lddt = model.lddt_to(reference)
+print(f"LDDT: {lddt.score:.4f}")
+
+# Kabsch alignment
+aligned, result = model.align_to(reference)
+print(f"Alignment RMSD: {result.rmsd:.3f} Å ({result.num_atoms} atoms)")
+
+# Backbone RMSD
+rmsd_bb = model.rmsd_to(reference, selection=AtomSelection.backbone())
+```
+
+### DockQ Interface Quality
+
+DockQ v2 scoring for evaluating protein-protein docking quality.
+
+#### Rust
+
+```rust
+use pdbrust::parse_pdb_file;
+
+let model = parse_pdb_file("model_complex.pdb")?;
+let native = parse_pdb_file("native_complex.pdb")?;
+
+let result = model.dockq_to(&native)?;
+println!("DockQ: {:.4} ({} interfaces)", result.total_dockq, result.num_interfaces);
+
+for iface in &result.interfaces {
+    println!("  {}-{}: DockQ={:.3} fnat={:.3} iRMSD={:.2} LRMSD={:.2} ({})",
+        iface.native_chains.0, iface.native_chains.1,
+        iface.dockq, iface.fnat, iface.irmsd, iface.lrmsd, iface.quality);
+}
+```
+
+#### Python
+
+```python
+import pdbrust
+
+model = pdbrust.parse_pdb_file("model_complex.pdb")
+native = pdbrust.parse_pdb_file("native_complex.pdb")
+
+result = model.dockq_to(native)
+print(f"DockQ: {result.total_dockq:.4f} ({result.num_interfaces} interfaces)")
+
+for iface in result.interfaces:
+    print(f"  {iface.native_receptor_chain}-{iface.native_ligand_chain}: "
+          f"DockQ={iface.dockq:.3f} fnat={iface.fnat:.3f}")
+```
+
 ### Download from RCSB PDB
+
+Search and download structures from the RCSB Protein Data Bank.
+
+#### Rust
 
 ```rust
 use pdbrust::rcsb::{download_structure, rcsb_search, SearchQuery, FileFormat};
@@ -179,7 +483,24 @@ let query = SearchQuery::new()
 let results = rcsb_search(&query, 10)?;
 ```
 
+#### Python
+
+```python
+from pdbrust import download_structure, FileFormat, SearchQuery, rcsb_search
+
+# Download a structure
+structure = download_structure("1UBQ", FileFormat.pdb())
+
+# Search RCSB
+query = SearchQuery().with_text("kinase").with_resolution_max(2.0)
+results = rcsb_search(query, 10)
+```
+
 ### Bulk Downloads with Async
+
+Concurrent bulk downloads with rate limiting (Rust uses tokio, Python wraps it synchronously).
+
+#### Rust
 
 ```rust
 use pdbrust::rcsb::{download_multiple_async, AsyncDownloadOptions, FileFormat};
@@ -206,7 +527,7 @@ async fn main() {
 }
 ```
 
-**Python:**
+#### Python
 
 ```python
 from pdbrust import download_multiple, AsyncDownloadOptions, FileFormat
@@ -225,194 +546,48 @@ for r in results:
         print(f"{r.pdb_id}: {r.error}")
 ```
 
-### Secondary Structure Assignment (DSSP)
+### Parse Gzip-Compressed Files
+
+Parse `.pdb.gz` / `.ent.gz` / `.cif.gz` files directly without manual decompression.
+
+#### Rust
 
 ```rust
-use pdbrust::parse_pdb_file;
+use pdbrust::parse_gzip_pdb_file;
 
-let structure = parse_pdb_file("protein.pdb")?;
-
-// Compute DSSP-like secondary structure
-let ss = structure.assign_secondary_structure();
-println!("Helix: {:.1}%", ss.helix_fraction * 100.0);
-println!("Sheet: {:.1}%", ss.sheet_fraction * 100.0);
-println!("Coil:  {:.1}%", ss.coil_fraction * 100.0);
-
-// Get as compact string (e.g., "HHHHEEEECCCC")
-let ss_string = structure.secondary_structure_string();
-
-// Get composition tuple
-let (helix, sheet, coil) = structure.secondary_structure_composition();
+// Parse gzip-compressed PDB files from the PDB archive
+let structure = parse_gzip_pdb_file("pdb1ubq.ent.gz")?;
+println!("Atoms: {}", structure.atoms.len());
 ```
 
-**Python:**
+#### Python
 
 ```python
-import pdbrust
+from pdbrust import parse_gzip_pdb_file
 
-structure = pdbrust.parse_pdb_file("protein.pdb")
-
-# Get secondary structure assignment
-ss = structure.assign_secondary_structure()
-print(f"Helix: {ss.helix_fraction*100:.1f}%")
-print(f"Sheet: {ss.sheet_fraction*100:.1f}%")
-
-# Compact string representation
-ss_string = structure.secondary_structure_string()
-print(f"SS: {ss_string}")  # e.g., "CCCCHHHHHHHCCEEEEEECCC"
-
-# Iterate over residue assignments
-for res in ss:
-    print(f"{res.chain_id}{res.residue_seq}: {res.ss.code()}")
+structure = parse_gzip_pdb_file("pdb1ubq.ent.gz")
+print(f"Atoms: {structure.num_atoms}")
 ```
 
-### B-factor Analysis
+## Example Files
 
-```rust
-use pdbrust::parse_pdb_file;
+See the [examples/](examples/) directory for complete Rust examples and [pdbrust-python/examples/](pdbrust-python/examples/) for Python examples.
 
-let structure = parse_pdb_file("protein.pdb")?;
-
-// B-factor statistics
-let mean_b = structure.b_factor_mean();
-let mean_b_ca = structure.b_factor_mean_ca();
-let std_b = structure.b_factor_std();
-println!("Mean B-factor: {:.2} Å²", mean_b);
-println!("Std deviation: {:.2} Å²", std_b);
-
-// Per-residue B-factor profile
-let profile = structure.b_factor_profile();
-for res in &profile {
-    println!("{}{}: mean={:.2}, max={:.2}",
-        res.chain_id, res.residue_seq, res.mean, res.max);
-}
-
-// Identify flexible/rigid regions
-let flexible = structure.flexible_residues(50.0);  // B > 50 Å²
-let rigid = structure.rigid_residues(15.0);        // B < 15 Å²
-
-// Normalize for cross-structure comparison
-let normalized = structure.normalize_b_factors();
-```
-
-**Python:**
-
-```python
-import pdbrust
-
-structure = pdbrust.parse_pdb_file("protein.pdb")
-
-# B-factor statistics
-print(f"Mean B-factor: {structure.b_factor_mean():.2f} Å²")
-print(f"CA mean: {structure.b_factor_mean_ca():.2f} Å²")
-
-# Per-residue profile
-profile = structure.b_factor_profile()
-for res in profile:
-    print(f"{res.chain_id}{res.residue_seq}: {res.mean:.2f} Å²")
-
-# Flexible regions
-flexible = structure.flexible_residues(50.0)
-print(f"Found {len(flexible)} flexible residues")
-```
-
-### Selection Language (PyMOL/VMD-style)
-
-```rust
-use pdbrust::parse_pdb_file;
-
-let structure = parse_pdb_file("protein.pdb")?;
-
-// Basic selections
-let chain_a = structure.select("chain A")?;
-let ca_atoms = structure.select("name CA")?;
-let backbone = structure.select("backbone")?;
-
-// Residue selections
-let res_range = structure.select("resid 1:100")?;
-let alanines = structure.select("resname ALA")?;
-
-// Boolean operators
-let chain_a_ca = structure.select("chain A and name CA")?;
-let heavy_atoms = structure.select("protein and not hydrogen")?;
-let complex = structure.select("(chain A or chain B) and backbone")?;
-
-// Numeric comparisons
-let low_bfactor = structure.select("bfactor < 30.0")?;
-let high_occ = structure.select("occupancy >= 0.5")?;
-
-// Validate without executing
-pdbrust::PdbStructure::validate_selection("chain A and name CA")?;
-```
-
-**Python:**
-
-```python
-import pdbrust
-
-structure = pdbrust.parse_pdb_file("protein.pdb")
-
-# Select atoms using familiar syntax
-chain_a = structure.select("chain A")
-ca_atoms = structure.select("name CA")
-backbone = structure.select("backbone and not hydrogen")
-
-# Complex selections
-active_site = structure.select("resid 50:60 and chain A")
-flexible = structure.select("chain A and bfactor > 40.0")
-```
-
-## Common Workflows
-
-See the [examples/](examples/) directory for complete working code:
-
-| Workflow | Example | Features Used |
-|----------|---------|---------------|
-| Load, clean, analyze, export | [analysis_workflow.rs](examples/analysis_workflow.rs) | filter, descriptors, quality, summary |
-| Filter and clean structures | [filtering_demo.rs](examples/filtering_demo.rs) | filter |
-| Selection language | [selection_demo.rs](examples/selection_demo.rs) | filter |
-| B-factor analysis | [b_factor_demo.rs](examples/b_factor_demo.rs) | descriptors |
-| Secondary structure (DSSP) | [secondary_structure_demo.rs](examples/secondary_structure_demo.rs) | dssp |
-| RMSD and structure alignment | [geometry_demo.rs](examples/geometry_demo.rs) | geometry |
-| LDDT (superposition-free) | [lddt_demo.rs](examples/lddt_demo.rs) | geometry |
-| DockQ interface quality | [dockq_demo.rs](examples/dockq_demo.rs) | dockq |
-| Search and download from RCSB | [rcsb_workflow.rs](examples/rcsb_workflow.rs) | rcsb, descriptors |
-| Async bulk downloads | [async_download_demo.rs](examples/async_download_demo.rs) | rcsb-async, descriptors |
-| Process multiple files | [batch_processing.rs](examples/batch_processing.rs) | descriptors, summary |
-
-**Python examples** are available in [pdbrust-python/examples/](pdbrust-python/examples/):
-- `basic_usage.py` - Parsing and structure access
-- `writing_files.py` - Write PDB/mmCIF files
-- `geometry_rmsd.py` - RMSD and alignment
-- `lddt_demo.py` - LDDT calculation (superposition-free)
-- `numpy_integration.py` - Numpy arrays, distance matrices, contact maps
-- `rcsb_search.py` - RCSB search and download
-- `selection_language.py` - PyMOL/VMD-style selection language
-- `secondary_structure.py` - DSSP secondary structure assignment
-- `b_factor_analysis.py` - B-factor statistics and flexibility analysis
-- `alphafold_analysis.py` - AlphaFold pLDDT confidence scores and disordered regions
-- `ramachandran_analysis.py` - Phi/Psi dihedrals and Ramachandran validation
-- `ligand_interactions.py` - Protein-ligand binding sites and interactions
-- `quality_and_summary.py` - Quality reports and structure summaries
-- `batch_processing.py` - Process multiple files with CSV export
-- `advanced_filtering.py` - Filtering, normalization, and manipulation
-- `dockq_demo.py` - DockQ v2 interface quality assessment
-
-Run Rust examples with:
-
-```bash
-cargo run --example analysis_workflow --features "filter,descriptors,quality,summary"
-cargo run --example filtering_demo --features "filter"
-cargo run --example selection_demo --features "filter"
-cargo run --example b_factor_demo --features "descriptors"
-cargo run --example secondary_structure_demo --features "dssp"
-cargo run --example geometry_demo --features "geometry"
-cargo run --example lddt_demo --features "geometry"
-cargo run --example dockq_demo --features "dockq"
-cargo run --example rcsb_workflow --features "rcsb,descriptors"
-cargo run --example async_download_demo --features "rcsb-async,descriptors"
-cargo run --example batch_processing --features "descriptors,summary"
-```
+| Workflow | Rust Example | Python Example |
+|----------|-------------|----------------|
+| Parsing and structure access | [read_pdb.rs](examples/read_pdb.rs) | [basic_usage.py](pdbrust-python/examples/basic_usage.py) |
+| Filtering and cleaning | [filtering_demo.rs](examples/filtering_demo.rs) | [advanced_filtering.py](pdbrust-python/examples/advanced_filtering.py) |
+| Selection language | [selection_demo.rs](examples/selection_demo.rs) | [selection_language.py](pdbrust-python/examples/selection_language.py) |
+| B-factor analysis | [b_factor_demo.rs](examples/b_factor_demo.rs) | [b_factor_analysis.py](pdbrust-python/examples/b_factor_analysis.py) |
+| Secondary structure (DSSP) | [secondary_structure_demo.rs](examples/secondary_structure_demo.rs) | [secondary_structure.py](pdbrust-python/examples/secondary_structure.py) |
+| RMSD and alignment | [geometry_demo.rs](examples/geometry_demo.rs) | [geometry_rmsd.py](pdbrust-python/examples/geometry_rmsd.py) |
+| LDDT (superposition-free) | [lddt_demo.rs](examples/lddt_demo.rs) | [lddt_demo.py](pdbrust-python/examples/lddt_demo.py) |
+| DockQ interface quality | [dockq_demo.rs](examples/dockq_demo.rs) | [dockq_demo.py](pdbrust-python/examples/dockq_demo.py) |
+| RCSB search and download | [rcsb_workflow.rs](examples/rcsb_workflow.rs) | [rcsb_search.py](pdbrust-python/examples/rcsb_search.py) |
+| Async bulk downloads | [async_download_demo.rs](examples/async_download_demo.rs) | — |
+| Numpy arrays and contact maps | — | [numpy_integration.py](pdbrust-python/examples/numpy_integration.py) |
+| Quality reports and summaries | [analysis_workflow.rs](examples/analysis_workflow.rs) | [quality_and_summary.py](pdbrust-python/examples/quality_and_summary.py) |
+| Batch processing | [batch_processing.rs](examples/batch_processing.rs) | [batch_processing.py](pdbrust-python/examples/batch_processing.py) |
 
 For a complete getting started guide, see [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md).
 
