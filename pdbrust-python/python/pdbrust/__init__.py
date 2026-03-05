@@ -32,6 +32,11 @@ from pdbrust._pdbrust import (
     Conect,
     Remark,
     Model,
+    # Molecular inventory
+    MolecularInventory,
+    ChainInventory,
+    ChainType,
+    LigandInfo,
     # Parsing functions
     parse_pdb_file,
     parse_mmcif_file,
@@ -145,6 +150,11 @@ __all__ = [
     "Conect",
     "Remark",
     "Model",
+    # Molecular inventory
+    "MolecularInventory",
+    "ChainInventory",
+    "ChainType",
+    "LigandInfo",
     # Parsing
     "parse_pdb_file",
     "parse_mmcif_file",

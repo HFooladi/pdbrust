@@ -263,6 +263,7 @@ pub mod classify;
 pub mod core;
 pub mod error;
 pub mod guide;
+pub mod inventory;
 pub mod parser;
 pub mod records;
 mod utils;
