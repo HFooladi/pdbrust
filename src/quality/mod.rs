@@ -209,23 +209,10 @@ impl PdbStructure {
     ///
     /// `true` if any non-standard residues are present.
     pub fn has_hetatm(&self) -> bool {
-        // Check if any residue is not a standard amino acid or nucleotide
-        #[cfg(feature = "filter")]
-        {
-            use crate::filter::is_standard_residue;
-            self.atoms
-                .iter()
-                .any(|atom| !is_standard_residue(&atom.residue_name))
-        }
-
-        #[cfg(not(feature = "filter"))]
-        {
-            // Fallback: check for common HETATM residue names
-            const NON_STANDARD: &[&str] = &["HOH", "WAT", "DOD", "H2O", "TIP"];
-            self.atoms
-                .iter()
-                .any(|atom| NON_STANDARD.contains(&atom.residue_name.trim()))
-        }
+        use crate::classify::is_standard_residue;
+        self.atoms
+            .iter()
+            .any(|atom| !is_standard_residue(&atom.residue_name))
     }
 
     /// Check if the structure contains hydrogen atoms.

@@ -259,6 +259,7 @@
 //! ```
 
 // Module exports
+pub mod classify;
 pub mod core;
 pub mod error;
 pub mod guide;

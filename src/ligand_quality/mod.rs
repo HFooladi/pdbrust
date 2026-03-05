@@ -102,7 +102,8 @@ pub const VOLUME_VDW_SCALING: f64 = 0.8;
 pub const VOLUME_GRID_SPACING: f64 = 0.5;
 
 /// Standard water residue names to exclude from ligand checks.
-pub const WATER_RESIDUES: [&str; 4] = ["HOH", "WAT", "H2O", "DOD"];
+/// Re-exported from [`crate::classify::WATER_RESIDUES`] for backwards compatibility.
+pub use crate::classify::WATER_RESIDUES;
 
 impl PdbStructure {
     /// Assess the pose quality of a specific ligand.
@@ -211,7 +212,7 @@ impl PdbStructure {
     ///
     /// `true` if the residue name is a known water identifier.
     pub fn is_water_residue(residue_name: &str) -> bool {
-        WATER_RESIDUES.contains(&residue_name)
+        crate::classify::is_water(residue_name)
     }
 }
 

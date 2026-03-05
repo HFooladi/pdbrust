@@ -324,7 +324,7 @@ impl PyPdbStructure {
     ///     - backbone: N, CA, C, O atoms
     ///     - protein: Standard amino acids
     ///     - nucleic: Standard nucleotides
-    ///     - water: Water molecules (HOH, WAT)
+    ///     - water: Water molecules (HOH, WAT, H2O, DOD, TIP, TIP3)
     ///     - hetero: HETATM records
     ///     - hydrogen: Hydrogen atoms
     ///     - all or *: All atoms

@@ -214,7 +214,7 @@ Keywords:
   backbone         - N, CA, C, O atoms
   protein          - standard amino acids
   nucleic          - standard nucleotides
-  water            - water molecules (HOH, WAT)
+  water            - water molecules (HOH, WAT, H2O, DOD, TIP, TIP3)
   hetero           - HETATM records
   hydrogen         - hydrogen atoms
   all / *          - all atoms

@@ -1,6 +1,6 @@
 //! Evaluator for selection expressions against atoms.
 
-use crate::filter::{is_standard_amino_acid, is_standard_nucleotide};
+use crate::classify::{is_standard_amino_acid, is_standard_nucleotide, is_water};
 use crate::records::Atom;
 
 use super::ast::{ComparisonOp, SelectionExpr};
@@ -44,10 +44,7 @@ pub fn evaluate(expr: &SelectionExpr, atom: &Atom) -> bool {
 
         SelectionExpr::Nucleic => is_standard_nucleotide(&atom.residue_name),
 
-        SelectionExpr::Water => {
-            let resname = atom.residue_name.trim().to_uppercase();
-            resname == "HOH" || resname == "WAT" || resname == "TIP3" || resname == "TIP"
-        }
+        SelectionExpr::Water => is_water(&atom.residue_name),
 
         SelectionExpr::Hetero => {
             // HETATM records are non-standard residues
