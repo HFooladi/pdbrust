@@ -35,9 +35,9 @@
 //! }
 //! ```
 
+use crate::PdbStructure;
 use crate::classify::{is_standard_amino_acid, is_water};
 use crate::records::Atom;
-use crate::PdbStructure;
 use std::collections::{HashMap, HashSet};
 
 /// Type alias for residue contact tracking: (min_distance, num_contacts, residue_name)

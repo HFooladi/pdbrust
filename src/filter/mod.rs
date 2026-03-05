@@ -45,8 +45,8 @@ pub mod selection;
 
 // Re-export classification constants and functions from the canonical source.
 pub use crate::classify::{
-    is_standard_amino_acid, is_standard_nucleotide, is_standard_residue, STANDARD_AMINO_ACIDS,
-    STANDARD_NUCLEOTIDES,
+    STANDARD_AMINO_ACIDS, STANDARD_NUCLEOTIDES, is_standard_amino_acid, is_standard_nucleotide,
+    is_standard_residue,
 };
 
 #[cfg(test)]
