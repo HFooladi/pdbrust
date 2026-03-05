@@ -43,35 +43,11 @@ pub mod selection;
 // The cleaning and extraction modules extend PdbStructure with impl blocks.
 // Selection module is public for accessing SelectionError and other types.
 
-/// Standard amino acid residue names (3-letter codes).
-pub const STANDARD_AMINO_ACIDS: &[&str] = &[
-    "ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS", "ILE", "LEU", "LYS", "MET",
-    "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL",
-];
-
-/// Standard nucleotide residue names.
-pub const STANDARD_NUCLEOTIDES: &[&str] = &[
-    "A", "C", "G", "U", // RNA
-    "DA", "DC", "DG", "DT", // DNA
-];
-
-/// Check if a residue name is a standard amino acid.
-#[inline]
-pub fn is_standard_amino_acid(residue_name: &str) -> bool {
-    STANDARD_AMINO_ACIDS.contains(&residue_name.trim())
-}
-
-/// Check if a residue name is a standard nucleotide.
-#[inline]
-pub fn is_standard_nucleotide(residue_name: &str) -> bool {
-    STANDARD_NUCLEOTIDES.contains(&residue_name.trim())
-}
-
-/// Check if a residue name is a standard biological residue (amino acid or nucleotide).
-#[inline]
-pub fn is_standard_residue(residue_name: &str) -> bool {
-    is_standard_amino_acid(residue_name) || is_standard_nucleotide(residue_name)
-}
+// Re-export classification constants and functions from the canonical source.
+pub use crate::classify::{
+    is_standard_amino_acid, is_standard_nucleotide, is_standard_residue, STANDARD_AMINO_ACIDS,
+    STANDARD_NUCLEOTIDES,
+};
 
 #[cfg(test)]
 mod tests {

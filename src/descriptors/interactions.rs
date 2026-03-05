@@ -35,8 +35,9 @@
 //! }
 //! ```
 
-use crate::PdbStructure;
+use crate::classify::{is_standard_amino_acid, is_water};
 use crate::records::Atom;
+use crate::PdbStructure;
 use std::collections::{HashMap, HashSet};
 
 /// Type alias for residue contact tracking: (min_distance, num_contacts, residue_name)
@@ -317,7 +318,7 @@ impl PdbStructure {
         let ligand_atoms: Vec<&Atom> = self
             .atoms
             .iter()
-            .filter(|a| a.residue_name == ligand_name)
+            .filter(|a| a.is_hetatm && a.residue_name == ligand_name)
             .collect();
 
         if ligand_atoms.is_empty() {
@@ -328,11 +329,11 @@ impl PdbStructure {
         let ligand_chain = ligand_atoms[0].chain_id.clone();
         let ligand_resid = ligand_atoms[0].residue_seq;
 
-        // Find protein atoms (standard amino acids)
+        // Find protein atoms (standard amino acids, non-HETATM)
         let protein_atoms: Vec<&Atom> = self
             .atoms
             .iter()
-            .filter(|a| is_standard_amino_acid(&a.residue_name))
+            .filter(|a| !a.is_hetatm && is_standard_amino_acid(&a.residue_name))
             .collect();
 
         // Track contacts per residue
@@ -412,11 +413,11 @@ impl PdbStructure {
     /// }
     /// ```
     pub fn ligand_interactions(&self, ligand_name: &str) -> Option<LigandInteractionProfile> {
-        // Find ligand atoms
+        // Find ligand atoms (HETATM records with matching name)
         let ligand_atoms: Vec<&Atom> = self
             .atoms
             .iter()
-            .filter(|a| a.residue_name == ligand_name)
+            .filter(|a| a.is_hetatm && a.residue_name == ligand_name)
             .collect();
 
         if ligand_atoms.is_empty() {
@@ -429,11 +430,11 @@ impl PdbStructure {
         // Get binding site first
         let binding_site = self.binding_site(ligand_name, 6.0)?;
 
-        // Find protein atoms
+        // Find protein atoms (standard amino acids, non-HETATM)
         let protein_atoms: Vec<&Atom> = self
             .atoms
             .iter()
-            .filter(|a| is_standard_amino_acid(&a.residue_name))
+            .filter(|a| !a.is_hetatm && is_standard_amino_acid(&a.residue_name))
             .collect();
 
         let mut hydrogen_bonds = Vec::new();
@@ -541,12 +542,11 @@ impl PdbStructure {
     /// }
     /// ```
     pub fn all_ligand_interactions(&self) -> Vec<LigandInteractionProfile> {
-        // Find unique ligand names (excluding water)
+        // Find unique ligand names (HETATM, excluding water)
         let ligand_names: HashSet<String> = self
             .atoms
             .iter()
-            .filter(|a| !is_standard_amino_acid(&a.residue_name))
-            .filter(|a| !["HOH", "WAT", "H2O", "DOD"].contains(&a.residue_name.as_str()))
+            .filter(|a| a.is_hetatm && !is_water(&a.residue_name))
             .map(|a| a.residue_name.clone())
             .collect();
 
@@ -556,15 +556,6 @@ impl PdbStructure {
             .filter(|profile| !profile.contact_residues.is_empty())
             .collect()
     }
-}
-
-/// Check if a residue name is a standard amino acid
-fn is_standard_amino_acid(name: &str) -> bool {
-    const AMINO_ACIDS: &[&str] = &[
-        "ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS", "ILE", "LEU", "LYS", "MET",
-        "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL", "SEC", "PYL",
-    ];
-    AMINO_ACIDS.contains(&name)
 }
 
 #[cfg(test)]
@@ -649,6 +640,23 @@ mod tests {
         assert!(structure.binding_site("ATP", 5.0).is_none());
     }
 
+    #[allow(clippy::too_many_arguments)]
+    fn make_hetatm(
+        chain: &str,
+        resid: i32,
+        res_name: &str,
+        name: &str,
+        element: &str,
+        x: f64,
+        y: f64,
+        z: f64,
+    ) -> Atom {
+        Atom {
+            is_hetatm: true,
+            ..make_atom(chain, resid, res_name, name, element, x, y, z)
+        }
+    }
+
     #[test]
     fn test_binding_site_detection() {
         let mut structure = PdbStructure::new();
@@ -664,10 +672,10 @@ mod tests {
             .atoms
             .push(make_atom("A", 3, "VAL", "CA", "C", 20.0, 0.0, 0.0)); // Far away
 
-        // Add ligand atom close to residue 1
+        // Add ligand atom close to residue 1 (must be HETATM)
         structure
             .atoms
-            .push(make_atom("A", 100, "ATP", "C1", "C", 2.0, 0.0, 0.0));
+            .push(make_hetatm("A", 100, "ATP", "C1", "C", 2.0, 0.0, 0.0));
 
         let site = structure.binding_site("ATP", 5.0);
         assert!(site.is_some());
