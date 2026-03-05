@@ -155,6 +155,16 @@ Future development ideas for PDBRust. Priority will be determined based on user 
 - Full Python bindings: `LddtOptions`, `LddtResult`, `PerResidueLddt` classes
 - Under `geometry` feature flag (requires nalgebra)
 
+### Molecular Inventory ✅
+- One-call breakdown of structure contents — chains, ligands, water, ions
+- `structure.molecular_inventory()` → `MolecularInventory`
+- Per-chain summary: `ChainInventory` with type (Protein, NucleicAcid, Mixed, Water, Other), residue/atom counts
+- Ligand detection: `LigandInfo` with name, chain, residue sequence, atom count (ions excluded)
+- Global counts: protein/nucleic/water/het atoms, chain counts, water molecules
+- Pretty-print via `Display` trait
+- No feature flags required — works on any `PdbStructure`
+- Full Python bindings: `MolecularInventory`, `ChainInventory`, `ChainType`, `LigandInfo`
+
 ### DockQ v2 Interface Quality Assessment ✅
 - Standard metric for CAPRI/CASP-multimer protein-protein interface evaluation
 - `structure.dockq_to(native)` → DockQResult with per-interface scores and overall DockQ

@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Molecular inventory** — one-call breakdown of structure contents
+  - `structure.molecular_inventory()` → `MolecularInventory` with per-chain and per-ligand details
+  - `ChainInventory` with chain type (Protein, NucleicAcid, Mixed, Water, Other), residue counts, atom counts
+  - `LigandInfo` with name, chain, residue sequence, atom count (ions excluded)
+  - Global counts: protein/nucleic/water/het atoms, protein/nucleic chain counts, water molecules
+  - Pretty-print via `Display` trait (`println!("{}", inv)`)
+  - No feature flags required — works on any `PdbStructure`
+  - Full Python bindings: `MolecularInventory`, `ChainInventory`, `ChainType`, `LigandInfo`
+
+### Changed
+- **README polished for consistency**
+  - All example sections now use uniform `#### Rust` / `#### Python` subheaders
+  - Added missing Python examples for Filter, Descriptors, Geometry, RCSB Download, Gzip
+  - Added Molecular Inventory section with Rust + Python examples
+  - Added "From Source" installation instructions for both Rust and Python
+  - Reordered examples into logical flow (Inventory → Filter → Selection → Descriptors → B-factor → DSSP → Geometry → DockQ → RCSB → Gzip)
+  - Replaced bloated Common Workflows section with compact Example Files table
+
+### Internal
+- Centralized `classify` module for consistent molecular classification (`is_standard_amino_acid`, `is_standard_nucleotide`, `is_water`, `COMMON_IONS`)
+
 ## [0.7.0] - 2026-02-13
 
 ### Added
