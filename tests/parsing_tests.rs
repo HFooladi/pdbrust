@@ -461,6 +461,36 @@ REMARK 465 MISSING RESIDUES
 }
 
 // ============================================================================
+// Edge Case Tests - REMARK with No Content
+// ============================================================================
+
+#[test]
+fn test_parse_remark_with_content() {
+    let content = "REMARK   2 RESOLUTION.    2.00 ANGSTROMS.\n";
+    let file = create_test_pdb(content);
+    let result = parse_pdb_file(file.path());
+    assert!(result.is_ok());
+    let structure = result.unwrap();
+    assert_eq!(structure.remarks.len(), 1);
+    assert_eq!(structure.remarks[0].number, 2);
+    assert_eq!(structure.remarks[0].content, "RESOLUTION.    2.00 ANGSTROMS.");
+}
+
+#[test]
+fn test_parse_remark_no_content() {
+    // A REMARK line that is exactly 10 characters (number only, no content field)
+    // should not panic or error — it should parse with an empty content string.
+    let content = "REMARK   2\n";
+    let file = create_test_pdb(content);
+    let result = parse_pdb_file(file.path());
+    assert!(result.is_ok());
+    let structure = result.unwrap();
+    assert_eq!(structure.remarks.len(), 1);
+    assert_eq!(structure.remarks[0].number, 2);
+    assert_eq!(structure.remarks[0].content, "");
+}
+
+// ============================================================================
 // Edge Case Tests - CONECT with Partial Connections
 // ============================================================================
 
