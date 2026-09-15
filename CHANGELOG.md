@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- **Python bindings: upgrade PyO3 0.27 → 0.29 and rust-numpy 0.27 → 0.29**
+  - Fixes RUSTSEC-2026-0176 (out-of-bounds read in `PyList`/`PyTuple` iterators' `nth`/`nth_back`) and RUSTSEC-2026-0177 (missing `Sync` bound on `PyCFunction::new_closure` closures)
+  - pdbrust's bindings don't call the affected APIs; there is no change to the Python API or results
+  - Supported Python versions are unchanged (3.9–3.13)
+
 ### Added
 - **Molecular inventory** — one-call breakdown of structure contents
   - `structure.molecular_inventory()` → `MolecularInventory` with per-chain and per-ligand details

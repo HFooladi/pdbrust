@@ -13,7 +13,7 @@ use pyo3::prelude::*;
 ///     selection = AtomSelection.backbone()   # N, CA, C, O atoms
 ///     selection = AtomSelection.all_atoms()  # All atoms
 ///     selection = AtomSelection.custom(["CA", "CB"])  # Custom list
-#[pyclass(name = "AtomSelection")]
+#[pyclass(name = "AtomSelection", from_py_object)]
 #[derive(Clone)]
 pub struct PyAtomSelection {
     pub(crate) inner: AtomSelection,
@@ -94,7 +94,7 @@ impl PyAtomSelection {
 ///     rotation (list): 3x3 rotation matrix as nested lists
 ///     translation (list): Translation vector [tx, ty, tz]
 ///     num_atoms (int): Number of atoms used in the alignment
-#[pyclass(name = "AlignmentResult")]
+#[pyclass(name = "AlignmentResult", from_py_object)]
 #[derive(Clone)]
 pub struct PyAlignmentResult {
     inner: AlignmentResult,
@@ -155,7 +155,7 @@ impl From<AlignmentResult> for PyAlignmentResult {
 ///     residue_name (str): Residue name (e.g., "ALA", "GLY")
 ///     rmsd (float): RMSD for this residue (Angstroms)
 ///     num_atoms (int): Number of atoms used for this residue
-#[pyclass(name = "PerResidueRmsd")]
+#[pyclass(name = "PerResidueRmsd", from_py_object)]
 #[derive(Clone)]
 pub struct PyPerResidueRmsd {
     inner: PerResidueRmsd,
@@ -227,7 +227,7 @@ impl From<PerResidueRmsd> for PyPerResidueRmsd {
 /// Attributes:
 ///     inclusion_radius (float): Maximum distance to consider (default: 15.0 Angstroms)
 ///     thresholds (list[float]): Distance difference thresholds (default: [0.5, 1.0, 2.0, 4.0])
-#[pyclass(name = "LddtOptions")]
+#[pyclass(name = "LddtOptions", from_py_object)]
 #[derive(Clone)]
 pub struct PyLddtOptions {
     pub(crate) inner: LddtOptions,
@@ -294,7 +294,7 @@ impl From<LddtOptions> for PyLddtOptions {
 ///     num_pairs (int): Number of distance pairs evaluated
 ///     per_threshold_scores (list[float]): Score for each threshold
 ///     num_residues (int): Number of residues evaluated
-#[pyclass(name = "LddtResult")]
+#[pyclass(name = "LddtResult", from_py_object)]
 #[derive(Clone)]
 pub struct PyLddtResult {
     inner: LddtResult,
@@ -357,7 +357,7 @@ impl From<LddtResult> for PyLddtResult {
 ///     residue_name (str): Residue name (e.g., "ALA", "GLY")
 ///     score (float): LDDT score for this residue (0.0 to 1.0)
 ///     num_pairs (int): Number of distance pairs involving this residue
-#[pyclass(name = "PerResidueLddt")]
+#[pyclass(name = "PerResidueLddt", from_py_object)]
 #[derive(Clone)]
 pub struct PyPerResidueLddt {
     inner: PerResidueLddt,

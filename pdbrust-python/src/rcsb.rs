@@ -11,7 +11,7 @@ use pdbrust::rcsb::{
 use pyo3::prelude::*;
 
 /// File format for PDB downloads
-#[pyclass(name = "FileFormat")]
+#[pyclass(name = "FileFormat", from_py_object)]
 #[derive(Clone)]
 pub struct PyFileFormat {
     inner: FileFormat,
@@ -54,7 +54,7 @@ impl PyFileFormat {
 }
 
 /// Experimental method filter for RCSB search
-#[pyclass(name = "ExperimentalMethod")]
+#[pyclass(name = "ExperimentalMethod", from_py_object)]
 #[derive(Clone)]
 pub struct PyExperimentalMethod {
     inner: ExperimentalMethod,
@@ -96,7 +96,7 @@ impl PyExperimentalMethod {
 }
 
 /// Polymer type filter for RCSB search
-#[pyclass(name = "PolymerType")]
+#[pyclass(name = "PolymerType", from_py_object)]
 #[derive(Clone)]
 pub struct PyPolymerType {
     inner: PolymerType,
@@ -131,7 +131,7 @@ impl PyPolymerType {
 }
 
 /// Search query builder for RCSB PDB
-#[pyclass(name = "SearchQuery")]
+#[pyclass(name = "SearchQuery", from_py_object)]
 #[derive(Clone)]
 pub struct PySearchQuery {
     inner: SearchQuery,
@@ -365,7 +365,7 @@ pub fn download_to_file(pdb_id: &str, path: &str, format: &PyFileFormat) -> PyRe
 ///     >>> options = AsyncDownloadOptions(max_concurrent=10, rate_limit_ms=50)
 ///     >>> results = download_multiple(pdb_ids, FileFormat.pdb(), options)
 #[cfg(feature = "rcsb-async")]
-#[pyclass(name = "AsyncDownloadOptions")]
+#[pyclass(name = "AsyncDownloadOptions", from_py_object)]
 #[derive(Clone)]
 pub struct PyAsyncDownloadOptions {
     inner: AsyncDownloadOptions,

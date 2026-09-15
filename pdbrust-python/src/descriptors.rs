@@ -18,7 +18,7 @@ use pdbrust::descriptors::{
 /// Per-residue B-factor statistics
 ///
 /// Contains B-factor mean, min, max and atom count for a single residue.
-#[pyclass(name = "ResidueBFactor")]
+#[pyclass(name = "ResidueBFactor", from_py_object)]
 #[derive(Clone)]
 pub struct PyResidueBFactor {
     pub(crate) inner: ResidueBFactor,
@@ -140,7 +140,7 @@ impl From<&ResidueBFactor> for PyResidueBFactor {
 /// Structural descriptors computed from a PDB structure
 ///
 /// Contains geometric, compositional, and size metrics.
-#[pyclass(name = "StructureDescriptors")]
+#[pyclass(name = "StructureDescriptors", from_py_object)]
 #[derive(Clone)]
 pub struct PyStructureDescriptors {
     inner: StructureDescriptors,
@@ -338,7 +338,7 @@ impl From<StructureDescriptors> for PyStructureDescriptors {
 // ============================================================================
 
 /// pLDDT confidence category
-#[pyclass(name = "ConfidenceCategory")]
+#[pyclass(name = "ConfidenceCategory", from_py_object)]
 #[derive(Clone)]
 pub struct PyConfidenceCategory {
     inner: ConfidenceCategory,
@@ -382,7 +382,7 @@ impl From<ConfidenceCategory> for PyConfidenceCategory {
 }
 
 /// Per-residue pLDDT confidence score
-#[pyclass(name = "ResiduePlddt")]
+#[pyclass(name = "ResiduePlddt", from_py_object)]
 #[derive(Clone)]
 pub struct PyResiduePlddt {
     pub(crate) inner: ResiduePlddt,
@@ -467,7 +467,7 @@ impl From<ResiduePlddt> for PyResiduePlddt {
 // ============================================================================
 
 /// A residue in contact with a ligand
-#[pyclass(name = "ContactResidue")]
+#[pyclass(name = "ContactResidue", from_py_object)]
 #[derive(Clone)]
 pub struct PyContactResidue {
     pub(crate) inner: ContactResidue,
@@ -518,7 +518,7 @@ impl From<ContactResidue> for PyContactResidue {
 }
 
 /// A hydrogen bond between protein and ligand
-#[pyclass(name = "ProteinLigandHBond")]
+#[pyclass(name = "ProteinLigandHBond", from_py_object)]
 #[derive(Clone)]
 pub struct PyProteinLigandHBond {
     pub(crate) inner: ProteinLigandHBond,
@@ -585,7 +585,7 @@ impl From<ProteinLigandHBond> for PyProteinLigandHBond {
 }
 
 /// A salt bridge between protein and ligand
-#[pyclass(name = "SaltBridge")]
+#[pyclass(name = "SaltBridge", from_py_object)]
 #[derive(Clone)]
 pub struct PySaltBridge {
     pub(crate) inner: SaltBridge,
@@ -652,7 +652,7 @@ impl From<SaltBridge> for PySaltBridge {
 }
 
 /// A hydrophobic contact between protein and ligand
-#[pyclass(name = "HydrophobicContact")]
+#[pyclass(name = "HydrophobicContact", from_py_object)]
 #[derive(Clone)]
 pub struct PyHydrophobicContact {
     pub(crate) inner: HydrophobicContact,
@@ -714,7 +714,7 @@ impl From<HydrophobicContact> for PyHydrophobicContact {
 }
 
 /// Ligand interaction profile
-#[pyclass(name = "LigandInteractionProfile")]
+#[pyclass(name = "LigandInteractionProfile", from_py_object)]
 #[derive(Clone)]
 pub struct PyLigandInteractionProfile {
     pub(crate) inner: LigandInteractionProfile,
@@ -802,7 +802,7 @@ impl From<LigandInteractionProfile> for PyLigandInteractionProfile {
 }
 
 /// Binding site around a ligand
-#[pyclass(name = "BindingSite")]
+#[pyclass(name = "BindingSite", from_py_object)]
 #[derive(Clone)]
 pub struct PyBindingSite {
     pub(crate) inner: BindingSite,
@@ -866,7 +866,7 @@ impl From<BindingSite> for PyBindingSite {
 
 #[cfg(feature = "dssp")]
 /// Ramachandran region classification
-#[pyclass(name = "RamachandranRegion")]
+#[pyclass(name = "RamachandranRegion", from_py_object)]
 #[derive(Clone)]
 pub struct PyRamachandranRegion {
     inner: RamachandranRegion,
@@ -908,7 +908,7 @@ impl From<RamachandranRegion> for PyRamachandranRegion {
 
 #[cfg(feature = "dssp")]
 /// Per-residue dihedral angles
-#[pyclass(name = "ResidueDihedrals")]
+#[pyclass(name = "ResidueDihedrals", from_py_object)]
 #[derive(Clone)]
 pub struct PyResidueDihedrals {
     pub(crate) inner: ResidueDihedrals,
@@ -984,7 +984,7 @@ impl From<ResidueDihedrals> for PyResidueDihedrals {
 
 #[cfg(feature = "dssp")]
 /// Ramachandran statistics
-#[pyclass(name = "RamachandranStats")]
+#[pyclass(name = "RamachandranStats", from_py_object)]
 #[derive(Clone)]
 pub struct PyRamachandranStats {
     pub(crate) inner: RamachandranStats,
@@ -1061,7 +1061,7 @@ impl From<RamachandranStats> for PyRamachandranStats {
 
 #[cfg(feature = "dssp")]
 /// H-bond type classification
-#[pyclass(name = "HBondType")]
+#[pyclass(name = "HBondType", from_py_object)]
 #[derive(Clone)]
 pub struct PyHBondType {
     inner: HBondType,
@@ -1095,7 +1095,7 @@ impl From<HBondType> for PyHBondType {
 
 #[cfg(feature = "dssp")]
 /// A mainchain hydrogen bond
-#[pyclass(name = "MainchainHBond")]
+#[pyclass(name = "MainchainHBond", from_py_object)]
 #[derive(Clone)]
 pub struct PyMainchainHBond {
     pub(crate) inner: MainchainHBond,
@@ -1190,7 +1190,7 @@ impl From<MainchainHBond> for PyMainchainHBond {
 
 #[cfg(feature = "dssp")]
 /// H-bonds for a specific residue
-#[pyclass(name = "ResidueHBonds")]
+#[pyclass(name = "ResidueHBonds", from_py_object)]
 #[derive(Clone)]
 pub struct PyResidueHBonds {
     pub(crate) inner: ResidueHBonds,
@@ -1245,7 +1245,7 @@ impl From<ResidueHBonds> for PyResidueHBonds {
 
 #[cfg(feature = "dssp")]
 /// H-bond network statistics
-#[pyclass(name = "HBondStats")]
+#[pyclass(name = "HBondStats", from_py_object)]
 #[derive(Clone)]
 pub struct PyHBondStats {
     pub(crate) inner: HBondStats,

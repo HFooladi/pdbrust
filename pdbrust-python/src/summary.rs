@@ -10,7 +10,7 @@ use std::collections::HashMap;
 ///
 /// Provides a comprehensive overview of a structure's characteristics
 /// in a single object.
-#[pyclass(name = "StructureSummary")]
+#[pyclass(name = "StructureSummary", from_py_object)]
 #[derive(Clone)]
 pub struct PyStructureSummary {
     inner: StructureSummary,
