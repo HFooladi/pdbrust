@@ -1,8 +1,82 @@
 # PDBRust Roadmap
 
-Future development ideas for PDBRust. Priority will be determined based on user feedback.
+Development plan for PDBRust. Last updated: 2026-09-15.
+
+## Current Focus: Hardening & Validation (v0.7.1 → v0.8.0)
+
+Through v0.7.0 PDBRust gained a broad feature set. The next cycle makes those features **correct, robust, and
+validated against reference tools** before adding new ones. A code review in September 2026 found issues that can
+make results silently wrong on real-world files. Fixing them comes first.
+
+### Known Issues Being Fixed
+
+| Area | Issue | Target |
+|------|-------|--------|
+| PDB parser | SSBOND symmetry operators misread (`1555` → `15`); panics on some short HEADER/TITLE/REMARK lines; non-numeric REMARKs (e.g. GROMACS output) abort parsing | v0.7.1 |
+| Writers | mmCIF writer does not quote values (a blank chain ID corrupts columns); PDB writer column-alignment issues | v0.7.1 |
+| mmCIF parser | Single-value items after the first `loop_` are dropped (title, resolution, cell missing); no multi-line `;` text fields or single-quoted values; `pdbx_PDB_model_num` ignored | v0.7.2 |
+| mmCIF IDs | Chain/residue IDs come from `label_*` fields, so they differ from the same entry in PDB format | v0.8.0 (author IDs by default, label IDs kept) |
+| Multi-model files | Atoms are stored twice, and analyses run on all NMR models combined | v0.7.2 / v0.8.0 |
+| Selections | `AtomSelection::CaOnly` also matches calcium ions; `Backbone` matches water oxygens | v0.7.2 |
+| DSSP | Diverges from mkdssp: virtual-H placement, β-bridge patterns, helix-start rule, PPII dihedral sign | v0.8.0 (sign fix in v0.7.2) |
+| DockQ | LRMSD matches atoms by index; interfaces that fail are skipped instead of scored | v0.8.0 |
+| lDDT | Index-based atom matching; same-residue pairs included; no symmetric-atom handling | v0.8.0 |
+| Python wheels | Linux wheels are built without the RCSB feature ([#8](https://github.com/HFooladi/pdbrust/issues/8)) | Maintenance (switch to rustls) |
+
+### Milestones
+
+**Maintenance (no release):** modernize CI (current GitHub Actions, feature-combination checks, a Python test job),
+commit `Cargo.lock`, remove unused dependencies, switch `reqwest` to rustls (fixes #8), and merge PR #16.
+
+**v0.7.1 — Safety patch (non-breaking)**
+- Panic-free PDB parsing (safe fixed-column access), with tolerant handling of blank or odd fields
+- Writer fixes: mmCIF value quoting and PDB column layout
+- Multi-member gzip, `.gz` auto-detection, `from_file` format auto-detection
+- No-panic property tests and PDB/mmCIF round-trip tests; first Python test suite; Python 3.14 wheels
+- Ships the unreleased molecular inventory
+
+**v0.7.2 — CIF tokenizer + validation harness (non-breaking)**
+- A spec-compliant CIF tokenizer (text fields, quoting rules, multiple data blocks) behind the existing API
+- Multi-model data kept per model, plus forward-compatible `atoms()` / `models()` accessors
+- A `validation/` harness with a parser differential test against gemmi
+- Fuzzing (cargo-fuzz), plus small science fixes (dihedral sign, hydrogen detection, Ramachandran wrap)
+
+**v0.8.0 — Correctness release (the only planned breaking release before 1.0)**
+- Data model: `models` as the single atom store (`atoms()` = first model), author IDs by default with label IDs
+  kept, new atom fields (formal charge, segment ID), and structure metadata (resolution, methods, unit cell,
+  entities, links)
+- `ParseOptions` (lenient by default with warnings; strict mode) and error types with line numbers
+- Residue/chain views, a shared `ResidueId`, and an internal spatial index
+- DSSP parity with mkdssp, lDDT parity with OpenStructure, DockQ parity with DockQ v2
+- API consistency pass with deprecation shims and a `MIGRATION.md`; Python bindings released the same day, with
+  type stubs
+
+**Validation targets for v0.8.0** (reference outputs committed as golden tests):
+
+| Component | Reference | Target |
+|-----------|-----------|--------|
+| Parser (PDB + mmCIF) | gemmi | 100% agreement on a stratified sample (documented differences only) |
+| DSSP | mkdssp 4.4 | ≥ 99.5% 8-state, ≥ 99.8% 3-state per-residue agreement |
+| lDDT | OpenStructure | abs(Δ global score) ≤ 0.005 |
+| DockQ | DockQ v2 | abs(ΔDockQ) ≤ 0.01 for ≥ 99% of interfaces |
+| Ligand pose checks | PoseBusters (implemented checks) | ≥ 99% pass/fail agreement |
+
+Performance claims will be re-measured against gemmi, Biotite, Biopython, and pdbtbx using a documented protocol.
+
+**v0.9.x — Structure completeness (additive):** see [Future Work](#future-work-after-v080).
+
+**v1.0 — API freeze:** semver checks in CI, a documentation site, an MSRV policy, and removal of the v0.8
+deprecation shims.
+
+### API Stability Policy
+
+v0.8.0 is the single planned breaking release. v0.7.2 already adds the new accessors, so code can migrate early.
+After v0.8.0, changes are additive only until 1.0.
 
 ## Completed
+
+> Some completed features have known issues (DSSP, DockQ, lDDT, mmCIF parsing). They are listed under
+> [Known Issues Being Fixed](#known-issues-being-fixed) and will be fixed in v0.7.x–v0.8.0.
 
 ### Python Bindings (PyO3) ✅
 - Created `pdbrust-python` package, published to PyPI (`pip install pdbrust`)
@@ -155,7 +229,7 @@ Future development ideas for PDBRust. Priority will be determined based on user 
 - Full Python bindings: `LddtOptions`, `LddtResult`, `PerResidueLddt` classes
 - Under `geometry` feature flag (requires nalgebra)
 
-### Molecular Inventory ✅
+### Molecular Inventory ✅ (unreleased — ships in v0.7.1)
 - One-call breakdown of structure contents — chains, ligands, water, ions
 - `structure.molecular_inventory()` → `MolecularInventory`
 - Per-chain summary: `ChainInventory` with type (Protein, NucleicAcid, Mixed, Water, Other), residue/atom counts
@@ -182,80 +256,72 @@ Future development ideas for PDBRust. Priority will be determined based on user 
 - `DockQResult`, `InterfaceResult`, `DockQOptions`, `DockQQuality`, `ChainMappingStrategy` types
 - Under `dockq` feature flag (requires `geometry`/nalgebra, included in `analysis`)
 
-## Future Ideas
+## Future Work (after v0.8.0)
 
-### High Priority
+### v0.9.x — Structure Completeness (additive; the fields these need are reserved in v0.8.0)
 
-#### Surface Area Calculation (SASA)
-- Solvent accessible surface area using Shrake-Rupley rolling ball algorithm
-- Per-residue and per-atom breakdown
-- Buried vs exposed residue classification
-- Essential for binding site analysis, protein-protein interfaces, stability predictions
-- `structure.sasa()` → total SASA in Å²
-- `structure.per_residue_sasa()` → Vec<ResidueSasa>
-- `structure.buried_residues(threshold)` → residues with low solvent exposure
+Listed in dependency order.
 
-#### Symmetry Operations / Biological Assemblies
-- Parse and apply BIOMT records (PDB) / `_pdbx_struct_oper_list` (mmCIF)
-- Generate biological assemblies from asymmetric unit
-- Critical for homo-oligomers (most proteins function as multimers)
-- `structure.biological_assembly()` → full biological unit
+#### Spatial Index and Neighbor Queries
+- Cell-list neighbor search shared by contacts, clashes, interactions, lDDT, DSSP, and DockQ (replaces O(n²) loops)
+- `structure.neighbors_within(point, radius)`, `structure.contacts_between(sel1, sel2, cutoff)`
+- Selection language: `within X of ...`, `around`, `byres`
+
+#### Unit Cell, Symmetry, and Biological Assemblies
+- Unit cell and space group from CRYST1 (PDB) and `_cell`/`_symmetry` (mmCIF)
+- Parse and apply REMARK 350 BIOMT records (PDB) and `_pdbx_struct_assembly_gen` + `_pdbx_struct_oper_list`
+  (mmCIF), including operator expressions such as `(1-60)(61-88)`
+- `structure.biological_assembly(id)` → full biological unit with deterministic chain naming
 - `structure.symmetry_mates()` → crystallographic neighbors
+- Critical for homo-oligomers (most proteins function as multimers); validated against gemmi
+
+#### Solvent Accessible Surface Area (SASA)
+- Shrake-Rupley algorithm with per-atom and per-residue breakdown
+- Relative SASA (Tien et al. 2013 maximum values) and buried/exposed classification
+- `structure.sasa()`, `structure.per_residue_sasa()`, `structure.buried_residues(threshold)`
+- Validated against FreeSASA
+
+#### Missing Residues, Missing Atoms, and Chain Breaks
+- REMARK 465/470 (PDB) and `_pdbx_unobs_or_zero_occ_residues` (mmCIF)
+- SEQRES/entity sequence ↔ modeled residue alignment
+- Chain-break detection from C–N distances
 
 #### Clashscore / Steric Clashes
-- VDW radii-based contact detection for structure validation
-- Classify contacts as clashes vs acceptable
-- Per-residue clashscore for model quality assessment
-- Important for refinement quality and model building
-- `structure.clashscore()` → clashes per 1000 atoms
-- `structure.steric_clashes()` → Vec<Clash> with atom pairs and overlap
+- Heavy-atom van der Waals overlap (≥ 0.4 Å, MolProbity-like), documented as an approximation without
+  hydrogens/Probe
+- `structure.clashscore()` → clashes per 1000 atoms; `structure.steric_clashes()` → atom pairs with overlap
+- Shares clash code with `ligand-quality`
 
-### Medium Priority
+#### Author Annotations and Links
+- HELIX/SHEET and `_struct_conf`/`_struct_sheet_range` (author-assigned secondary structure)
+- LINK and `_struct_conn` covalent/metal links (also gives ligands bond topology)
+- MODRES, ANISOU
 
-#### Sequence Alignment Integration
-- Simple Needleman-Wunsch for structure-to-structure sequence mapping
-- Enable comparison of different conformations
-- Foundation for homology analysis and mutation effects
-- `structure.align_sequence_to(other)` → SequenceAlignment
-- `structure.rmsd_aligned(other)` → RMSD after sequence alignment
+#### BinaryCIF
+- `.bcif` reader behind a `bcif` feature, reusing the CIF data model; BinaryCIF downloads from RCSB/PDBe/AFDB
 
-#### Electrostatics / Partial Charges
-- Assign partial charges from residue templates (AMBER, CHARMM)
-- Compute electrostatic potential at grid points
-- Foundation for pKa predictions and ligand binding affinity
-- `structure.assign_charges()` → structure with partial charges
-- `structure.electrostatic_potential(point)` → potential at coordinate
+### Later / Parking Lot
 
-#### mmCIF Dictionary Validation
-- Validate structures against official PDBx/mmCIF dictionary
-- Check category and item compliance
-- Error reporting for non-compliant files
-- `structure.validate_mmcif()` → ValidationReport
+Deferred during the hardening cycle; to be re-prioritized from user feedback.
 
-### Lower Priority
-
-#### Trajectory Support
-- Parse multi-frame trajectories (e.g., from MD simulations)
-- Memory-efficient streaming for large trajectories
-- Basic trajectory analysis (RMSD over time, etc.)
-- Support for common formats (DCD, XTC, TRR)
-- High complexity - requires careful memory management
-
-#### Symmetry-Expanded RMSD/LDDT
-- Compare structures considering symmetry mates
-- Apply symmetry operations before comparison
-- Useful for crystallographic analysis
-- `structure.rmsd_symmetric(other)` → best RMSD across symmetry
-
-#### Domain Detection
-- Automatic identification of structural domains
-- Useful for large multi-domain proteins
-- Foundation for domain-based alignment
-- `structure.detect_domains()` → Vec<Domain>
+- **Sequence alignment API**: expose the Needleman-Wunsch used by DockQ as `structure.align_sequence_to(other)` and
+  `structure.rmsd_aligned(other)`
+- **Ligand chemistry**: Chemical Component Dictionary (bond orders/topology) → the remaining PoseBusters checks
+  (bond lengths, angles, planarity, chirality)
+- **Electrostatics / partial charges**: residue-template charges (AMBER, CHARMM), potential on a grid
+- **mmCIF dictionary validation** against PDBx/mmCIF
+- **Trajectory support** (DCD, XTC, TRR), with streaming and per-frame RMSD/lDDT
+- **Symmetry-expanded RMSD/lDDT**
+- **Domain detection**
+- **ML/data pipelines**: featurization, Arrow/Parquet export, interop with Biotite/gemmi
+- **Additional sources**: AlphaFold DB and PDB-REDO clients
 
 ## Community Requested
 
-*This section will be populated based on GitHub issues and user feedback.*
+- [#8](https://github.com/HFooladi/pdbrust/issues/8) — Enable the RCSB feature in Linux Python wheels (scheduled:
+  switch `reqwest` to rustls)
+- [PR #16](https://github.com/HFooladi/pdbrust/pull/16) — Fix a panic on REMARK lines with no content (to be merged
+  during the maintenance phase)
 
 ---
 

@@ -6,6 +6,10 @@
 *.swo
 libraryPDB/
 
+# Paper sources are kept private until a preprint is posted
+/docs/paper/
+/docs/*overleaf*.zip
+
 # Python
 __pycache__/
 *.py[cod]
