@@ -9,7 +9,7 @@ use pyo3::prelude::*;
 ///
 /// A clash occurs when two non-bonded atoms are closer than the expected
 /// minimum distance based on their van der Waals radii.
-#[pyclass(name = "AtomClash")]
+#[pyclass(name = "AtomClash", from_py_object)]
 #[derive(Clone)]
 pub struct PyAtomClash {
     inner: AtomClash,
@@ -114,7 +114,7 @@ impl From<AtomClash> for PyAtomClash {
 ///
 /// Contains results from PoseBusters-style geometry checks including
 /// steric clash detection and volume overlap calculation.
-#[pyclass(name = "LigandPoseReport")]
+#[pyclass(name = "LigandPoseReport", from_py_object)]
 #[derive(Clone)]
 pub struct PyLigandPoseReport {
     inner: LigandPoseReport,

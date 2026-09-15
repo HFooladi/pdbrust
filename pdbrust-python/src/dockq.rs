@@ -20,7 +20,7 @@ use pyo3::prelude::*;
 ///     >>> quality = DockQQuality.from_score(0.85)
 ///     >>> print(quality)  # "High"
 ///     >>> quality == DockQQuality.HIGH  # True
-#[pyclass(name = "DockQQuality")]
+#[pyclass(name = "DockQQuality", from_py_object)]
 #[derive(Clone)]
 pub struct PyDockQQuality {
     inner: DockQQuality,
@@ -122,7 +122,7 @@ impl From<DockQQuality> for PyDockQQuality {
 ///     num_native_contacts (int): Number of contacts in native
 ///     num_model_contacts (int): Number of contacts in model
 ///     num_clashes (int): Number of atomic clashes (< 2.0 A)
-#[pyclass(name = "InterfaceResult")]
+#[pyclass(name = "InterfaceResult", from_py_object)]
 #[derive(Clone)]
 pub struct PyInterfaceResult {
     inner: InterfaceResult,
@@ -252,7 +252,7 @@ impl From<InterfaceResult> for PyInterfaceResult {
 ///     >>> print(f"DockQ: {result.total_dockq:.4f}")
 ///     >>> for iface in result:
 ///     ...     print(f"  {iface.native_receptor_chain}-{iface.native_ligand_chain}: {iface.dockq:.3f}")
-#[pyclass(name = "DockQResult")]
+#[pyclass(name = "DockQResult", from_py_object)]
 #[derive(Clone)]
 pub struct PyDockQResult {
     inner: DockQResult,
@@ -346,7 +346,7 @@ impl From<DockQResult> for PyDockQResult {
 ///     >>>
 ///     >>> # Explicit mapping
 ///     >>> strategy = ChainMappingStrategy.explicit([("A", "A"), ("B", "B")])
-#[pyclass(name = "ChainMappingStrategy")]
+#[pyclass(name = "ChainMappingStrategy", from_py_object)]
 #[derive(Clone)]
 pub struct PyChainMappingStrategy {
     pub(crate) inner: ChainMappingStrategy,
@@ -404,7 +404,7 @@ impl PyChainMappingStrategy {
 ///     >>> options = DockQOptions()  # Default options
 ///     >>> options = DockQOptions(contact_threshold=4.0)
 ///     >>> options = DockQOptions(chain_mapping=ChainMappingStrategy.explicit([("A", "A"), ("B", "B")]))
-#[pyclass(name = "DockQOptions")]
+#[pyclass(name = "DockQOptions", from_py_object)]
 #[derive(Clone)]
 pub struct PyDockQOptions {
     pub(crate) inner: DockQOptions,

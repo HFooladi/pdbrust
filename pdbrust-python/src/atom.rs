@@ -7,7 +7,7 @@ use pyo3::prelude::*;
 ///
 /// Contains all standard PDB ATOM record fields including position,
 /// identification, and thermal factor information.
-#[pyclass(name = "Atom")]
+#[pyclass(name = "Atom", from_py_object)]
 #[derive(Clone)]
 pub struct PyAtom {
     pub(crate) inner: Atom,

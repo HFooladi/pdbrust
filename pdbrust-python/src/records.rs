@@ -6,7 +6,7 @@ use pyo3::prelude::*;
 use crate::atom::PyAtom;
 
 /// Represents a disulfide bond between two cysteine residues
-#[pyclass(name = "SSBond")]
+#[pyclass(name = "SSBond", from_py_object)]
 #[derive(Clone)]
 pub struct PySSBond {
     inner: SSBond,
@@ -89,7 +89,7 @@ impl From<&SSBond> for PySSBond {
 }
 
 /// Represents a SEQRES record containing sequence information
-#[pyclass(name = "SeqRes")]
+#[pyclass(name = "SeqRes", from_py_object)]
 #[derive(Clone)]
 pub struct PySeqRes {
     inner: SeqRes,
@@ -140,7 +140,7 @@ impl From<&SeqRes> for PySeqRes {
 }
 
 /// Represents a CONECT record containing atom connectivity information
-#[pyclass(name = "Conect")]
+#[pyclass(name = "Conect", from_py_object)]
 #[derive(Clone)]
 pub struct PyConect {
     inner: Conect,
@@ -207,7 +207,7 @@ impl From<&Conect> for PyConect {
 }
 
 /// Represents a REMARK record
-#[pyclass(name = "Remark")]
+#[pyclass(name = "Remark", from_py_object)]
 #[derive(Clone)]
 pub struct PyRemark {
     inner: Remark,
@@ -255,7 +255,7 @@ impl From<&Remark> for PyRemark {
 }
 
 /// Represents a MODEL record for multi-model structures (e.g., NMR ensembles)
-#[pyclass(name = "Model")]
+#[pyclass(name = "Model", from_py_object)]
 #[derive(Clone)]
 pub struct PyModel {
     inner: Model,

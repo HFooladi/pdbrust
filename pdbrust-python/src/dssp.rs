@@ -15,7 +15,7 @@ use pyo3::prelude::*;
 /// - T: Hydrogen-bonded turn
 /// - S: Bend (high backbone curvature)
 /// - C: Coil (none of the above)
-#[pyclass(name = "SecondaryStructure")]
+#[pyclass(name = "SecondaryStructure", from_py_object)]
 #[derive(Clone)]
 pub struct PySecondaryStructure {
     pub(crate) inner: SecondaryStructure,
@@ -155,7 +155,7 @@ impl From<SecondaryStructure> for PySecondaryStructure {
 }
 
 /// Secondary structure assignment for a single residue.
-#[pyclass(name = "ResidueSSAssignment")]
+#[pyclass(name = "ResidueSSAssignment", from_py_object)]
 #[derive(Clone)]
 pub struct PyResidueSSAssignment {
     pub(crate) inner: ResidueSSAssignment,
@@ -228,7 +228,7 @@ impl From<ResidueSSAssignment> for PyResidueSSAssignment {
 /// Complete secondary structure assignment for a protein structure.
 ///
 /// Contains per-residue assignments and summary statistics.
-#[pyclass(name = "SecondaryStructureAssignment")]
+#[pyclass(name = "SecondaryStructureAssignment", from_py_object)]
 #[derive(Clone)]
 pub struct PySecondaryStructureAssignment {
     pub(crate) inner: SecondaryStructureAssignment,

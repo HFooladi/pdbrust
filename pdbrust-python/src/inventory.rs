@@ -4,7 +4,7 @@ use pdbrust::inventory::{ChainInventory, ChainType, LigandInfo, MolecularInvento
 use pyo3::prelude::*;
 
 /// Type of molecular content in a chain
-#[pyclass(name = "ChainType")]
+#[pyclass(name = "ChainType", from_py_object)]
 #[derive(Clone)]
 pub struct PyChainType {
     inner: ChainType,
@@ -47,7 +47,7 @@ impl PyChainType {
 }
 
 /// Per-chain summary
-#[pyclass(name = "ChainInventory")]
+#[pyclass(name = "ChainInventory", from_py_object)]
 #[derive(Clone)]
 pub struct PyChainInventory {
     inner: ChainInventory,
@@ -112,7 +112,7 @@ impl PyChainInventory {
 }
 
 /// Description of a single ligand instance
-#[pyclass(name = "LigandInfo")]
+#[pyclass(name = "LigandInfo", from_py_object)]
 #[derive(Clone)]
 pub struct PyLigandInfo {
     inner: LigandInfo,
@@ -168,7 +168,7 @@ impl PyLigandInfo {
 ///     >>> print(f"Protein chains: {inv.num_protein_chains}")
 ///     >>> for lig in inv.ligands:
 ///     ...     print(f"  {lig.name} in chain {lig.chain_id}")
-#[pyclass(name = "MolecularInventory")]
+#[pyclass(name = "MolecularInventory", from_py_object)]
 #[derive(Clone)]
 pub struct PyMolecularInventory {
     inner: MolecularInventory,

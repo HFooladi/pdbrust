@@ -10,7 +10,7 @@ use std::collections::HashMap;
 ///
 /// Contains various quality metrics and flags indicating
 /// structure characteristics.
-#[pyclass(name = "QualityReport")]
+#[pyclass(name = "QualityReport", from_py_object)]
 #[derive(Clone)]
 pub struct PyQualityReport {
     inner: QualityReport,
