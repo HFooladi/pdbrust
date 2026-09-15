@@ -1,0 +1,11 @@
+coverage:
+  status:
+    project:
+      default:
+        # Tolerate rounding-level changes (e.g. -0.01%) instead of failing.
+        threshold: 0.5%
+
+# Examples and benchmarks are not exercised by the test suite.
+ignore:
+  - "examples"
+  - "benches"
