@@ -13,6 +13,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - pdbrust's bindings don't call the affected APIs; there is no change to the Python API or results
   - Supported Python versions are unchanged (3.9–3.13)
 
+### Fixed
+- **PDB files written by pdbrust were misread by other tools**
+  - Element symbols were written to columns 73–74 instead of 77–78, and atom names were left-aligned. Readers such as gemmi therefore read alpha carbons (`CA`) as calcium and misassigned or lost many other elements. pdbrust itself lost element symbols when re-reading its own output.
+  - Atom names now follow the PDB alignment convention: names of one-letter elements start in column 14, and names of two-letter elements start in column 13.
+  - Residue names are right-justified, element symbols are in columns 77–78, and an empty chain ID is written as a blank column.
+- **SSBOND records** are now written in the standard column layout (previously misaligned) and before the coordinate records. The parser now reads symmetry operators from columns 60–65 and 67–72; previously `1555` was read as `15`.
+- **mmCIF writer** now quotes values when needed. Previously a blank or empty chain ID shifted the columns, which corrupted coordinates when the file was read back.
+  - Titles containing double quotes are now written with single quotes, and the reader strips either quote style. Previously the writer replaced `"` with `'`, altering the title.
+
 ### Added
 - **Molecular inventory** — one-call breakdown of structure contents
   - `structure.molecular_inventory()` → `MolecularInventory` with per-chain and per-ligand details

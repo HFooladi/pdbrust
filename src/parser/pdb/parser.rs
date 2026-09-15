@@ -309,10 +309,10 @@ fn parse_ssbond_record(line: &str) -> Result<SSBond, PdbError> {
     };
 
     // Parse symmetry operators and length if available
-    let (sym1, sym2, length) = if line.len() >= 70 {
+    let (sym1, sym2, length) = if line.len() >= 72 {
         (
-            parse_int(&line[59..63])?,
-            parse_int(&line[66..70])?,
+            parse_int(&line[59..65])?,
+            parse_int(&line[66..72])?,
             if line.len() >= 78 {
                 parse_float(&line[73..78])?
             } else {

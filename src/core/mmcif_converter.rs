@@ -46,13 +46,15 @@ fn parse_header_info(parser: &MmcifParser, structure: &mut PdbStructure) -> Resu
     if let Some(struct_category) = parser.get_category("struct") {
         if let Some(row) = struct_category.get_row(0) {
             if let Some(title) = row.get("title") {
-                // Remove quotes if present
-                let clean_title =
-                    if title.starts_with('"') && title.ends_with('"') && title.len() > 1 {
-                        &title[1..title.len() - 1]
-                    } else {
-                        title
-                    };
+                // Remove surrounding quotes (CIF values may use ' or ")
+                let is_quoted = title.len() > 1
+                    && ((title.starts_with('"') && title.ends_with('"'))
+                        || (title.starts_with('\'') && title.ends_with('\'')));
+                let clean_title = if is_quoted {
+                    &title[1..title.len() - 1]
+                } else {
+                    title
+                };
                 structure.title = Some(clean_title.to_string());
             }
         }
