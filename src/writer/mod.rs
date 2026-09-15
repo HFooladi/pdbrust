@@ -11,21 +11,110 @@ use flate2::Compression;
 use flate2::write::GzEncoder;
 
 /// Writes a PDB structure to a file.
+///
+/// Returns an error, without creating the file, if the structure contains
+/// values that the PDB format cannot represent (see [`write_pdb`]).
 pub fn write_pdb_file<P: AsRef<Path>>(structure: &PdbStructure, path: P) -> Result<(), PdbError> {
-    let file = File::create(path)?;
-    write_pdb(structure, file)
+    check_pdb_representable(structure)?;
+    let mut writer = BufWriter::new(File::create(path)?);
+    write_pdb_records(structure, &mut writer)?;
+    writer.flush()?;
+    Ok(())
 }
 
 /// Writes a PDB structure to a writer.
+///
+/// Atom serial numbers above 99,999 and residue numbers above 9,999 are
+/// written in hybrid-36. Values the fixed-column format cannot hold at all
+/// (chain IDs longer than 1 character, residue names longer than 3, atom names
+/// longer than 4, element symbols longer than 2, or numbers beyond the
+/// hybrid-36 range) return [`PdbError::InvalidRecord`] before anything is
+/// written; use mmCIF for such structures.
 pub fn write_pdb<W: Write>(structure: &PdbStructure, mut writer: W) -> Result<(), PdbError> {
+    check_pdb_representable(structure)?;
+    write_pdb_records(structure, &mut writer)?;
+    writer.flush()?;
+    Ok(())
+}
+
+/// Fails if any value in `structure` does not fit its PDB column width.
+fn check_pdb_representable(structure: &PdbStructure) -> Result<(), PdbError> {
+    let atoms: Box<dyn Iterator<Item = &crate::records::Atom>> = if structure.models.is_empty() {
+        Box::new(structure.atoms.iter())
+    } else {
+        Box::new(structure.models.iter().flat_map(|model| model.atoms.iter()))
+    };
+    for atom in atoms {
+        check_width("chain ID", &atom.chain_id, 1)?;
+        check_width("residue name", &atom.residue_name, 3)?;
+        check_width("atom name", &atom.name, 4)?;
+        check_width("element symbol", &atom.element, 2)?;
+        pdb_number("atom serial number", atom.serial, 5)?;
+        pdb_number("residue number", atom.residue_seq, 4)?;
+    }
+    for seqres in &structure.seqres {
+        check_width("SEQRES chain ID", &seqres.chain_id, 1)?;
+        for residue in &seqres.residues {
+            check_width("SEQRES residue name", residue, 3)?;
+        }
+    }
+    for ssbond in &structure.ssbonds {
+        check_width("SSBOND chain ID", &ssbond.chain1_id, 1)?;
+        check_width("SSBOND chain ID", &ssbond.chain2_id, 1)?;
+        pdb_number("SSBOND residue number", ssbond.residue1_seq, 4)?;
+        pdb_number("SSBOND residue number", ssbond.residue2_seq, 4)?;
+    }
+    for conect in &structure.connects {
+        for serial in [
+            Some(conect.atom1),
+            Some(conect.atom2),
+            conect.atom3,
+            conect.atom4,
+        ]
+        .into_iter()
+        .flatten()
+        {
+            pdb_number("CONECT atom serial number", serial, 5)?;
+        }
+    }
+    Ok(())
+}
+
+fn check_width(what: &str, value: &str, width: usize) -> Result<(), PdbError> {
+    if value.chars().count() > width {
+        return Err(PdbError::InvalidRecord(format!(
+            "{what} {value:?} does not fit the PDB format (at most {width} characters); \
+             write mmCIF instead"
+        )));
+    }
+    Ok(())
+}
+
+/// Formats a number for a `width`-column PDB field (decimal or hybrid-36).
+fn pdb_number(what: &str, value: i32, width: u32) -> Result<String, PdbError> {
+    crate::utils::encode_hybrid36(value, width).ok_or_else(|| {
+        PdbError::InvalidRecord(format!(
+            "{what} {value} does not fit the PDB format; write mmCIF instead"
+        ))
+    })
+}
+
+/// Writes all records; values must already have passed `check_pdb_representable`.
+fn write_pdb_records<W: Write>(structure: &PdbStructure, writer: &mut W) -> Result<(), PdbError> {
     // Write header
     if let Some(header) = &structure.header {
         writeln!(writer, "HEADER    {}", header)?;
     }
 
-    // Write title
+    // Write title, wrapped into continuation records (text in columns 11-80)
     if let Some(title) = &structure.title {
-        writeln!(writer, "TITLE     {}", title)?;
+        for (index, line) in wrap_words(title, 70, 69).iter().enumerate() {
+            if index == 0 {
+                writeln!(writer, "TITLE     {line}")?;
+            } else {
+                writeln!(writer, "TITLE   {:>2} {line}", index + 1)?;
+            }
+        }
     }
 
     // Write remarks
@@ -33,16 +122,26 @@ pub fn write_pdb<W: Write>(structure: &PdbStructure, mut writer: W) -> Result<()
         writeln!(writer, "REMARK {:3} {}", remark.number, remark.content)?;
     }
 
-    // Write SEQRES records
-    for seqres in &structure.seqres {
-        writeln!(
-            writer,
-            "SEQRES {:3} {} {:4}  {}",
-            seqres.serial,
-            seqres.chain_id,
-            seqres.num_residues,
-            seqres.residues.join(" ")
-        )?;
+    // Write SEQRES records: 13 right-justified residue names per line,
+    // numbered per chain.
+    for (chain_id, num_residues, residues) in seqres_by_chain(structure) {
+        let chain_id = if chain_id.is_empty() { " " } else { chain_id };
+        let lines: Vec<&[&str]> = if residues.is_empty() {
+            vec![&[]]
+        } else {
+            residues.chunks(13).collect()
+        };
+        for (index, chunk) in lines.into_iter().enumerate() {
+            let names: Vec<String> = chunk.iter().map(|name| format!("{name:>3}")).collect();
+            writeln!(
+                writer,
+                "SEQRES {:>3} {} {:>4}  {}",
+                index + 1,
+                chain_id,
+                num_residues,
+                names.join(" ")
+            )?;
+        }
     }
 
     // Write SSBOND records (header section, before the coordinates)
@@ -52,15 +151,15 @@ pub fn write_pdb<W: Write>(structure: &PdbStructure, mut writer: W) -> Result<()
 
         writeln!(
             writer,
-            "SSBOND {:>3} {:>3} {} {:>4}{}   {:>3} {} {:>4}{}{:23}{:>6} {:>6} {:>5.2}",
+            "SSBOND {:>3} {:>3} {} {}{}   {:>3} {} {}{}{:23}{:>6} {:>6} {:>5.2}",
             ssbond.serial,
             ssbond.residue1_name,
             ssbond.chain1_id,
-            ssbond.residue1_seq,
+            pdb_number("SSBOND residue number", ssbond.residue1_seq, 4)?,
             icode1,
             ssbond.residue2_name,
             ssbond.chain2_id,
-            ssbond.residue2_seq,
+            pdb_number("SSBOND residue number", ssbond.residue2_seq, 4)?,
             icode2,
             "",
             ssbond.sym1,
@@ -77,7 +176,7 @@ pub fn write_pdb<W: Write>(structure: &PdbStructure, mut writer: W) -> Result<()
 
             // Write atoms for this model
             for atom in &model.atoms {
-                write_atom_record(&mut writer, atom)?;
+                write_atom_record(writer, atom)?;
             }
 
             writeln!(writer, "ENDMDL")?;
@@ -85,23 +184,22 @@ pub fn write_pdb<W: Write>(structure: &PdbStructure, mut writer: W) -> Result<()
     } else {
         // Write atoms directly if no models
         for atom in &structure.atoms {
-            write_atom_record(&mut writer, atom)?;
+            write_atom_record(writer, atom)?;
         }
     }
 
     // Write CONECT records
     for conect in &structure.connects {
-        let atom3_str = conect
-            .atom3
-            .map_or("     ".to_string(), |a| format!("{:5}", a));
-        let atom4_str = conect
-            .atom4
-            .map_or("     ".to_string(), |a| format!("{:5}", a));
+        let serial = |value: i32| pdb_number("CONECT atom serial number", value, 5);
+        let optional = |value: Option<i32>| value.map_or(Ok("     ".to_string()), serial);
 
         writeln!(
             writer,
-            "CONECT{:5}{:5}{}{}",
-            conect.atom1, conect.atom2, atom3_str, atom4_str
+            "CONECT{}{}{}{}",
+            serial(conect.atom1)?,
+            serial(conect.atom2)?,
+            optional(conect.atom3)?,
+            optional(conect.atom4)?
         )?;
     }
 
@@ -112,7 +210,10 @@ pub fn write_pdb<W: Write>(structure: &PdbStructure, mut writer: W) -> Result<()
 }
 
 /// Helper function to write an ATOM or HETATM record
-fn write_atom_record<W: Write>(writer: &mut W, atom: &crate::records::Atom) -> io::Result<()> {
+fn write_atom_record<W: Write>(
+    writer: &mut W,
+    atom: &crate::records::Atom,
+) -> Result<(), PdbError> {
     let alt_loc = atom.alt_loc.unwrap_or(' ');
     let ins_code = atom.ins_code.unwrap_or(' ');
     let record_type = if atom.is_hetatm { "HETATM" } else { "ATOM  " };
@@ -124,14 +225,14 @@ fn write_atom_record<W: Write>(writer: &mut W, atom: &crate::records::Atom) -> i
 
     writeln!(
         writer,
-        "{}{:5} {}{}{:>3} {}{:4}{}   {:8.3}{:8.3}{:8.3}{:6.2}{:6.2}          {:>2}  ",
+        "{}{} {}{}{:>3} {}{}{}   {:8.3}{:8.3}{:8.3}{:6.2}{:6.2}          {:>2}  ",
         record_type,
-        atom.serial,
+        pdb_number("atom serial number", atom.serial, 5)?,
         pdb_atom_name(&atom.name, &atom.element),
         alt_loc,
         atom.residue_name,
         chain_id,
-        atom.residue_seq,
+        pdb_number("residue number", atom.residue_seq, 4)?,
         ins_code,
         atom.x,
         atom.y,
@@ -139,7 +240,8 @@ fn write_atom_record<W: Write>(writer: &mut W, atom: &crate::records::Atom) -> i
         atom.occupancy,
         atom.temp_factor,
         atom.element
-    )
+    )?;
+    Ok(())
 }
 
 /// Pads an atom name to the 4-character PDB atom-name field (columns 13-16).
@@ -149,11 +251,73 @@ fn write_atom_record<W: Write>(writer: &mut W, atom: &crate::records::Atom) -> i
 /// start in column 13 (`"CA  "` is calcium, `"HD21"`).
 fn pdb_atom_name(name: &str, element: &str) -> String {
     let starts_with_letter = name.chars().next().is_some_and(|c| c.is_ascii_alphabetic());
-    if name.len() < 4 && element.len() < 2 && starts_with_letter {
+    if name.chars().count() < 4 && element.chars().count() < 2 && starts_with_letter {
         format!(" {name:<3}")
     } else {
         format!("{name:<4}")
     }
+}
+
+/// Greedily wraps `text` at word boundaries into lines of at most `first_width`
+/// characters (first line) and `rest_width` characters (following lines).
+/// Words longer than a line are split.
+fn wrap_words(text: &str, first_width: usize, rest_width: usize) -> Vec<String> {
+    let mut lines: Vec<String> = Vec::new();
+    let mut current = String::new();
+    for word in text.split_whitespace() {
+        let mut word = word;
+        loop {
+            let width = if lines.is_empty() {
+                first_width
+            } else {
+                rest_width
+            };
+            let used = current.chars().count();
+            let needed = word.chars().count() + usize::from(used > 0);
+            if used + needed <= width {
+                if used > 0 {
+                    current.push(' ');
+                }
+                current.push_str(word);
+                break;
+            }
+            if used > 0 {
+                lines.push(std::mem::take(&mut current));
+                continue;
+            }
+            // A single word longer than the line: split it.
+            let split = word
+                .char_indices()
+                .nth(width)
+                .map_or(word.len(), |(i, _)| i);
+            lines.push(word[..split].to_string());
+            word = &word[split..];
+            if word.is_empty() {
+                break;
+            }
+        }
+    }
+    if !current.is_empty() || lines.is_empty() {
+        lines.push(current);
+    }
+    lines
+}
+
+/// Collects SEQRES residues per chain, in order of first appearance, with the
+/// residue count declared by the chain's first record.
+fn seqres_by_chain(structure: &PdbStructure) -> Vec<(&str, i32, Vec<&str>)> {
+    let mut chains: Vec<(&str, i32, Vec<&str>)> = Vec::new();
+    for record in &structure.seqres {
+        let residues = record.residues.iter().map(String::as_str);
+        match chains
+            .iter_mut()
+            .find(|(chain_id, _, _)| *chain_id == record.chain_id)
+        {
+            Some((_, _, chain_residues)) => chain_residues.extend(residues),
+            None => chains.push((&record.chain_id, record.num_residues, residues.collect())),
+        }
+    }
+    chains
 }
 
 // ============================================================================

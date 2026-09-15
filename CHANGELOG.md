@@ -31,6 +31,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - CONECT records without bonded atoms are skipped, and SSBOND records with blank symmetry fields get the identity operator, instead of aborting the parse.
 - **Multi-line TITLE records** are now read completely. Previously only the last continuation line was kept, which truncated the title of 528 of 934 randomly sampled PDB entries.
 - **SEQRES serial numbers of 100 and above** are now read correctly, from columns 8–10.
+- **PDB writer, large structures**: atom serial numbers above 99,999 and residue numbers above 9,999 are written in hybrid-36 (ATOM/HETATM, CONECT, SSBOND), as gemmi and cctbx do. Previously they overflowed their columns and corrupted the rest of the line.
+- **PDB writer, values the format cannot hold**: chain IDs longer than 1 character, residue names longer than 3, atom names longer than 4, element symbols longer than 2, and numbers beyond the hybrid-36 range now return an error (`ValueError` in Python) before anything is written, instead of producing a corrupted file. Write such structures as mmCIF.
+- **PDB writer, TITLE and SEQRES**: long titles are wrapped into continuation records, and SEQRES residues are written 13 per line with right-justified names, so no line exceeds 80 columns. Previously, structures read from mmCIF produced a single very long SEQRES line.
 
 ### Added
 - **Molecular inventory** — one-call breakdown of structure contents
@@ -43,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Full Python bindings: `MolecularInventory`, `ChainInventory`, `ChainType`, `LigandInfo`
 
 ### Changed
+- `write_pdb_file` now writes through a buffer, which is faster for large structures, and reports write errors instead of losing them when the file is closed.
 - **README polished for consistency**
   - All example sections now use uniform `#### Rust` / `#### Python` subheaders
   - Added missing Python examples for Filter, Descriptors, Geometry, RCSB Download, Gzip
