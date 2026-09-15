@@ -15,6 +15,9 @@ jobs:
     name: Test
     runs-on: ${{ matrix.os }}
     strategy:
+      # Let every OS/toolchain combination finish so one failure (or a flaky
+      # runner) doesn't hide the results of the others.
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         rust: [stable, 1.85.0]  # Test on both stable and MSRV
@@ -23,7 +26,7 @@ jobs:
             rust: stable
             run-coverage: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@master
@@ -31,7 +34,7 @@ jobs:
           toolchain: ${{ matrix.rust }}
       
       - name: Cache dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v5
         with:
           path: |
             ~/.cargo/registry
@@ -49,7 +52,7 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -57,7 +60,7 @@ jobs:
           components: clippy, rustfmt
       
       - name: Cache dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v5
         with:
           path: |
             ~/.cargo/registry
@@ -71,11 +74,72 @@ jobs:
       - name: Check formatting
         run: cargo fmt --all -- --check
 
+  features:
+    name: Feature combinations
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-hack
+        uses: taiki-e/install-action@cargo-hack
+
+      # Users often enable a single feature (e.g. `features = ["geometry"]`);
+      # make sure each one compiles on its own without warnings.
+      - name: Check each feature individually
+        run: cargo hack check --each-feature --package pdbrust
+
+  python:
+    name: Python bindings
+    runs-on: ubuntu-latest
+    env:
+      # Build the bindings the same way the release wheels are built
+      # (python-publish.yml does not use -D warnings).
+      RUSTFLAGS: ""
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Compile-check all binding features
+        run: cargo check --package pdbrust-python --all-features
+
+      # Same features as the Linux release wheels (see python-publish.yml).
+      - name: Build and install the Python package
+        run: |
+          python -m pip install --upgrade pip maturin
+          maturin build --manifest-path pdbrust-python/Cargo.toml --interpreter python --no-default-features --features core --out dist
+          python -m pip install dist/*.whl numpy
+
+      - name: Smoke-test the Python package
+        run: |
+          python - <<'EOF'
+          import pdbrust
+
+          pdb = pdbrust.parse_pdb_file("examples/pdb_files/1UBQ.pdb")
+          cif = pdbrust.parse_mmcif_file("examples/pdb_files/1CRN.cif")
+          for s in (pdb, cif):
+              assert s.num_atoms > 0
+              assert s.get_coords_array().shape == (s.num_atoms, 3)
+
+          print(f"1UBQ: {pdb.num_atoms} atoms, {pdb.num_chains} chain(s)")
+          print(f"1CRN: {cif.num_atoms} atoms")
+          print(f"Radius of gyration: {pdb.radius_of_gyration():.2f}")
+          print(f"Secondary structure: {pdb.secondary_structure_string()[:40]}")
+          EOF
+
   coverage:
     name: Code coverage
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -89,17 +153,19 @@ jobs:
         run: cargo llvm-cov --all-features --package pdbrust --lcov --output-path lcov.info
       
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v6
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          file: lcov.info
-          fail_ci_if_error: true
+          files: lcov.info
+          # Dependabot and fork PRs have no access to the token; an upload
+          # failure there says nothing about the code, so don't fail CI on it.
+          fail_ci_if_error: false
 
   doc:
     name: Documentation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -113,7 +179,7 @@ jobs:
     name: Security
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -131,7 +197,7 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
