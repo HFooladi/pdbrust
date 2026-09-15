@@ -694,11 +694,7 @@ impl BenchmarkRunner {
                 f64::INFINITY
             };
 
-            let bar_len = if max_count > 0 {
-                count * bar_width / max_count
-            } else {
-                0
-            };
+            let bar_len = (count * bar_width).checked_div(max_count).unwrap_or(0);
             let bar: String = "█".repeat(bar_len);
 
             if bound.is_infinite() {
