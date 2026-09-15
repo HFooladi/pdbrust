@@ -158,7 +158,6 @@ proptest! {
     }
 
     #[test]
-    #[ignore = "Multi-model atom association needs parser fix - see issue"]
     fn test_multi_model_structure(
         num_models in 1..5usize,
         atoms_per_model in 1..10usize,
