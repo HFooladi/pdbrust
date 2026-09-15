@@ -348,7 +348,7 @@ fn parse_remark_record(line: &str) -> Result<Remark, PdbError> {
     }
 
     let number = parse_int(&line[6..10])?;
-    let content = line[11..].trim().to_string();
+    let content = line.get(11..).unwrap_or("").trim().to_string();
 
     Ok(Remark { number, content })
 }
