@@ -1,5 +1,6 @@
 use crate::PdbStructure;
 use crate::error::PdbError;
+use std::borrow::Cow;
 use std::fs::File;
 use std::io::{self, BufWriter, Write};
 use std::path::Path;
@@ -44,6 +45,30 @@ pub fn write_pdb<W: Write>(structure: &PdbStructure, mut writer: W) -> Result<()
         )?;
     }
 
+    // Write SSBOND records (header section, before the coordinates)
+    for ssbond in &structure.ssbonds {
+        let icode1 = ssbond.icode1.unwrap_or(' ');
+        let icode2 = ssbond.icode2.unwrap_or(' ');
+
+        writeln!(
+            writer,
+            "SSBOND {:>3} {:>3} {} {:>4}{}   {:>3} {} {:>4}{}{:23}{:>6} {:>6} {:>5.2}",
+            ssbond.serial,
+            ssbond.residue1_name,
+            ssbond.chain1_id,
+            ssbond.residue1_seq,
+            icode1,
+            ssbond.residue2_name,
+            ssbond.chain2_id,
+            ssbond.residue2_seq,
+            icode2,
+            "",
+            ssbond.sym1,
+            ssbond.sym2,
+            ssbond.length
+        )?;
+    }
+
     // Write MODEL/ATOM/ENDMDL records
     if !structure.models.is_empty() {
         // Write models if present
@@ -80,29 +105,6 @@ pub fn write_pdb<W: Write>(structure: &PdbStructure, mut writer: W) -> Result<()
         )?;
     }
 
-    // Write SSBOND records
-    for ssbond in &structure.ssbonds {
-        let icode1 = ssbond.icode1.unwrap_or(' ');
-        let icode2 = ssbond.icode2.unwrap_or(' ');
-
-        writeln!(
-            writer,
-            "SSBOND {:3} {:3} {}{:4}{} {:3} {}{:4}{} {:5} {:5} {:6.2}",
-            ssbond.serial,
-            ssbond.residue1_name,
-            ssbond.chain1_id,
-            ssbond.residue1_seq,
-            icode1,
-            ssbond.residue2_name,
-            ssbond.chain2_id,
-            ssbond.residue2_seq,
-            icode2,
-            ssbond.sym1,
-            ssbond.sym2,
-            ssbond.length
-        )?;
-    }
-
     // Write END record
     writeln!(writer, "END")?;
 
@@ -114,16 +116,21 @@ fn write_atom_record<W: Write>(writer: &mut W, atom: &crate::records::Atom) -> i
     let alt_loc = atom.alt_loc.unwrap_or(' ');
     let ins_code = atom.ins_code.unwrap_or(' ');
     let record_type = if atom.is_hetatm { "HETATM" } else { "ATOM  " };
+    let chain_id = if atom.chain_id.is_empty() {
+        " "
+    } else {
+        atom.chain_id.as_str()
+    };
 
     writeln!(
         writer,
-        "{}{:5} {:4}{}{:3} {}{:4}{}   {:8.3}{:8.3}{:8.3}{:6.2}{:6.2}      {:2}  ",
+        "{}{:5} {}{}{:>3} {}{:4}{}   {:8.3}{:8.3}{:8.3}{:6.2}{:6.2}          {:>2}  ",
         record_type,
         atom.serial,
-        atom.name,
+        pdb_atom_name(&atom.name, &atom.element),
         alt_loc,
         atom.residue_name,
-        atom.chain_id,
+        chain_id,
         atom.residue_seq,
         ins_code,
         atom.x,
@@ -133,6 +140,20 @@ fn write_atom_record<W: Write>(writer: &mut W, atom: &crate::records::Atom) -> i
         atom.temp_factor,
         atom.element
     )
+}
+
+/// Pads an atom name to the 4-character PDB atom-name field (columns 13-16).
+///
+/// By convention, names of one-letter elements start in column 14 (`" CA "` is
+/// an alpha carbon), while names of two-letter elements and 4-character names
+/// start in column 13 (`"CA  "` is calcium, `"HD21"`).
+fn pdb_atom_name(name: &str, element: &str) -> String {
+    let starts_with_letter = name.chars().next().is_some_and(|c| c.is_ascii_alphabetic());
+    if name.len() < 4 && element.len() < 2 && starts_with_letter {
+        format!(" {name:<3}")
+    } else {
+        format!("{name:<4}")
+    }
 }
 
 // ============================================================================
@@ -269,20 +290,14 @@ pub fn write_mmcif_string(structure: &PdbStructure) -> Result<String, PdbError> 
 
 /// Helper function to write the _entry category.
 fn write_entry_info<W: Write>(writer: &mut W, structure_id: &str) -> io::Result<()> {
-    writeln!(writer, "_entry.id   {}", structure_id)?;
+    writeln!(writer, "_entry.id   {}", cif_value(structure_id))?;
     writeln!(writer, "#")?;
     Ok(())
 }
 
 /// Helper function to write the _struct category.
 fn write_struct_info<W: Write>(writer: &mut W, title: &str) -> io::Result<()> {
-    // Quote the title if it contains spaces or special characters
-    let quoted_title = if title.contains(' ') || title.contains('\'') {
-        format!("\"{}\"", title.replace('"', "'"))
-    } else {
-        title.to_string()
-    };
-    writeln!(writer, "_struct.title   {}", quoted_title)?;
+    writeln!(writer, "_struct.title   {}", cif_value(title))?;
     writeln!(writer, "#")?;
     Ok(())
 }
@@ -344,8 +359,12 @@ fn write_mmcif_atom_record<W: Write>(
     let auth_seq_id = atom.residue_seq;
 
     // Handle optional fields
-    let alt_loc = atom.alt_loc.map_or(".".to_string(), |c| c.to_string());
-    let ins_code = atom.ins_code.map_or("?".to_string(), |c| c.to_string());
+    let alt_loc = atom
+        .alt_loc
+        .map_or(".".to_string(), |c| cif_value(&c.to_string()).into_owned());
+    let ins_code = atom
+        .ins_code
+        .map_or("?".to_string(), |c| cif_value(&c.to_string()).into_owned());
 
     // Element symbol (use first character of atom name if element is empty)
     let element = if atom.element.is_empty() {
@@ -359,11 +378,11 @@ fn write_mmcif_atom_record<W: Write>(
         "{} {} {} {} {} {} {} {} {} {} {:.3} {:.3} {:.3} {:.2} {:.2} {}",
         group_pdb,
         atom.serial,
-        element,
-        atom.name,
+        cif_value(&element),
+        cif_value(&atom.name),
         alt_loc,
-        atom.residue_name,
-        atom.chain_id,
+        cif_value(&atom.residue_name),
+        cif_value(&atom.chain_id),
         label_seq_id,
         auth_seq_id,
         ins_code,
@@ -404,13 +423,40 @@ fn write_entity_poly_seq<W: Write>(writer: &mut W, structure: &PdbStructure) -> 
                 "{} {} {}",
                 entity_id,
                 base_num + i as i32 + 1,
-                residue
+                cif_value(residue)
             )?;
         }
     }
 
     writeln!(writer, "#")?;
     Ok(())
+}
+
+/// Formats a string as a CIF value, quoting it when a CIF reader would
+/// otherwise misparse it (empty, containing whitespace, starting with a
+/// reserved character, `.`/`?`, or a reserved word).
+fn cif_value(value: &str) -> Cow<'_, str> {
+    let is_reserved_word = value.get(..5).is_some_and(|prefix| {
+        prefix.eq_ignore_ascii_case("data_") || prefix.eq_ignore_ascii_case("save_")
+    }) || ["loop_", "stop_", "global_"]
+        .iter()
+        .any(|word| value.eq_ignore_ascii_case(word));
+    let needs_quotes = value.is_empty()
+        || value.chars().any(char::is_whitespace)
+        || value.starts_with(['_', '#', '$', '\'', '"', '[', ']', ';'])
+        || value == "."
+        || value == "?"
+        || is_reserved_word;
+
+    if !needs_quotes {
+        Cow::Borrowed(value)
+    } else if !value.contains('"') {
+        Cow::Owned(format!("\"{value}\""))
+    } else if !value.contains('\'') {
+        Cow::Owned(format!("'{value}'"))
+    } else {
+        Cow::Owned(format!("\"{}\"", value.replace('"', "'")))
+    }
 }
 
 /// Helper function to write the _struct_conn_type and _struct_disulfid loops.
@@ -439,11 +485,11 @@ fn write_struct_disulfid<W: Write>(writer: &mut W, structure: &PdbStructure) -> 
             writer,
             "disulf{} disulf {} {} {} {} {} {} {:.3}",
             ssbond.serial,
-            ssbond.chain1_id,
-            ssbond.residue1_name,
+            cif_value(&ssbond.chain1_id),
+            cif_value(&ssbond.residue1_name),
             ssbond.residue1_seq,
-            ssbond.chain2_id,
-            ssbond.residue2_name,
+            cif_value(&ssbond.chain2_id),
+            cif_value(&ssbond.residue2_name),
             ssbond.residue2_seq,
             ssbond.length
         )?;
@@ -451,4 +497,54 @@ fn write_struct_disulfid<W: Write>(writer: &mut W, structure: &PdbStructure) -> 
 
     writeln!(writer, "#")?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::cif_value;
+
+    #[test]
+    fn cif_value_leaves_plain_values_bare() {
+        for value in ["A", "CA", "HOH", "O5'", "1.5", "C1'"] {
+            assert_eq!(cif_value(value), value);
+        }
+    }
+
+    #[test]
+    fn cif_value_quotes_values_a_cif_reader_would_misparse() {
+        let cases = [
+            ("", "\"\""),
+            (" ", "\" \""),
+            ("a b", "\"a b\""),
+            ("a\tb", "\"a\tb\""),
+            ("_x", "\"_x\""),
+            ("#1", "\"#1\""),
+            ("$x", "\"$x\""),
+            ("'x", "\"'x\""),
+            ("\"x", "'\"x'"),
+            ("[x", "\"[x\""),
+            ("]x", "\"]x\""),
+            (";x", "\";x\""),
+            (".", "\".\""),
+            ("?", "\"?\""),
+            ("data_x", "\"data_x\""),
+            ("DATA_x", "\"DATA_x\""),
+            ("save_x", "\"save_x\""),
+            ("loop_", "\"loop_\""),
+            ("stop_", "\"stop_\""),
+            ("global_", "\"global_\""),
+        ];
+        for (value, expected) in cases {
+            assert_eq!(cif_value(value), expected, "value {value:?}");
+        }
+    }
+
+    #[test]
+    fn cif_value_picks_a_quote_character_the_value_does_not_contain() {
+        assert_eq!(cif_value("say \"hi\""), "'say \"hi\"'");
+        assert_eq!(cif_value("it's here"), "\"it's here\"");
+        // A value containing both quote characters cannot be quoted safely on
+        // one line; double quotes are replaced so the output stays parseable.
+        assert_eq!(cif_value("it's \"x\""), "\"it's 'x'\"");
+    }
 }
