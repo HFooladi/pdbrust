@@ -1,6 +1,6 @@
 [workspace]
 members = [".", "pdbrust-python"]
-resolver = "2"
+resolver = "3"
 
 [package]
 name = "pdbrust"

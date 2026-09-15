@@ -150,11 +150,9 @@ fn assign_helices(
                 SecondaryStructure::Coil | SecondaryStructure::Turn | SecondaryStructure::Bend => {
                     assignments[i] = ss;
                 }
-                SecondaryStructure::Helix310 => {
-                    // α and π helices override 3₁₀
-                    if helix_type != HelixType::Helix310 {
-                        assignments[i] = ss;
-                    }
+                // α and π helices override 3₁₀
+                SecondaryStructure::Helix310 if helix_type != HelixType::Helix310 => {
+                    assignments[i] = ss;
                 }
                 _ => {
                     // Don't override existing assignments

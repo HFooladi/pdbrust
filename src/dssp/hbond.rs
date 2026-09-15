@@ -240,17 +240,13 @@ pub fn extract_backbone_atoms(atoms: &[Atom]) -> Vec<BackboneAtoms> {
             "N" => backbone.n = Some(coords),
             "CA" => backbone.ca = Some(coords),
             "C" => backbone.c = Some(coords),
-            "O" | "OXT" => {
-                // Use O preferentially, only use OXT if O is not set
-                if backbone.o.is_none() || name == "O" {
-                    backbone.o = Some(coords);
-                }
+            // Use O preferentially, only use OXT if O is not set
+            "O" | "OXT" if backbone.o.is_none() || name == "O" => {
+                backbone.o = Some(coords);
             }
-            "H" | "HN" | "H1" => {
-                // Use explicit H if present
-                if backbone.h.is_none() {
-                    backbone.h = Some(coords);
-                }
+            // Use explicit H if present
+            "H" | "HN" | "H1" if backbone.h.is_none() => {
+                backbone.h = Some(coords);
             }
             _ => {}
         }

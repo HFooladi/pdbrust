@@ -473,7 +473,10 @@ fn test_parse_remark_with_content() {
     let structure = result.unwrap();
     assert_eq!(structure.remarks.len(), 1);
     assert_eq!(structure.remarks[0].number, 2);
-    assert_eq!(structure.remarks[0].content, "RESOLUTION.    2.00 ANGSTROMS.");
+    assert_eq!(
+        structure.remarks[0].content,
+        "RESOLUTION.    2.00 ANGSTROMS."
+    );
 }
 
 #[test]
