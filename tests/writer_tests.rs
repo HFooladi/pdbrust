@@ -2,8 +2,8 @@
 //! round-trips through the parsers.
 
 use pdbrust::{
-    PdbStructure, parse_mmcif_string, parse_pdb_file, parse_pdb_string, write_mmcif_string,
-    write_pdb,
+    PdbError, PdbStructure, parse_mmcif_string, parse_pdb_file, parse_pdb_string,
+    write_mmcif_string, write_pdb, write_pdb_file,
 };
 
 /// Writes `structure` as PDB-format text.
@@ -102,6 +102,10 @@ const CANONICAL_ATOM_RECORDS: &[&str] = &[
     // Residue names are right-justified in columns 18-20.
     "ATOM      1  P     A B   1      12.000  22.000  32.000  1.00 17.00           P  ",
     "HETATM  604  O   HOH A  77      45.747  30.081  19.708  1.00 12.43           O  ",
+    // Serial numbers above 99,999 and residue numbers above 9,999 use hybrid-36
+    // (the first line as written by gemmi).
+    "HETATMA0000  O   HOH ABXG0      99.000  99.000   9.000  1.00 20.00           O  ",
+    "ATOM  A0000  CA  GLY AA000       1.000   2.000   3.000  1.00  0.00           C  ",
 ];
 
 #[test]
@@ -134,6 +138,205 @@ fn pdb_round_trip_preserves_atoms_of_example_files() {
         let reparsed = parse_pdb_string(&pdb_text(&original)).unwrap();
         assert_same_atoms(&original, &reparsed, name);
     }
+}
+
+#[test]
+fn conect_records_with_hybrid36_serials_are_reproduced() {
+    let structure = parse_pdb_string("CONECTA0000A0001\n").unwrap();
+
+    let text = pdb_text(&structure);
+
+    let written: Vec<&str> = records(&text, "CONECT")
+        .into_iter()
+        .map(str::trim_end)
+        .collect();
+    assert_eq!(written, vec!["CONECTA0000A0001"]);
+}
+
+/// Changes a structure so that it no longer fits the PDB format.
+type MakeUnrepresentable = fn(&mut PdbStructure);
+
+#[test]
+fn values_that_do_not_fit_the_pdb_format_are_rejected_before_writing() {
+    let base = parse_pdb_string(CANONICAL_ATOM_RECORDS[1]).unwrap();
+    let cases: [(&str, MakeUnrepresentable); 6] = [
+        ("2-character chain ID", |s| {
+            s.atoms[0].chain_id = "AB".into()
+        }),
+        ("5-character residue name", |s| {
+            s.atoms[0].residue_name = "A1AAA".into()
+        }),
+        ("5-character atom name", |s| {
+            s.atoms[0].name = "C1234".into()
+        }),
+        ("3-character element", |s| s.atoms[0].element = "XYZ".into()),
+        ("serial beyond hybrid-36", |s| {
+            s.atoms[0].serial = 87_440_032
+        }),
+        ("residue number below -999", |s| {
+            s.atoms[0].residue_seq = -1_000
+        }),
+    ];
+
+    for (case, modify) in cases {
+        let mut structure = base.clone();
+        modify(&mut structure);
+        let mut buffer = Vec::new();
+
+        let result = write_pdb(&structure, &mut buffer);
+
+        assert!(
+            matches!(result, Err(PdbError::InvalidRecord(_))),
+            "{case}: {result:?}"
+        );
+        assert!(buffer.is_empty(), "{case}: output was written");
+    }
+}
+
+#[test]
+fn write_pdb_file_creates_no_file_for_structures_that_do_not_fit() {
+    let mut structure = parse_pdb_string(CANONICAL_ATOM_RECORDS[1]).unwrap();
+    structure.atoms[0].chain_id = "AB".into();
+    let directory = tempfile::tempdir().unwrap();
+    let path = directory.path().join("out.pdb");
+
+    assert!(write_pdb_file(&structure, &path).is_err());
+    assert!(!path.exists());
+}
+
+// ============================================================================
+// PDB writer: TITLE and SEQRES
+// ============================================================================
+
+#[test]
+fn long_titles_are_written_as_continuation_records() {
+    let mut structure = parse_pdb_string(CANONICAL_ATOM_RECORDS[1]).unwrap();
+    structure.title = Some(
+        "CRYSTAL STRUCTURE OF THE COMPLEX OF CYCLOPHILIN A WITH A HEXAPEPTIDE INHIBITOR"
+            .to_string(),
+    );
+
+    let text = pdb_text(&structure);
+
+    assert_eq!(
+        records(&text, "TITLE"),
+        vec![
+            "TITLE     CRYSTAL STRUCTURE OF THE COMPLEX OF CYCLOPHILIN A WITH A HEXAPEPTIDE",
+            "TITLE    2 INHIBITOR",
+        ]
+    );
+}
+
+#[test]
+fn long_seqres_records_are_split_into_lines_of_13_residues() {
+    let mut structure = parse_pdb_string(CANONICAL_ATOM_RECORDS[1]).unwrap();
+    structure.seqres = vec![pdbrust::records::SeqRes {
+        serial: 1,
+        chain_id: "A".to_string(),
+        num_residues: 15,
+        residues: "MET GLN ILE PHE VAL LYS THR LEU THR GLY LYS THR ILE THR LEU"
+            .split(' ')
+            .map(String::from)
+            .collect(),
+    }];
+
+    let text = pdb_text(&structure);
+
+    assert_eq!(
+        records(&text, "SEQRES"),
+        vec![
+            "SEQRES   1 A   15  MET GLN ILE PHE VAL LYS THR LEU THR GLY LYS THR ILE",
+            "SEQRES   2 A   15  THR LEU",
+        ]
+    );
+}
+
+#[test]
+fn seqres_residue_names_are_right_justified() {
+    let mut structure = parse_pdb_string(CANONICAL_ATOM_RECORDS[1]).unwrap();
+    structure.seqres = vec![pdbrust::records::SeqRes {
+        serial: 1,
+        chain_id: "B".to_string(),
+        num_residues: 3,
+        residues: vec!["DA".to_string(), "DG".to_string(), "C".to_string()],
+    }];
+
+    let text = pdb_text(&structure);
+
+    assert_eq!(
+        records(&text, "SEQRES"),
+        vec!["SEQRES   1 B    3   DA  DG   C"]
+    );
+}
+
+#[test]
+fn seqres_records_of_example_files_are_reproduced() {
+    // test.pdb is left out: its SEQRES line is not in the standard columns.
+    for name in [
+        "1UBQ.pdb",
+        "1HSG.pdb",
+        "1L2Y.pdb",
+        "8HM2.pdb",
+        "AF-P62987-F1.pdb",
+    ] {
+        assert_records_reproduced(name, "SEQRES");
+    }
+}
+
+#[test]
+fn titles_of_wwpdb_files_are_wrapped_like_the_originals() {
+    // wwPDB wraps TITLE text at word boundaries within columns 11-80.
+    for name in ["1UBQ.pdb", "1HSG.pdb", "1L2Y.pdb", "8HM2.pdb"] {
+        assert_records_reproduced(name, "TITLE");
+    }
+}
+
+#[test]
+fn titles_of_example_files_fit_in_80_columns_and_round_trip() {
+    for name in EXAMPLE_PDB_FILES {
+        let original = parse_pdb_file(format!("examples/pdb_files/{name}")).unwrap();
+
+        let text = pdb_text(&original);
+
+        assert!(
+            records(&text, "TITLE").iter().all(|line| line.len() <= 80),
+            "{name}"
+        );
+        let reparsed = parse_pdb_string(&text).unwrap();
+        assert_eq!(reparsed.title, original.title, "{name}");
+    }
+}
+
+/// Asserts that writing a parsed example file reproduces its `record` lines.
+fn assert_records_reproduced(name: &str, record: &str) {
+    let path = format!("examples/pdb_files/{name}");
+    let original = std::fs::read_to_string(&path).unwrap();
+    let text = pdb_text(&parse_pdb_file(&path).unwrap());
+
+    let expected: Vec<&str> = records(&original, record)
+        .into_iter()
+        .map(str::trim_end)
+        .collect();
+    let written: Vec<&str> = records(&text, record)
+        .into_iter()
+        .map(str::trim_end)
+        .collect();
+    assert_eq!(written, expected, "{name}: {record}");
+}
+
+#[test]
+fn seqres_from_mmcif_fits_in_80_columns_and_round_trips() {
+    let original = pdbrust::parse_mmcif_file("examples/pdb_files/1CRN.cif").unwrap();
+
+    let text = pdb_text(&original);
+
+    assert!(records(&text, "SEQRES").iter().all(|line| line.len() <= 80));
+    let reparsed = parse_pdb_string(&text).unwrap();
+    let residues = |s: &PdbStructure| -> Vec<String> {
+        s.seqres.iter().flat_map(|r| r.residues.clone()).collect()
+    };
+    assert_eq!(residues(&reparsed), residues(&original));
+    assert_eq!(residues(&original).len(), 46);
 }
 
 // ============================================================================

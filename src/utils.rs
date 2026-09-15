@@ -52,9 +52,94 @@ pub(crate) fn decode_hybrid36(field: &str, width: u32) -> Result<i32, crate::Pdb
     i32::try_from(decoded).map_err(|_| invalid())
 }
 
+/// Encodes a number into a fixed-width PDB field, using hybrid-36 when it does
+/// not fit in decimal. Returns `None` if the value is out of range for `width`.
+pub(crate) fn encode_hybrid36(value: i32, width: u32) -> Option<String> {
+    let field_width = width as usize;
+    let value = i64::from(value);
+    let decimal_limit = 10_i64.pow(width);
+    if value > -10_i64.pow(width - 1) && value < decimal_limit {
+        return Some(format!("{value:>field_width$}"));
+    }
+    if value < 0 {
+        return None;
+    }
+
+    // Uppercase block first (A000.. to ZZZZ..), then the lowercase block.
+    let block = 26 * 36_i64.pow(width - 1);
+    let mut offset = value - decimal_limit;
+    let digits: &[u8] = if offset < block {
+        b"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    } else {
+        offset -= block;
+        if offset >= block {
+            return None;
+        }
+        b"0123456789abcdefghijklmnopqrstuvwxyz"
+    };
+
+    let mut n = offset + 10 * 36_i64.pow(width - 1);
+    let mut encoded = vec![b'0'; field_width];
+    for slot in encoded.iter_mut().rev() {
+        *slot = digits[(n % 36) as usize];
+        n /= 36;
+    }
+    Some(encoded.iter().map(|&b| b as char).collect())
+}
+
 #[cfg(test)]
 mod tests {
-    use super::decode_hybrid36;
+    use super::{decode_hybrid36, encode_hybrid36};
+    use proptest::prelude::*;
+
+    #[test]
+    fn numbers_in_the_decimal_range_are_encoded_in_decimal() {
+        for (value, width, expected) in [
+            (1, 5, "    1"),
+            (99_999, 5, "99999"),
+            (-9_999, 5, "-9999"),
+            (1, 4, "   1"),
+            (9_999, 4, "9999"),
+            (-999, 4, "-999"),
+        ] {
+            assert_eq!(encode_hybrid36(value, width).as_deref(), Some(expected));
+        }
+    }
+
+    #[test]
+    fn larger_numbers_are_encoded_in_hybrid36() {
+        for (value, width, expected) in [
+            (100_000, 5, "A0000"),
+            (100_035, 5, "A000Z"),
+            (100_036, 5, "A0010"),
+            (43_770_015, 5, "ZZZZZ"),
+            (43_770_016, 5, "a0000"),
+            (87_440_031, 5, "zzzzz"),
+            (10_000, 4, "A000"),
+            (1_223_055, 4, "ZZZZ"),
+            (1_223_056, 4, "a000"),
+            (2_436_111, 4, "zzzz"),
+        ] {
+            assert_eq!(encode_hybrid36(value, width).as_deref(), Some(expected));
+        }
+    }
+
+    #[test]
+    fn numbers_outside_the_hybrid36_range_are_not_encoded() {
+        for (value, width) in [(87_440_032, 5), (-10_000, 5), (2_436_112, 4), (-1_000, 4)] {
+            assert_eq!(encode_hybrid36(value, width), None, "{value}");
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn encoded_numbers_decode_to_the_original(value in -999..2_436_112i32, wide in any::<bool>()) {
+            let width = if wide { 5 } else { 4 };
+            let field = encode_hybrid36(value, width).unwrap();
+            prop_assert_eq!(field.len(), width as usize);
+            prop_assert_eq!(decode_hybrid36(&field, width).unwrap(), value);
+        }
+    }
 
     #[test]
     fn decimal_numbers_decode_unchanged() {
