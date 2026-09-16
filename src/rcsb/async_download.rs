@@ -48,8 +48,6 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use futures::future::join_all;
-use tokio::fs::File;
-use tokio::io::AsyncWriteExt;
 use tokio::sync::Semaphore;
 use tokio::time::sleep;
 
@@ -275,8 +273,16 @@ pub async fn download_to_file_async<P: AsRef<Path>>(
     format: FileFormat,
 ) -> Result<(), DownloadError> {
     let content = download_pdb_string_async(pdb_id, format).await?;
-    let mut file = File::create(path).await?;
-    file.write_all(content.as_bytes()).await?;
+    write_downloaded_file(path.as_ref(), &content).await
+}
+
+/// Write downloaded content to `path`, returning only once the write has finished.
+///
+/// A `tokio::fs::File` reports `write_all` as done while its last chunk is still
+/// being written in the background, which loses that write's errors and lets
+/// callers read a truncated file.
+async fn write_downloaded_file(path: &Path, content: &str) -> Result<(), DownloadError> {
+    tokio::fs::write(path, content).await?;
     Ok(())
 }
 
@@ -525,9 +531,7 @@ pub async fn download_multiple_to_files_async<P: AsRef<Path> + Sync>(
                             }
 
                             let content = response.text().await?;
-                            let mut file = File::create(&path).await?;
-                            file.write_all(content.as_bytes()).await?;
-                            Ok(())
+                            write_downloaded_file(&path, &content).await
                         }
                         .await;
 
@@ -609,5 +613,32 @@ mod tests {
     fn test_build_download_url_cif() {
         let url = build_download_url("8hm2", FileFormat::Cif);
         assert_eq!(url, "https://files.rcsb.org/download/8HM2.cif");
+    }
+
+    #[tokio::test]
+    async fn test_written_file_is_complete_when_write_returns() {
+        // Larger than tokio's 2 MiB write chunk, so the write happens in several steps.
+        let line =
+            "ATOM      1  N   MET A   1      27.340  24.430   2.614  1.00  9.67           N  \n";
+        let content = line.repeat(80_000);
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("1UBQ.pdb");
+
+        write_downloaded_file(&path, &content).await.unwrap();
+
+        assert_eq!(std::fs::metadata(&path).unwrap().len(), 6_480_000);
+        assert!(std::fs::read_to_string(&path).unwrap() == content);
+    }
+
+    #[cfg(target_os = "linux")]
+    #[tokio::test]
+    async fn test_write_failure_is_reported() {
+        // Every write to /dev/full fails with "No space left on device".
+        let result = write_downloaded_file(Path::new("/dev/full"), "ATOM\n").await;
+
+        assert!(
+            matches!(result, Err(DownloadError::IoError(_))),
+            "{result:?}"
+        );
     }
 }
