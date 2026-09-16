@@ -1,13 +1,14 @@
 //! Error handling and Python exception mapping
 
 use pdbrust::PdbError;
-use pyo3::exceptions::{PyIOError, PyRuntimeError, PyValueError};
+use pyo3::exceptions::{PyRuntimeError, PyValueError};
 use pyo3::PyErr;
 
 /// Convert a PdbError to a Python exception
 pub fn convert_error(err: PdbError) -> PyErr {
     match err {
-        PdbError::IoError(e) => PyIOError::new_err(e.to_string()),
+        // FileNotFoundError, PermissionError, ... (all subclasses of OSError/IOError)
+        PdbError::IoError(e) => PyErr::from(e),
         PdbError::InvalidRecord(msg) => PyValueError::new_err(msg),
         PdbError::ParseError(msg) => PyValueError::new_err(format!("Parse error: {}", msg)),
         PdbError::AtomCountMismatch { expected, found } => PyValueError::new_err(format!(
@@ -37,7 +38,7 @@ pub fn convert_download_error(err: pdbrust::rcsb::DownloadError) -> PyErr {
         DownloadError::NotFound(id) => PyValueError::new_err(format!("PDB ID not found: {}", id)),
         DownloadError::RequestFailed(msg) => PyRuntimeError::new_err(msg),
         DownloadError::ParseError(e) => convert_error(e),
-        DownloadError::IoError(e) => PyIOError::new_err(e.to_string()),
+        DownloadError::IoError(e) => PyErr::from(e),
     }
 }
 

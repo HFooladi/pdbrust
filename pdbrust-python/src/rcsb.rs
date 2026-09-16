@@ -352,10 +352,14 @@ pub fn download_pdb_string(pdb_id: &str, format: &PyFileFormat) -> PyResult<Stri
 ///
 /// Args:
 ///     pdb_id: 4-character PDB ID
-///     path: Output file path
+///     path: Output file path (str or os.PathLike)
 ///     format: FileFormat.pdb() or FileFormat.cif()
 #[pyfunction]
-pub fn download_to_file(pdb_id: &str, path: &str, format: &PyFileFormat) -> PyResult<()> {
+pub fn download_to_file(
+    pdb_id: &str,
+    path: std::path::PathBuf,
+    format: &PyFileFormat,
+) -> PyResult<()> {
     pdbrust::rcsb::download_to_file(pdb_id, path, format.inner).map_err(convert_download_error)
 }
 

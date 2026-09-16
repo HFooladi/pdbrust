@@ -625,7 +625,7 @@ cargo run --release --example full_pdb_benchmark \
 
 ## Python Package
 
-Pre-built wheels available for Linux, macOS, and Windows (Python 3.9-3.13):
+Pre-built wheels available for Linux, macOS, and Windows (Python 3.10-3.14):
 
 ```bash
 pip install pdbrust

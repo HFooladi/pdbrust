@@ -3,20 +3,21 @@
 use crate::error::convert_error;
 use crate::structure::PyPdbStructure;
 use pyo3::prelude::*;
+use std::path::PathBuf;
 
 /// Parse a PDB format file
 ///
 /// Args:
-///     path: Path to the PDB file
+///     path: Path to the PDB file (str or os.PathLike)
 ///
 /// Returns:
 ///     PdbStructure object
 ///
 /// Raises:
-///     IOError: If file cannot be read
+///     OSError: If the file cannot be read (FileNotFoundError if it does not exist)
 ///     ValueError: If file format is invalid
 #[pyfunction]
-pub fn parse_pdb_file(path: &str) -> PyResult<PyPdbStructure> {
+pub fn parse_pdb_file(path: PathBuf) -> PyResult<PyPdbStructure> {
     pdbrust::parse_pdb_file(path)
         .map(PyPdbStructure::from)
         .map_err(convert_error)
@@ -25,16 +26,16 @@ pub fn parse_pdb_file(path: &str) -> PyResult<PyPdbStructure> {
 /// Parse an mmCIF format file
 ///
 /// Args:
-///     path: Path to the mmCIF file
+///     path: Path to the mmCIF file (str or os.PathLike)
 ///
 /// Returns:
 ///     PdbStructure object
 ///
 /// Raises:
-///     IOError: If file cannot be read
+///     OSError: If the file cannot be read (FileNotFoundError if it does not exist)
 ///     ValueError: If file format is invalid
 #[pyfunction]
-pub fn parse_mmcif_file(path: &str) -> PyResult<PyPdbStructure> {
+pub fn parse_mmcif_file(path: PathBuf) -> PyResult<PyPdbStructure> {
     pdbrust::parse_mmcif_file(path)
         .map(PyPdbStructure::from)
         .map_err(convert_error)
@@ -46,16 +47,16 @@ pub fn parse_mmcif_file(path: &str) -> PyResult<PyPdbStructure> {
 /// based on file content.
 ///
 /// Args:
-///     path: Path to the structure file
+///     path: Path to the structure file (str or os.PathLike)
 ///
 /// Returns:
 ///     PdbStructure object
 ///
 /// Raises:
-///     IOError: If file cannot be read
+///     OSError: If the file cannot be read (FileNotFoundError if it does not exist)
 ///     ValueError: If file format is invalid or unrecognized
 #[pyfunction]
-pub fn parse_structure_file(path: &str) -> PyResult<PyPdbStructure> {
+pub fn parse_structure_file(path: PathBuf) -> PyResult<PyPdbStructure> {
     pdbrust::parse_structure_file(path)
         .map(PyPdbStructure::from)
         .map_err(convert_error)
@@ -104,11 +105,11 @@ pub fn parse_mmcif_string(content: &str) -> PyResult<PyPdbStructure> {
 ///     PdbStructure object
 ///
 /// Raises:
-///     IOError: If file cannot be read
+///     OSError: If the file cannot be read (FileNotFoundError if it does not exist)
 ///     ValueError: If file format is invalid
 #[cfg(feature = "gzip")]
 #[pyfunction]
-pub fn parse_gzip_pdb_file(path: &str) -> PyResult<PyPdbStructure> {
+pub fn parse_gzip_pdb_file(path: PathBuf) -> PyResult<PyPdbStructure> {
     pdbrust::parse_gzip_pdb_file(path)
         .map(PyPdbStructure::from)
         .map_err(convert_error)
@@ -123,11 +124,11 @@ pub fn parse_gzip_pdb_file(path: &str) -> PyResult<PyPdbStructure> {
 ///     PdbStructure object
 ///
 /// Raises:
-///     IOError: If file cannot be read
+///     OSError: If the file cannot be read (FileNotFoundError if it does not exist)
 ///     ValueError: If file format is invalid
 #[cfg(feature = "gzip")]
 #[pyfunction]
-pub fn parse_gzip_mmcif_file(path: &str) -> PyResult<PyPdbStructure> {
+pub fn parse_gzip_mmcif_file(path: PathBuf) -> PyResult<PyPdbStructure> {
     pdbrust::parse_gzip_mmcif_file(path)
         .map(PyPdbStructure::from)
         .map_err(convert_error)
@@ -136,17 +137,17 @@ pub fn parse_gzip_mmcif_file(path: &str) -> PyResult<PyPdbStructure> {
 /// Parse a gzip-compressed structure file with automatic format detection
 ///
 /// Args:
-///     path: Path to the gzip-compressed file
+///     path: Path to the gzip-compressed file (str or os.PathLike)
 ///
 /// Returns:
 ///     PdbStructure object
 ///
 /// Raises:
-///     IOError: If file cannot be read
+///     OSError: If the file cannot be read (FileNotFoundError if it does not exist)
 ///     ValueError: If file format is invalid
 #[cfg(feature = "gzip")]
 #[pyfunction]
-pub fn parse_gzip_structure_file(path: &str) -> PyResult<PyPdbStructure> {
+pub fn parse_gzip_structure_file(path: PathBuf) -> PyResult<PyPdbStructure> {
     pdbrust::parse_gzip_structure_file(path)
         .map(PyPdbStructure::from)
         .map_err(convert_error)
@@ -156,12 +157,12 @@ pub fn parse_gzip_structure_file(path: &str) -> PyResult<PyPdbStructure> {
 ///
 /// Args:
 ///     structure: PdbStructure object to write
-///     path: Output file path
+///     path: Output file path (str or os.PathLike)
 ///
 /// Raises:
-///     IOError: If file cannot be written
+///     OSError: If the file cannot be written
 #[pyfunction]
-pub fn write_pdb_file(structure: &PyPdbStructure, path: &str) -> PyResult<()> {
+pub fn write_pdb_file(structure: &PyPdbStructure, path: PathBuf) -> PyResult<()> {
     pdbrust::write_pdb_file(&structure.inner, path).map_err(convert_error)
 }
 
@@ -169,17 +170,17 @@ pub fn write_pdb_file(structure: &PyPdbStructure, path: &str) -> PyResult<()> {
 ///
 /// Args:
 ///     structure: PdbStructure object to write
-///     path: Output file path
+///     path: Output file path (str or os.PathLike)
 ///
 /// Raises:
-///     IOError: If file cannot be written
+///     OSError: If the file cannot be written
 ///
 /// Example:
 ///     >>> import pdbrust
 ///     >>> structure = pdbrust.parse_pdb_file("protein.pdb")
 ///     >>> pdbrust.write_mmcif_file(structure, "protein.cif")
 #[pyfunction]
-pub fn write_mmcif_file(structure: &PyPdbStructure, path: &str) -> PyResult<()> {
+pub fn write_mmcif_file(structure: &PyPdbStructure, path: PathBuf) -> PyResult<()> {
     pdbrust::write_mmcif_file(&structure.inner, path).map_err(convert_error)
 }
 
@@ -208,10 +209,10 @@ pub fn write_mmcif_string(structure: &PyPdbStructure) -> PyResult<String> {
 ///
 /// Args:
 ///     structure: PdbStructure object to write
-///     path: Output file path (typically ending in .cif.gz)
+///     path: Output file path (typically ending in .cif.gz) (str or os.PathLike)
 ///
 /// Raises:
-///     IOError: If file cannot be written
+///     OSError: If the file cannot be written
 ///
 /// Example:
 ///     >>> import pdbrust
@@ -219,6 +220,6 @@ pub fn write_mmcif_string(structure: &PyPdbStructure) -> PyResult<String> {
 ///     >>> pdbrust.write_gzip_mmcif_file(structure, "protein.cif.gz")
 #[cfg(feature = "gzip")]
 #[pyfunction]
-pub fn write_gzip_mmcif_file(structure: &PyPdbStructure, path: &str) -> PyResult<()> {
+pub fn write_gzip_mmcif_file(structure: &PyPdbStructure, path: PathBuf) -> PyResult<()> {
     pdbrust::write_gzip_mmcif_file(&structure.inner, path).map_err(convert_error)
 }

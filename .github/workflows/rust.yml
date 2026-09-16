@@ -92,8 +92,13 @@ jobs:
         run: cargo hack check --each-feature --package pdbrust
 
   python:
-    name: Python bindings
+    name: Python bindings (${{ matrix.python-version }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Oldest and newest supported Python versions
+        python-version: ["3.10", "3.14"]
     env:
       # Build the bindings the same way the release wheels are built
       # (python-publish.yml does not use -D warnings).
@@ -103,7 +108,7 @@ jobs:
 
       - uses: actions/setup-python@v6
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python-version }}
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable

@@ -188,7 +188,7 @@ impl PyPdbStructure {
     ///
     /// Raises:
     ///     IOError: If file cannot be written
-    fn to_file(&self, path: &str) -> PyResult<()> {
+    fn to_file(&self, path: std::path::PathBuf) -> PyResult<()> {
         self.inner.to_file(path).map_err(convert_error)
     }
 
