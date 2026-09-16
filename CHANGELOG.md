@@ -39,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Resolution of cryo-EM mmCIF entries** is now read from `_em_3d_reconstruction.resolution`.
 - **SEQRES read from mmCIF**: records now follow the entity order of the file (previously random from run to run), use the correct chain ID when `_struct_asym` is written as single-value items, and no longer include spurious records made from misread text.
 - **Python source distribution**: the sdist build failed because of a file clash between the library and the Python bindings, so releases shipped wheels only, and `pip install pdbrust` could not build from source on platforms without a pre-built wheel. The sdist now builds, CI installs from it to check it works, and it will be published with releases.
+- **Async downloads to files** (`download_to_file_async`, `download_multiple_to_files_async`, feature `rcsb-async`) could return before the file was completely written, so reading the file right away could give a truncated structure, and an error writing the end of the file (e.g. a full disk) was lost and the call reported success. They now return once the file is fully written and report write errors.
 
 ### Added
 - **RCSB search and download in Linux Python wheels** ([#8](https://github.com/HFooladi/pdbrust/issues/8)): Linux wheels were built without the `rcsb` feature because of OpenSSL cross-compilation problems. They now include it, as the macOS and Windows wheels do.

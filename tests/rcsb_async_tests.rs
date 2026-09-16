@@ -6,9 +6,11 @@
 
 #![cfg(feature = "rcsb-async")]
 
+use pdbrust::parse_pdb_file;
 use pdbrust::rcsb::{
-    AsyncDownloadOptions, FileFormat, download_multiple_async, download_pdb_string_async,
-    download_structure_async, download_to_file_async,
+    AsyncDownloadOptions, DownloadError, FileFormat, download_multiple_async,
+    download_multiple_to_files_async, download_pdb_string_async, download_structure_async,
+    download_to_file_async,
 };
 use tempfile::tempdir;
 
@@ -169,10 +171,32 @@ async fn test_download_to_file_async() {
         .await
         .expect("Failed to download 1UBQ to file");
 
-    // Verify file exists and has content
-    assert!(path.exists());
-    let content = std::fs::read_to_string(&path).expect("Failed to read file");
-    assert!(content.contains("ATOM"));
+    // The file is complete as soon as the call returns: 1UBQ has 660 atoms
+    let structure = parse_pdb_file(&path).expect("Failed to parse downloaded file");
+    assert_eq!(structure.atoms.len(), 660);
+}
+
+#[tokio::test]
+#[ignore = "requires network access"]
+async fn test_download_multiple_to_files_async() {
+    let dir = tempdir().expect("Failed to create temp dir");
+    let pdb_ids = vec!["1ubq", "XXXX"];
+    let results =
+        download_multiple_to_files_async(&pdb_ids, dir.path(), FileFormat::Pdb, None).await;
+
+    assert_eq!(results.len(), 2);
+    assert!(results[0].1.is_ok(), "{:?}", results[0].1);
+    assert!(
+        matches!(results[1].1, Err(DownloadError::NotFound(_))),
+        "{:?}",
+        results[1].1
+    );
+
+    // Files are named by the upper-case ID and complete as soon as the call returns
+    let structure =
+        parse_pdb_file(dir.path().join("1UBQ.pdb")).expect("Failed to parse downloaded file");
+    assert_eq!(structure.atoms.len(), 660);
+    assert!(!dir.path().join("XXXX.pdb").exists());
 }
 
 #[tokio::test]
