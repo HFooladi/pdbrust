@@ -55,7 +55,10 @@ fn parse_header_info(parser: &MmcifParser, structure: &mut PdbStructure) -> Resu
                 } else {
                     title
                 };
-                structure.title = Some(clean_title.to_string());
+                // "?" (unknown) and "." (inapplicable) are not text.
+                if !clean_title.is_empty() && clean_title != "?" && clean_title != "." {
+                    structure.title = Some(clean_title.to_string());
+                }
             }
         }
     }
@@ -289,8 +292,10 @@ fn parse_sequences(parser: &MmcifParser, structure: &mut PdbStructure) -> Result
         None => return Ok(()), // No sequence information, not an error
     };
 
-    // Group sequences by entity_id and build SEQRES records
+    // Group sequences by entity_id and build SEQRES records, keeping the
+    // entities in the order they appear in the file.
     let mut sequences: HashMap<String, Vec<String>> = HashMap::new();
+    let mut entity_order: Vec<String> = Vec::new();
 
     if let (Some(entity_col), Some(mon_id_col), Some(num_col)) = (
         entity_poly_seq.get_column("entity_id"),
@@ -300,6 +305,9 @@ fn parse_sequences(parser: &MmcifParser, structure: &mut PdbStructure) -> Result
         for ((entity_id, mon_id), num) in
             entity_col.iter().zip(mon_id_col.iter()).zip(num_col.iter())
         {
+            if !sequences.contains_key(*entity_id) {
+                entity_order.push(entity_id.to_string());
+            }
             let seq_entry = sequences.entry(entity_id.to_string()).or_default();
 
             // Parse the sequence number to ensure proper ordering
@@ -321,7 +329,8 @@ fn parse_sequences(parser: &MmcifParser, structure: &mut PdbStructure) -> Result
     let chain_mapping = get_entity_to_chain_mapping(parser);
 
     let mut serial = 1;
-    for (entity_id, residues) in sequences {
+    for entity_id in entity_order {
+        let residues = sequences.remove(&entity_id).unwrap_or_default();
         let residues: Vec<String> = residues.into_iter().filter(|r| !r.is_empty()).collect();
 
         if residues.is_empty() {
@@ -470,6 +479,17 @@ fn parse_connectivity(parser: &MmcifParser, _structure: &mut PdbStructure) -> Re
     Ok(())
 }
 
+/// The first row's value of `category.field` if it is a number ("?" and "."
+/// mean unknown or inapplicable).
+fn numeric_item<'a>(parser: &'a MmcifParser, category: &str, field: &str) -> Option<&'a str> {
+    let value = parser
+        .get_category(category)?
+        .get_row(0)?
+        .get(field)
+        .copied()?;
+    value.parse::<f64>().is_ok().then_some(value)
+}
+
 /// Parse remarks and comments
 fn parse_remarks(parser: &MmcifParser, structure: &mut PdbStructure) -> Result<(), PdbError> {
     // Parse from various comment categories
@@ -487,17 +507,15 @@ fn parse_remarks(parser: &MmcifParser, structure: &mut PdbStructure) -> Result<(
         }
     }
 
-    // Parse resolution information
-    if let Some(refine) = parser.get_category("refine") {
-        if let Some(row) = refine.get_row(0) {
-            if let Some(resolution) = row.get("ls_d_res_high") {
-                let remark = Remark {
-                    number: 2,
-                    content: format!("RESOLUTION. {} ANGSTROMS.", resolution),
-                };
-                structure.remarks.push(remark);
-            }
-        }
+    // Parse resolution information: from refinement (X-ray, neutron) or,
+    // for cryo-EM entries, from the 3D reconstruction.
+    let resolution = numeric_item(parser, "refine", "ls_d_res_high")
+        .or_else(|| numeric_item(parser, "em_3d_reconstruction", "resolution"));
+    if let Some(resolution) = resolution {
+        structure.remarks.push(Remark {
+            number: 2,
+            content: format!("RESOLUTION. {} ANGSTROMS.", resolution),
+        });
     }
 
     Ok(())
