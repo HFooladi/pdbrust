@@ -664,7 +664,7 @@ If you use PDBRust in your research, please cite it using the metadata in our [C
   publisher = {Zenodo},
   doi = {10.5281/zenodo.18232203},
   url = {https://doi.org/10.5281/zenodo.18232203},
-  version = {0.7.0}
+  version = {0.7.1}
 }
 ```
 

@@ -4,7 +4,7 @@ resolver = "3"
 
 [package]
 name = "pdbrust"
-version = "0.7.0"
+version = "0.7.1"
 edition = "2024"
 rust-version = "1.85.0"
 authors = ["Hosein Fooladi <fooladi.hosein@gmail.com>"]
