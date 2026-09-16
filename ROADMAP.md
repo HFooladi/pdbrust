@@ -1,6 +1,6 @@
 # PDBRust Roadmap
 
-Development plan for PDBRust. Last updated: 2026-09-15.
+Development plan for PDBRust. Last updated: 2026-09-16.
 
 ## Current Focus: Hardening & Validation (v0.7.1 → v0.8.0)
 
@@ -12,30 +12,35 @@ make results silently wrong on real-world files. Fixing them comes first.
 
 | Area | Issue | Target |
 |------|-------|--------|
-| PDB parser | SSBOND symmetry operators misread (`1555` → `15`); panics on some short HEADER/TITLE/REMARK lines; non-numeric REMARKs (e.g. GROMACS output) abort parsing | v0.7.1 |
-| Writers | mmCIF writer does not quote values (a blank chain ID corrupts columns); PDB writer column-alignment issues | v0.7.1 |
-| mmCIF parser | Single-value items after the first `loop_` are dropped (title, resolution, cell missing); no multi-line `;` text fields or single-quoted values; `pdbx_PDB_model_num` ignored | v0.7.2 |
+| PDB parser | SSBOND symmetry operators misread (`1555` → `15`); panics on some short HEADER/TITLE/REMARK lines; non-numeric REMARKs (e.g. GROMACS output) abort parsing | ✅ Fixed in v0.7.1 |
+| Writers | mmCIF writer does not quote values (a blank chain ID corrupts columns); PDB writer column-alignment issues | ✅ Fixed in v0.7.1 |
+| mmCIF parser | Single-value items after the first `loop_` are dropped (title, resolution, cell missing); no multi-line `;` text fields | ✅ Fixed in v0.7.1 |
+| mmCIF parser | Single-quoted values in loop rows are split at spaces; `pdbx_PDB_model_num` ignored | v0.7.2 |
 | mmCIF IDs | Chain/residue IDs come from `label_*` fields, so they differ from the same entry in PDB format | v0.8.0 (author IDs by default, label IDs kept) |
 | Multi-model files | Atoms are stored twice, and analyses run on all NMR models combined | v0.7.2 / v0.8.0 |
 | Selections | `AtomSelection::CaOnly` also matches calcium ions; `Backbone` matches water oxygens | v0.7.2 |
 | DSSP | Diverges from mkdssp: virtual-H placement, β-bridge patterns, helix-start rule, PPII dihedral sign | v0.8.0 (sign fix in v0.7.2) |
 | DockQ | LRMSD matches atoms by index; interfaces that fail are skipped instead of scored | v0.8.0 |
 | lDDT | Index-based atom matching; same-residue pairs included; no symmetric-atom handling | v0.8.0 |
-| Python wheels | Linux wheels are built without the RCSB feature ([#8](https://github.com/HFooladi/pdbrust/issues/8)) | Maintenance (switch to rustls) |
+| Python wheels | Linux wheels are built without the RCSB feature ([#8](https://github.com/HFooladi/pdbrust/issues/8)) | ✅ Fixed in v0.7.1 (switch to rustls) |
 
 ### Milestones
 
-**Maintenance (no release):** modernize CI (current GitHub Actions, feature-combination checks, a Python test job),
-commit `Cargo.lock`, remove unused dependencies, switch `reqwest` to rustls (fixes #8), and merge PR #16.
+**Maintenance (no release) ✅:** modernized CI (current GitHub Actions, feature-combination checks, a Python test
+job), committed `Cargo.lock`, switched `reqwest` to rustls (fixes #8), and merged PR #16. Removing unused
+dependencies moves to v0.7.2.
 
-**v0.7.1 — Safety patch (non-breaking)**
-- Panic-free PDB parsing (safe fixed-column access), with tolerant handling of blank or odd fields
-- Writer fixes: mmCIF value quoting and PDB column layout
-- Multi-member gzip, `.gz` auto-detection, `from_file` format auto-detection
-- No-panic property tests and PDB/mmCIF round-trip tests; first Python test suite; Python 3.14 wheels
+**v0.7.1 — Safety patch (non-breaking) ✅**
+- Panic-free PDB parsing (safe fixed-column access), with tolerant handling of blank or odd fields; hybrid-36
+  numbers read and written
+- Writer fixes: mmCIF value quoting and PDB column layout; files are checked by reading them back with gemmi
+- mmCIF title, resolution and other single-value items read correctly
+- No-panic property tests and PDB/mmCIF round-trip tests; first Python test suite; Python 3.14 wheels (3.9 dropped)
 - Ships the unreleased molecular inventory
 
 **v0.7.2 — CIF tokenizer + validation harness (non-breaking)**
+- Multi-member gzip, `.gz` auto-detection, `from_file` format auto-detection (moved from v0.7.1)
+- Validate PDB IDs used as download file names; remove unused dependencies
 - A spec-compliant CIF tokenizer (text fields, quoting rules, multiple data blocks) behind the existing API
 - Multi-model data kept per model, plus forward-compatible `atoms()` / `models()` accessors
 - A `validation/` harness with a parser differential test against gemmi
@@ -229,7 +234,7 @@ After v0.8.0, changes are additive only until 1.0.
 - Full Python bindings: `LddtOptions`, `LddtResult`, `PerResidueLddt` classes
 - Under `geometry` feature flag (requires nalgebra)
 
-### Molecular Inventory ✅ (unreleased — ships in v0.7.1)
+### Molecular Inventory ✅ (v0.7.1)
 - One-call breakdown of structure contents — chains, ligands, water, ions
 - `structure.molecular_inventory()` → `MolecularInventory`
 - Per-chain summary: `ChainInventory` with type (Protein, NucleicAcid, Mixed, Water, Other), residue/atom counts
