@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::io::{self, BufRead, BufReader};
 
@@ -6,6 +6,8 @@ use std::io::{self, BufRead, BufReader};
 pub struct MmcifParser {
     /// Stores data categories as key-value pairs
     categories: HashMap<String, Category>,
+    /// Categories built from single-value items rather than a loop
+    single_value_categories: HashSet<String>,
 }
 
 #[derive(Debug)]
@@ -26,6 +28,7 @@ impl MmcifParser {
     pub fn new() -> Self {
         Self {
             categories: HashMap::new(),
+            single_value_categories: HashSet::new(),
         }
     }
 
@@ -41,13 +44,46 @@ impl MmcifParser {
         let mut current_category: Option<String> = None;
         let mut current_headers: Vec<String> = Vec::new();
         let mut in_loop = false;
+        let mut loop_has_rows = false;
+        // A tag whose value follows on a later line.
+        let mut pending_item: Option<(String, String)> = None;
+        // A semicolon-delimited text field being collected.
+        let mut text_field: Option<(String, String, String)> = None;
 
         for line in reader.lines() {
             let line = line?;
             let trimmed = line.trim();
 
+            // Inside a text field, every line is value text until a line
+            // starting with ';'.
+            if text_field.is_some() {
+                if line.starts_with(';') {
+                    let (category, field, value) = text_field.take().unwrap();
+                    self.set_item(&category, &field, value);
+                } else if let Some((_, _, value)) = text_field.as_mut() {
+                    if !value.is_empty() {
+                        value.push(' ');
+                    }
+                    value.push_str(trimmed);
+                }
+                continue;
+            }
+
             if trimmed.is_empty() || trimmed.starts_with('#') {
                 continue;
+            }
+
+            // The value of a tag seen on an earlier line.
+            if let Some((category, field)) = pending_item.take() {
+                if line.starts_with(';') {
+                    text_field = Some((category, field, trimmed[1..].trim().to_string()));
+                    continue;
+                }
+                if !trimmed.starts_with('_') && !is_reserved_word(trimmed) {
+                    self.set_item(&category, &field, first_value(trimmed).to_string());
+                    continue;
+                }
+                // Otherwise the tag had no value; fall through to this line.
             }
 
             if trimmed.starts_with("data_") {
@@ -57,6 +93,7 @@ impl MmcifParser {
 
             if trimmed.starts_with("loop_") {
                 in_loop = true;
+                loop_has_rows = false;
                 current_category = None;
                 current_headers.clear();
                 continue;
@@ -69,40 +106,32 @@ impl MmcifParser {
                 }
 
                 let category_name = parts[0][1..].to_string(); // Remove leading underscore
-                let field_name = parts[1].split_whitespace().next().unwrap_or("").to_string();
+                let mut rest = parts[1].splitn(2, char::is_whitespace);
+                let field_name = rest.next().unwrap_or("").to_string();
+                let value = rest.next().unwrap_or("").trim();
 
-                if in_loop {
+                if in_loop && !loop_has_rows {
+                    // Still reading the column names of this loop.
                     if current_category.is_none() {
-                        current_category = Some(category_name.clone());
+                        current_category = Some(category_name);
                     }
                     current_headers.push(field_name);
                 } else {
-                    // Handle non-loop single value items
-                    let remaining = parts[1].trim();
-                    let value = if remaining.starts_with('"') && remaining.ends_with('"') {
-                        remaining[1..remaining.len() - 1].to_string()
+                    // A tag after a loop's data rows ends the loop.
+                    in_loop = false;
+                    if value.is_empty() {
+                        pending_item = Some((category_name, field_name));
                     } else {
-                        remaining
-                            .split_whitespace()
-                            .skip(1)
-                            .collect::<Vec<&str>>()
-                            .join(" ")
-                    };
-                    let category =
-                        self.categories
-                            .entry(category_name.clone())
-                            .or_insert(Category {
-                                headers: vec![field_name.clone()],
-                                rows: Vec::new(),
-                            });
-                    category.rows.push(vec![value]);
+                        self.set_item(&category_name, &field_name, first_value(value).to_string());
+                    }
                 }
                 continue;
             }
 
-            if in_loop && !trimmed.starts_with('_') && !current_headers.is_empty() {
+            if in_loop && !current_headers.is_empty() {
                 // Parse data rows
                 if let Some(category_name) = &current_category {
+                    loop_has_rows = true;
                     let values = parse_values(trimmed);
                     let category =
                         self.categories
@@ -116,13 +145,66 @@ impl MmcifParser {
             }
         }
 
+        // A text field left open at the end of the file.
+        if let Some((category, field, value)) = text_field.take() {
+            self.set_item(&category, &field, value);
+        }
+
         Ok(())
+    }
+
+    /// Stores one single-value item, collecting a category's items into one row.
+    fn set_item(&mut self, category_name: &str, field: &str, value: String) {
+        if !self.single_value_categories.contains(category_name)
+            && self.categories.contains_key(category_name)
+        {
+            return; // A loop of this category was read; leave it untouched.
+        }
+        self.single_value_categories
+            .insert(category_name.to_string());
+        let category = self
+            .categories
+            .entry(category_name.to_string())
+            .or_insert_with(|| Category {
+                headers: Vec::new(),
+                rows: vec![Vec::new()],
+            });
+        match category.headers.iter().position(|name| name == field) {
+            Some(index) => category.rows[0][index] = value,
+            None => {
+                category.headers.push(field.to_string());
+                category.rows[0].push(value);
+            }
+        }
     }
 
     /// Get a reference to a category by name
     pub fn get_category(&self, name: &str) -> Option<&Category> {
         self.categories.get(name)
     }
+}
+
+/// Returns the first value of `text`, without its quotes.
+fn first_value(text: &str) -> &str {
+    let mut chars = text.chars();
+    match chars.next() {
+        Some(quote @ ('\'' | '"')) => {
+            let rest = &text[quote.len_utf8()..];
+            match rest.find(quote) {
+                Some(end) => &rest[..end],
+                None => rest,
+            }
+        }
+        _ => text.split_whitespace().next().unwrap_or(""),
+    }
+}
+
+/// True for the CIF reserved words that cannot be a value.
+fn is_reserved_word(text: &str) -> bool {
+    let lowercase = text.to_ascii_lowercase();
+    ["data_", "loop_", "save_", "global_", "stop_"]
+        .iter()
+        .any(|word| lowercase.starts_with(word))
 }
 
 impl Category {

@@ -34,6 +34,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **PDB writer, large structures**: atom serial numbers above 99,999 and residue numbers above 9,999 are written in hybrid-36 (ATOM/HETATM, CONECT, SSBOND), as gemmi and cctbx do. Previously they overflowed their columns and corrupted the rest of the line.
 - **PDB writer, values the format cannot hold**: chain IDs longer than 1 character, residue names longer than 3, atom names longer than 4, element symbols longer than 2, and numbers beyond the hybrid-36 range now return an error (`ValueError` in Python) before anything is written, instead of producing a corrupted file. Write such structures as mmCIF.
 - **PDB writer, TITLE and SEQRES**: long titles are wrapped into continuation records, and SEQRES residues are written 13 per line with right-justified names, so no line exceeds 80 columns. Previously, structures read from mmCIF produced a single very long SEQRES line.
+- **mmCIF reader lost single-value items**: title, resolution, unit cell and every other single-value item after the first `loop_` were dropped for real wwPDB files. In a random sample of 1,000 entries, the title was missing for 999 and the resolution for 931. They are now read, including values on the line after their tag and `;`-delimited text fields; `?` and `.` are treated as unknown/inapplicable.
+  - A text field right after the atom table could be misread as atom data and fail the whole parse (1 of the 1,000 sampled entries).
+- **Resolution of cryo-EM mmCIF entries** is now read from `_em_3d_reconstruction.resolution`.
+- **SEQRES read from mmCIF**: records now follow the entity order of the file (previously random from run to run), use the correct chain ID when `_struct_asym` is written as single-value items, and no longer include spurious records made from misread text.
 
 ### Added
 - **Molecular inventory** — one-call breakdown of structure contents
