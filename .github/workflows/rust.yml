@@ -98,7 +98,7 @@ jobs:
       fail-fast: false
       matrix:
         # Oldest and newest supported Python versions
-        python-version: ["3.9", "3.14"]
+        python-version: ["3.10", "3.14"]
     env:
       # Build the bindings the same way the release wheels are built
       # (python-publish.yml does not use -D warnings).

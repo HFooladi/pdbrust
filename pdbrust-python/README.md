@@ -13,7 +13,7 @@ pip install pdbrust
 To build and install from source (useful for development or testing latest changes):
 
 ### Prerequisites
-- Python 3.9+
+- Python 3.10+
 - Rust toolchain (1.85.0+)
 - [uv](https://github.com/astral-sh/uv) (fast Python package manager)
 - [maturin](https://github.com/PyO3/maturin) (Rust-Python build tool)
@@ -350,7 +350,7 @@ PDBRust provides **40-260x speedups** over pure Python implementations:
 
 ## Requirements
 
-- Python 3.9-3.14
+- Python 3.10-3.14
 - No runtime dependencies (Rust code is compiled into the package)
 
 ## License

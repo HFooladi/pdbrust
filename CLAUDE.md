@@ -787,7 +787,7 @@ print(f"Found {len(flexible)} flexible residues")
 
 The `.github/workflows/python-publish.yml` workflow:
 - Builds wheels for Linux (x86_64, aarch64), macOS (x86_64, aarch64), Windows (x64)
-- Supports Python 3.9, 3.10, 3.11, 3.12
+- Supports Python 3.10, 3.11, 3.12, 3.13, 3.14
 - Automatically publishes to PyPI on version tags (v*)
 - Uses PyPI trusted publishing (no token needed in CI)
 

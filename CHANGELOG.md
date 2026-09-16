@@ -40,7 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **SEQRES read from mmCIF**: records now follow the entity order of the file (previously random from run to run), use the correct chain ID when `_struct_asym` is written as single-value items, and no longer include spurious records made from misread text.
 
 ### Added
-- **Python 3.14 wheels** for Linux, macOS and Windows. The bindings are tested in CI on Python 3.9 and 3.14.
+- **Python 3.14 wheels** for Linux, macOS and Windows. The bindings are tested in CI on Python 3.10 and 3.14.
 - **Python: file functions accept path objects**: `parse_*_file`, `write_*_file`, `PdbStructure.to_file` and `download_to_file` accept `pathlib.Path` (any `os.PathLike`) as well as `str`.
 - **Molecular inventory** — one-call breakdown of structure contents
   - `structure.molecular_inventory()` → `MolecularInventory` with per-chain and per-ligand details
@@ -61,6 +61,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added "From Source" installation instructions for both Rust and Python
   - Reordered examples into logical flow (Inventory → Filter → Selection → Descriptors → B-factor → DSSP → Geometry → DockQ → RCSB → Gzip)
   - Replaced bloated Common Workflows section with compact Example Files table
+
+### Removed
+- **Python 3.9 support**: Python 3.9 reached end of life on 31 October 2025. The package now requires Python 3.10 or newer, and `pip` on Python 3.9 keeps installing pdbrust 0.7.0.
 
 ### Internal
 - Centralized `classify` module for consistent molecular classification (`is_standard_amino_acid`, `is_standard_nucleotide`, `is_water`, `COMMON_IONS`)
