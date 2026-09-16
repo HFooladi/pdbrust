@@ -40,6 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **SEQRES read from mmCIF**: records now follow the entity order of the file (previously random from run to run), use the correct chain ID when `_struct_asym` is written as single-value items, and no longer include spurious records made from misread text.
 
 ### Added
+- **Python 3.14 wheels** for Linux, macOS and Windows. The bindings are tested in CI on Python 3.9 and 3.14.
+- **Python: file functions accept path objects**: `parse_*_file`, `write_*_file`, `PdbStructure.to_file` and `download_to_file` accept `pathlib.Path` (any `os.PathLike`) as well as `str`.
 - **Molecular inventory** — one-call breakdown of structure contents
   - `structure.molecular_inventory()` → `MolecularInventory` with per-chain and per-ligand details
   - `ChainInventory` with chain type (Protein, NucleicAcid, Mixed, Water, Other), residue counts, atom counts
@@ -50,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Full Python bindings: `MolecularInventory`, `ChainInventory`, `ChainType`, `LigandInfo`
 
 ### Changed
+- **Python: file errors raise specific exceptions**: a missing file raises `FileNotFoundError` (and other I/O failures their matching `OSError` subclass, e.g. `PermissionError`) instead of a generic `OSError`. These are subclasses of `OSError`/`IOError`, so existing `except IOError:` or `except OSError:` handlers keep working.
 - `write_pdb_file` now writes through a buffer, which is faster for large structures, and reports write errors instead of losing them when the file is closed.
 - **README polished for consistency**
   - All example sections now use uniform `#### Rust` / `#### Python` subheaders
