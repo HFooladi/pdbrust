@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Python source distribution**: the sdist build failed because of a file clash between the library and the Python bindings, so releases shipped wheels only, and `pip install pdbrust` could not build from source on platforms without a pre-built wheel. The sdist now builds, CI installs from it to check it works, and it will be published with releases.
 
 ### Added
+- **RCSB search and download in Linux Python wheels** ([#8](https://github.com/HFooladi/pdbrust/issues/8)): Linux wheels were built without the `rcsb` feature because of OpenSSL cross-compilation problems. They now include it, as the macOS and Windows wheels do.
 - **Python 3.14 wheels** for Linux, macOS and Windows. The bindings are tested in CI on Python 3.10 and 3.14.
 - **Python: file functions accept path objects**: `parse_*_file`, `write_*_file`, `PdbStructure.to_file` and `download_to_file` accept `pathlib.Path` (any `os.PathLike`) as well as `str`.
 - **Molecular inventory** — one-call breakdown of structure contents
@@ -53,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Full Python bindings: `MolecularInventory`, `ChainInventory`, `ChainType`, `LigandInfo`
 
 ### Changed
+- **HTTPS for RCSB access uses rustls instead of native-tls/OpenSSL**: building or running pdbrust with the `rcsb` feature no longer needs OpenSSL. Certificates are checked against the operating system's certificate store plus Mozilla's bundled root certificates, so custom or corporate CAs installed in the system store keep working.
 - **Python: file errors raise specific exceptions**: a missing file raises `FileNotFoundError` (and other I/O failures their matching `OSError` subclass, e.g. `PermissionError`) instead of a generic `OSError`. These are subclasses of `OSError`/`IOError`, so existing `except IOError:` or `except OSError:` handlers keep working.
 - `write_pdb_file` now writes through a buffer, which is faster for large structures, and reports write errors instead of losing them when the file is closed.
 - **README polished for consistency**

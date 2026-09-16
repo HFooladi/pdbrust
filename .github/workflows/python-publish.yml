@@ -31,8 +31,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          # Use 'core' features for Linux (no RCSB to avoid OpenSSL issues)
-          args: --release --out dist -i 3.10 3.11 3.12 3.13 3.14 --manifest-path pdbrust-python/Cargo.toml --no-default-features --features core
+          args: --release --out dist -i 3.10 3.11 3.12 3.13 3.14 --manifest-path pdbrust-python/Cargo.toml --features full
           sccache: 'true'
           manylinux: auto
 

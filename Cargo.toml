@@ -31,7 +31,17 @@ thiserror = "1.0"
 rayon = { version = "1.8", optional = true }
 nalgebra = { version = "0.32", optional = true }
 itertools = "0.12"
-reqwest = { version = "0.12", features = ["json", "blocking"], optional = true }
+# TLS via rustls (no OpenSSL): trusts the operating system's certificate store
+# plus Mozilla's bundled roots. The other features are reqwest's defaults.
+reqwest = { version = "0.12", default-features = false, features = [
+    "json",
+    "blocking",
+    "charset",
+    "http2",
+    "system-proxy",
+    "rustls-tls-native-roots",
+    "rustls-tls-webpki-roots",
+], optional = true }
 serde = { version = "1.0", features = ["derive"], optional = true }
 serde_json = { version = "1.0", optional = true }
 flate2 = { version = "1.0", optional = true }
