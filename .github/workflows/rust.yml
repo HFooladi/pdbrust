@@ -48,10 +48,6 @@ jobs:
       - name: Run tests with all features
         run: cargo test --all-features --verbose --package pdbrust
 
-      - name: "TEMPORARY: RCSB network tests over HTTPS (reverted before merge)"
-        if: matrix.rust == 'stable'
-        run: cargo test --features rcsb,rcsb-async --package pdbrust --test rcsb_tests --test rcsb_async_tests -- --ignored
-
   lint:
     name: Lint
     runs-on: ubuntu-latest
@@ -146,8 +142,6 @@ jobs:
 
       # Includes checks that files written by pdbrust are read correctly by gemmi.
       - name: Run the Python tests
-        env:
-          PDBRUST_NETWORK_TESTS: "1"  # TEMPORARY: reverted before merge
         run: |
           python -m pip install pytest gemmi==0.7.5
           python -m pytest pdbrust-python/tests -q
