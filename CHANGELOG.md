@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - A text field right after the atom table could be misread as atom data and fail the whole parse (1 of the 1,000 sampled entries).
 - **Resolution of cryo-EM mmCIF entries** is now read from `_em_3d_reconstruction.resolution`.
 - **SEQRES read from mmCIF**: records now follow the entity order of the file (previously random from run to run), use the correct chain ID when `_struct_asym` is written as single-value items, and no longer include spurious records made from misread text.
+- **Python source distribution**: the sdist build failed because of a file clash between the library and the Python bindings, so releases shipped wheels only, and `pip install pdbrust` could not build from source on platforms without a pre-built wheel. The sdist now builds, CI installs from it to check it works, and it will be published with releases.
 
 ### Added
 - **Python 3.14 wheels** for Linux, macOS and Windows. The bindings are tested in CI on Python 3.10 and 3.14.
