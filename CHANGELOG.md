@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- **Update rustls 0.23.45 → 0.23.46, rustls-webpki 0.103.15 → 0.103.16 and webpki-roots 1.0.9 → 1.0.10** (Cargo.lock only)
+  - Fixes RUSTSEC-2026-0381 and RUSTSEC-2026-0382 (certificate paths through distrusted emSign intermediates, whose private keys are public) and RUSTSEC-2026-0346 to 0349 (rustls) for RCSB downloads (`rcsb` feature) in the Python wheels and any build from this lockfile. Rust users of the crate resolve their own versions and should run `cargo update -p rustls -p rustls-webpki -p webpki-roots`.
+
 ## [0.7.1] - 2026-09-16
 
 A hardening release: it fixes bugs that could crash the parser or silently give wrong results when reading and writing PDB and mmCIF files. The Rust API has no breaking changes. Three changes can affect existing code:
