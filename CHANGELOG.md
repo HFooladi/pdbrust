@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **mmCIF: disulfide bonds are read from `_struct_conn`.** RCSB mmCIF files list disulfides as `_struct_conn` rows with `conn_type_id` `disulf`; the reader only looked at `_struct_disulfid`, so every RCSB mmCIF file reported no disulfide bonds (`has_ssbonds` was false). This also means disulfides written by `write_mmcif` now survive a read back. Bond lengths come from `pdbx_dist_value` (previously the reader parsed the symmetry column and always fell back to 2.04 Å), and insertion codes and symmetry operators are kept. A bond listed in both categories is counted once.
+
 ## [0.7.1] - 2026-09-16
 
 A hardening release: it fixes bugs that could crash the parser or silently give wrong results when reading and writing PDB and mmCIF files. The Rust API has no breaking changes. Three changes can affect existing code:
