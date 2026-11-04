@@ -144,6 +144,156 @@ disulf2 CYS B 15 CYS B 28
     assert_eq!(bond2.residue2_seq, 28);
 }
 
+/// The disulfide pairs of crambin (1CRN) with the distances in its RCSB mmCIF.
+const CRAMBIN_DISULFIDES: [(i32, i32, f64); 3] = [(3, 40, 2.004), (4, 32, 2.035), (16, 26, 2.051)];
+
+fn assert_crambin_disulfides(structure: &PdbStructure) {
+    let pairs: Vec<_> = structure
+        .ssbonds
+        .iter()
+        .map(|b| (b.residue1_seq, b.residue2_seq, b.length))
+        .collect();
+    assert_eq!(pairs.len(), 3, "expected 3 disulfides, got {pairs:?}");
+    for ((seq1, seq2, length), (exp1, exp2, exp_len)) in pairs.iter().zip(CRAMBIN_DISULFIDES) {
+        assert_eq!((*seq1, *seq2), (exp1, exp2));
+        assert!(
+            (length - exp_len).abs() < 0.01,
+            "length {length} != {exp_len}"
+        );
+    }
+    for (i, bond) in structure.ssbonds.iter().enumerate() {
+        assert_eq!(bond.serial, i as i32 + 1);
+        assert_eq!(
+            (bond.chain1_id.as_str(), bond.chain2_id.as_str()),
+            ("A", "A")
+        );
+        assert_eq!(
+            (bond.residue1_name.as_str(), bond.residue2_name.as_str()),
+            ("CYS", "CYS")
+        );
+        assert_eq!((bond.sym1, bond.sym2), (1555, 1555));
+    }
+}
+
+/// RCSB mmCIF files record disulfides in `_struct_conn` (conn_type_id `disulf`),
+/// not in `_struct_disulfid`.
+#[test]
+fn test_mmcif_disulfides_from_struct_conn_rcsb_file() {
+    let structure = parse_mmcif_file("examples/pdb_files/1CRN.cif").unwrap();
+    assert_crambin_disulfides(&structure);
+}
+
+#[test]
+fn test_mmcif_struct_conn_keeps_only_disulfides() {
+    let mmcif_content = r#"
+data_test
+loop_
+_struct_conn.id
+_struct_conn.conn_type_id
+_struct_conn.ptnr1_label_asym_id
+_struct_conn.ptnr1_label_comp_id
+_struct_conn.ptnr1_label_seq_id
+_struct_conn.pdbx_ptnr1_PDB_ins_code
+_struct_conn.ptnr1_symmetry
+_struct_conn.ptnr2_label_asym_id
+_struct_conn.ptnr2_label_comp_id
+_struct_conn.ptnr2_label_seq_id
+_struct_conn.pdbx_ptnr2_PDB_ins_code
+_struct_conn.ptnr2_symmetry
+_struct_conn.ptnr1_auth_asym_id
+_struct_conn.ptnr1_auth_comp_id
+_struct_conn.ptnr1_auth_seq_id
+_struct_conn.ptnr2_auth_asym_id
+_struct_conn.ptnr2_auth_comp_id
+_struct_conn.ptnr2_auth_seq_id
+_struct_conn.pdbx_dist_value
+covale1 covale A NAG 1 ? 1_555 B ASN 5 ? 1_555 C NAG 501 B ASN 45 1.44
+disulf1 disulf B CYS 2 ? 1_555 B CYS 9 A 1_555 B CYS 22 B CYS 30 2.03
+metalc1 metalc B CYS 3 ? 1_555 D ZN 1 ? 1_555 B CYS 23 B ZN 601 2.30
+disulf2 DISULF B CYS 4 ? 1_555 E CYS 4 ? 2_655 B CYS 24 E CYS 24 2.07
+"#;
+    let structure = parse_mmcif_string(mmcif_content).unwrap();
+    assert_eq!(structure.ssbonds.len(), 2);
+
+    // Label numbering wins, matching how `_atom_site` rows are converted.
+    let bond1 = &structure.ssbonds[0];
+    assert_eq!(bond1.serial, 1);
+    assert_eq!((bond1.chain1_id.as_str(), bond1.residue1_seq), ("B", 2));
+    assert_eq!((bond1.chain2_id.as_str(), bond1.residue2_seq), ("B", 9));
+    assert_eq!((bond1.icode1, bond1.icode2), (None, Some('A')));
+    assert!((bond1.length - 2.03).abs() < 1e-9);
+
+    let bond2 = &structure.ssbonds[1];
+    assert_eq!(bond2.serial, 2);
+    assert_eq!((bond2.chain2_id.as_str(), bond2.residue2_seq), ("E", 4));
+    assert_eq!((bond2.sym1, bond2.sym2), (1555, 2655));
+    assert!((bond2.length - 2.07).abs() < 1e-9);
+}
+
+#[test]
+fn test_mmcif_disulfides_survive_write_read_round_trip() {
+    let structure = parse_mmcif_file("examples/pdb_files/1CRN.cif").unwrap();
+    let written = write_mmcif_string(&structure).unwrap();
+    let reread = parse_mmcif_string(&written).unwrap();
+    assert_crambin_disulfides(&reread);
+}
+
+#[test]
+fn test_mmcif_disulfides_listed_in_both_categories_are_not_duplicated() {
+    let mmcif_content = r#"
+data_test
+loop_
+_struct_disulfid.id
+_struct_disulfid.ptnr1_auth_comp_id
+_struct_disulfid.ptnr1_auth_asym_id
+_struct_disulfid.ptnr1_auth_seq_id
+_struct_disulfid.ptnr2_auth_comp_id
+_struct_disulfid.ptnr2_auth_asym_id
+_struct_disulfid.ptnr2_auth_seq_id
+disulf1 CYS A 6 CYS A 11
+loop_
+_struct_conn.id
+_struct_conn.conn_type_id
+_struct_conn.ptnr1_auth_asym_id
+_struct_conn.ptnr1_auth_comp_id
+_struct_conn.ptnr1_auth_seq_id
+_struct_conn.ptnr2_auth_asym_id
+_struct_conn.ptnr2_auth_comp_id
+_struct_conn.ptnr2_auth_seq_id
+_struct_conn.pdbx_dist_value
+disulf1 disulf A CYS 11 A CYS 6 2.04
+disulf2 disulf A CYS 20 A CYS 30 2.05
+"#;
+    let structure = parse_mmcif_string(mmcif_content).unwrap();
+    let pairs: Vec<_> = structure
+        .ssbonds
+        .iter()
+        .map(|b| (b.serial, b.residue1_seq, b.residue2_seq))
+        .collect();
+    assert_eq!(pairs, vec![(1, 6, 11), (2, 20, 30)]);
+}
+
+#[test]
+fn test_mmcif_struct_disulfid_reads_distance_not_symmetry() {
+    let mmcif_content = r#"
+data_test
+loop_
+_struct_disulfid.id
+_struct_disulfid.ptnr1_auth_comp_id
+_struct_disulfid.ptnr1_auth_asym_id
+_struct_disulfid.ptnr1_auth_seq_id
+_struct_disulfid.ptnr1_symmetry
+_struct_disulfid.ptnr2_auth_comp_id
+_struct_disulfid.ptnr2_auth_asym_id
+_struct_disulfid.ptnr2_auth_seq_id
+_struct_disulfid.pdbx_dist_value
+disulf1 CYS A 6 1_555 CYS A 11 2.10
+"#;
+    let structure = parse_mmcif_string(mmcif_content).unwrap();
+    assert_eq!(structure.ssbonds.len(), 1);
+    assert!((structure.ssbonds[0].length - 2.10).abs() < 1e-9);
+}
+
 #[test]
 fn test_mmcif_with_alternate_locations() {
     let mmcif_content = r#"
@@ -893,4 +1043,68 @@ fn test_write_mmcif_coordinate_precision() {
     assert!((atom.x - 123.457).abs() < 0.001);
     assert!((atom.y - (-987.654)).abs() < 0.001);
     assert!((atom.z - 0.001).abs() < 0.001);
+}
+
+/// When label and author numbering differ, disulfide partners must name the
+/// residues as they appear in `structure.atoms`.
+#[test]
+fn test_mmcif_disulfide_partners_match_parsed_atoms() {
+    let mmcif_content = r#"
+data_test
+loop_
+_atom_site.group_PDB
+_atom_site.id
+_atom_site.type_symbol
+_atom_site.label_atom_id
+_atom_site.label_alt_id
+_atom_site.label_comp_id
+_atom_site.label_asym_id
+_atom_site.label_entity_id
+_atom_site.label_seq_id
+_atom_site.pdbx_PDB_ins_code
+_atom_site.Cartn_x
+_atom_site.Cartn_y
+_atom_site.Cartn_z
+_atom_site.occupancy
+_atom_site.B_iso_or_equiv
+_atom_site.auth_seq_id
+_atom_site.auth_comp_id
+_atom_site.auth_asym_id
+_atom_site.auth_atom_id
+_atom_site.pdbx_PDB_model_num
+ATOM 1 S SG . CYS A 1 1 ? 0.000 0.000 0.000 1.00 10.00 22 CYS H SG 1
+ATOM 2 S SG . CYS A 1 7 ? 2.030 0.000 0.000 1.00 10.00 95 CYS H SG 1
+loop_
+_struct_conn.id
+_struct_conn.conn_type_id
+_struct_conn.ptnr1_label_asym_id
+_struct_conn.ptnr1_label_comp_id
+_struct_conn.ptnr1_label_seq_id
+_struct_conn.ptnr2_label_asym_id
+_struct_conn.ptnr2_label_comp_id
+_struct_conn.ptnr2_label_seq_id
+_struct_conn.ptnr1_auth_asym_id
+_struct_conn.ptnr1_auth_comp_id
+_struct_conn.ptnr1_auth_seq_id
+_struct_conn.ptnr2_auth_asym_id
+_struct_conn.ptnr2_auth_comp_id
+_struct_conn.ptnr2_auth_seq_id
+_struct_conn.pdbx_dist_value
+disulf1 disulf A CYS 1 A CYS 7 H CYS 22 H CYS 95 2.03
+"#;
+    let structure = parse_mmcif_string(mmcif_content).unwrap();
+    assert_eq!(structure.ssbonds.len(), 1);
+    let bond = &structure.ssbonds[0];
+    for (chain, seq) in [
+        (&bond.chain1_id, bond.residue1_seq),
+        (&bond.chain2_id, bond.residue2_seq),
+    ] {
+        assert!(
+            structure
+                .atoms
+                .iter()
+                .any(|a| &a.chain_id == chain && a.residue_seq == seq && a.name == "SG"),
+            "no SG atom for {chain}{seq}"
+        );
+    }
 }
