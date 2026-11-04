@@ -215,17 +215,17 @@ disulf2 DISULF B CYS 4 ? 1_555 E CYS 4 ? 2_655 B CYS 24 E CYS 24 2.07
     let structure = parse_mmcif_string(mmcif_content).unwrap();
     assert_eq!(structure.ssbonds.len(), 2);
 
-    // Author numbering wins over label numbering when both are present.
+    // Label numbering wins, matching how `_atom_site` rows are converted.
     let bond1 = &structure.ssbonds[0];
     assert_eq!(bond1.serial, 1);
-    assert_eq!((bond1.chain1_id.as_str(), bond1.residue1_seq), ("B", 22));
-    assert_eq!((bond1.chain2_id.as_str(), bond1.residue2_seq), ("B", 30));
+    assert_eq!((bond1.chain1_id.as_str(), bond1.residue1_seq), ("B", 2));
+    assert_eq!((bond1.chain2_id.as_str(), bond1.residue2_seq), ("B", 9));
     assert_eq!((bond1.icode1, bond1.icode2), (None, Some('A')));
     assert!((bond1.length - 2.03).abs() < 1e-9);
 
     let bond2 = &structure.ssbonds[1];
     assert_eq!(bond2.serial, 2);
-    assert_eq!((bond2.chain2_id.as_str(), bond2.residue2_seq), ("E", 24));
+    assert_eq!((bond2.chain2_id.as_str(), bond2.residue2_seq), ("E", 4));
     assert_eq!((bond2.sym1, bond2.sym2), (1555, 2655));
     assert!((bond2.length - 2.07).abs() < 1e-9);
 }
@@ -1043,4 +1043,68 @@ fn test_write_mmcif_coordinate_precision() {
     assert!((atom.x - 123.457).abs() < 0.001);
     assert!((atom.y - (-987.654)).abs() < 0.001);
     assert!((atom.z - 0.001).abs() < 0.001);
+}
+
+/// When label and author numbering differ, disulfide partners must name the
+/// residues as they appear in `structure.atoms`.
+#[test]
+fn test_mmcif_disulfide_partners_match_parsed_atoms() {
+    let mmcif_content = r#"
+data_test
+loop_
+_atom_site.group_PDB
+_atom_site.id
+_atom_site.type_symbol
+_atom_site.label_atom_id
+_atom_site.label_alt_id
+_atom_site.label_comp_id
+_atom_site.label_asym_id
+_atom_site.label_entity_id
+_atom_site.label_seq_id
+_atom_site.pdbx_PDB_ins_code
+_atom_site.Cartn_x
+_atom_site.Cartn_y
+_atom_site.Cartn_z
+_atom_site.occupancy
+_atom_site.B_iso_or_equiv
+_atom_site.auth_seq_id
+_atom_site.auth_comp_id
+_atom_site.auth_asym_id
+_atom_site.auth_atom_id
+_atom_site.pdbx_PDB_model_num
+ATOM 1 S SG . CYS A 1 1 ? 0.000 0.000 0.000 1.00 10.00 22 CYS H SG 1
+ATOM 2 S SG . CYS A 1 7 ? 2.030 0.000 0.000 1.00 10.00 95 CYS H SG 1
+loop_
+_struct_conn.id
+_struct_conn.conn_type_id
+_struct_conn.ptnr1_label_asym_id
+_struct_conn.ptnr1_label_comp_id
+_struct_conn.ptnr1_label_seq_id
+_struct_conn.ptnr2_label_asym_id
+_struct_conn.ptnr2_label_comp_id
+_struct_conn.ptnr2_label_seq_id
+_struct_conn.ptnr1_auth_asym_id
+_struct_conn.ptnr1_auth_comp_id
+_struct_conn.ptnr1_auth_seq_id
+_struct_conn.ptnr2_auth_asym_id
+_struct_conn.ptnr2_auth_comp_id
+_struct_conn.ptnr2_auth_seq_id
+_struct_conn.pdbx_dist_value
+disulf1 disulf A CYS 1 A CYS 7 H CYS 22 H CYS 95 2.03
+"#;
+    let structure = parse_mmcif_string(mmcif_content).unwrap();
+    assert_eq!(structure.ssbonds.len(), 1);
+    let bond = &structure.ssbonds[0];
+    for (chain, seq) in [
+        (&bond.chain1_id, bond.residue1_seq),
+        (&bond.chain2_id, bond.residue2_seq),
+    ] {
+        assert!(
+            structure
+                .atoms
+                .iter()
+                .any(|a| &a.chain_id == chain && a.residue_seq == seq && a.name == "SG"),
+            "no SG atom for {chain}{seq}"
+        );
+    }
 }

@@ -438,8 +438,11 @@ struct DisulfidePartner {
 
 /// Builds an [`SSBond`] from one `_struct_disulfid` or `_struct_conn` row.
 ///
-/// Author chain/residue identifiers are preferred and label identifiers used
-/// when the author ones are absent. Returns `Ok(None)` when a partner cannot be
+/// Chain and residue identifiers follow the `_atom_site` conversion: label
+/// identifiers (`label_asym_id`, `label_seq_id`) are used so that the bond
+/// refers to residues as they appear in `structure.atoms`, and author
+/// identifiers are the fallback when a label one is absent (`_struct_disulfid`
+/// has only author columns; non-polymer residues have no `label_seq_id`). Returns `Ok(None)` when a partner cannot be
 /// identified (missing columns, or `?`/`.` values), and an error for a residue
 /// number that is present but not an integer. The serial is set by the caller.
 fn parse_disulfide_row(row: &[String], headers: &[String]) -> Result<Option<SSBond>, PdbError> {
@@ -449,8 +452,8 @@ fn parse_disulfide_row(row: &[String], headers: &[String]) -> Result<Option<SSBo
         (v != "?" && v != ".").then_some(v)
     };
     let id = |partner: u8, item: &str| {
-        value(&format!("ptnr{partner}_auth_{item}"))
-            .or_else(|| value(&format!("ptnr{partner}_label_{item}")))
+        value(&format!("ptnr{partner}_label_{item}"))
+            .or_else(|| value(&format!("ptnr{partner}_auth_{item}")))
     };
     let partner = |p: u8| -> Result<Option<DisulfidePartner>, PdbError> {
         let (Some(chain), Some(name), Some(seq)) =
