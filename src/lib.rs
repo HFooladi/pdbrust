@@ -190,7 +190,8 @@
 //! Modern dictionary-based format with support for:
 //! - `_atom_site` category (converted to ATOM records)
 //! - `_entity_poly_seq` category (converted to SEQRES records)
-//! - `_struct_disulfid` category (converted to SSBOND records)
+//! - `_struct_conn` disulfide rows (`conn_type_id` `disulf`) and the older
+//!   `_struct_disulfid` category (converted to SSBOND records)
 //! - Header and metadata information
 //!
 //! ## Examples

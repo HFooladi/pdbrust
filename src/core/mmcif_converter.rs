@@ -4,7 +4,7 @@ use crate::core::PdbStructure;
 use crate::core::mmcif::{Category, MmcifParser};
 use crate::error::PdbError;
 use crate::records::{Atom, Remark, SSBond, SeqRes};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 /// Converts mmCIF data to PdbStructure
 pub fn mmcif_to_pdb_structure(parser: &MmcifParser) -> Result<PdbStructure, PdbError> {
@@ -19,11 +19,8 @@ pub fn mmcif_to_pdb_structure(parser: &MmcifParser) -> Result<PdbStructure, PdbE
     // Parse sequence information from _entity_poly_seq
     parse_sequences(parser, &mut structure)?;
 
-    // Parse disulfide bonds from _struct_disulfid
+    // Parse disulfide bonds from _struct_conn and _struct_disulfid
     parse_disulfide_bonds(parser, &mut structure)?;
-
-    // Parse connectivity from _struct_conn
-    parse_connectivity(parser, &mut structure)?;
 
     // Parse remarks/comments
     parse_remarks(parser, &mut structure)?;
@@ -375,108 +372,134 @@ fn get_entity_to_chain_mapping(parser: &MmcifParser) -> HashMap<String, String> 
     mapping
 }
 
-/// Parse disulfide bonds from _struct_disulfid
+/// Parse disulfide bonds.
+///
+/// Two categories can hold them:
+/// - `_struct_conn` rows with `conn_type_id` `disulf`, which is where RCSB (and
+///   our own mmCIF writer) records them;
+/// - the older `_struct_disulfid` category.
+///
+/// A bond listed in both is kept once, and serials are numbered from 1.
 fn parse_disulfide_bonds(
     parser: &MmcifParser,
     structure: &mut PdbStructure,
 ) -> Result<(), PdbError> {
-    let struct_disulfid = match parser.get_category("struct_disulfid") {
-        Some(category) => category,
-        None => return Ok(()), // No disulfide bonds, not an error
-    };
+    let mut bonds = Vec::new();
 
-    for (serial, row) in struct_disulfid.rows.iter().enumerate() {
-        if let Some(ssbond) = parse_disulfide_row(row, &struct_disulfid.headers, serial as i32 + 1)?
-        {
-            structure.ssbonds.push(ssbond);
+    if let Some(struct_disulfid) = parser.get_category("struct_disulfid") {
+        for row in &struct_disulfid.rows {
+            if let Some(bond) = parse_disulfide_row(row, &struct_disulfid.headers)? {
+                bonds.push(bond);
+            }
+        }
+    }
+
+    if let Some(struct_conn) = parser.get_category("struct_conn") {
+        let conn_type = struct_conn.headers.iter().position(|h| h == "conn_type_id");
+        for row in &struct_conn.rows {
+            let is_disulfide = conn_type
+                .and_then(|i| row.get(i))
+                .is_some_and(|t| t.eq_ignore_ascii_case("disulf"));
+            if !is_disulfide {
+                continue;
+            }
+            if let Some(bond) = parse_disulfide_row(row, &struct_conn.headers)? {
+                bonds.push(bond);
+            }
+        }
+    }
+
+    let mut seen = HashSet::new();
+    for mut bond in bonds {
+        let end1 = (bond.chain1_id.clone(), bond.residue1_seq, bond.icode1);
+        let end2 = (bond.chain2_id.clone(), bond.residue2_seq, bond.icode2);
+        let key = if end1 <= end2 {
+            (end1, end2)
+        } else {
+            (end2, end1)
+        };
+        if seen.insert(key) {
+            bond.serial = structure.ssbonds.len() as i32 + 1;
+            structure.ssbonds.push(bond);
         }
     }
 
     Ok(())
 }
 
-fn parse_disulfide_row(
-    row: &[String],
-    headers: &[String],
-    serial: i32,
-) -> Result<Option<SSBond>, PdbError> {
-    let find_col = |name: &str| headers.iter().position(|h| h == name);
-
-    let ptnr1_auth_asym_id = find_col("ptnr1_auth_asym_id").and_then(|i| row.get(i));
-    let ptnr1_auth_comp_id = find_col("ptnr1_auth_comp_id").and_then(|i| row.get(i));
-    let ptnr1_auth_seq_id = find_col("ptnr1_auth_seq_id").and_then(|i| row.get(i));
-
-    let ptnr2_auth_asym_id = find_col("ptnr2_auth_asym_id").and_then(|i| row.get(i));
-    let ptnr2_auth_comp_id = find_col("ptnr2_auth_comp_id").and_then(|i| row.get(i));
-    let ptnr2_auth_seq_id = find_col("ptnr2_auth_seq_id").and_then(|i| row.get(i));
-
-    if let (
-        Some(chain1),
-        Some(res1_name),
-        Some(res1_seq),
-        Some(chain2),
-        Some(res2_name),
-        Some(res2_seq),
-    ) = (
-        ptnr1_auth_asym_id,
-        ptnr1_auth_comp_id,
-        ptnr1_auth_seq_id,
-        ptnr2_auth_asym_id,
-        ptnr2_auth_comp_id,
-        ptnr2_auth_seq_id,
-    ) {
-        let residue1_seq: i32 = res1_seq
-            .parse()
-            .map_err(|_| PdbError::ParseError(format!("Invalid residue sequence: {}", res1_seq)))?;
-        let residue2_seq: i32 = res2_seq
-            .parse()
-            .map_err(|_| PdbError::ParseError(format!("Invalid residue sequence: {}", res2_seq)))?;
-
-        // Try to get distance if available
-        let length = find_col("ptnr1_symmetry")
-            .and_then(|i| row.get(i))
-            .and_then(|s| s.parse().ok())
-            .unwrap_or(2.04); // Default S-S bond length
-
-        Ok(Some(SSBond {
-            serial,
-            residue1_name: res1_name.clone(),
-            chain1_id: chain1.clone(),
-            residue1_seq,
-            icode1: None, // mmCIF doesn't typically use insertion codes the same way
-            residue2_name: res2_name.clone(),
-            chain2_id: chain2.clone(),
-            residue2_seq,
-            icode2: None,
-            sym1: 1555, // Default symmetry
-            sym2: 1555,
-            length,
-        }))
-    } else {
-        Ok(None)
-    }
+/// One end of a disulfide bond as read from an mmCIF row.
+struct DisulfidePartner {
+    chain_id: String,
+    residue_name: String,
+    residue_seq: i32,
+    icode: Option<char>,
+    symmetry: i32,
 }
 
-/// Parse connectivity information from _struct_conn
-fn parse_connectivity(parser: &MmcifParser, _structure: &mut PdbStructure) -> Result<(), PdbError> {
-    let struct_conn = match parser.get_category("struct_conn") {
-        Some(category) => category,
-        None => return Ok(()), // No connectivity info, not an error
+/// Builds an [`SSBond`] from one `_struct_disulfid` or `_struct_conn` row.
+///
+/// Chain and residue identifiers follow the `_atom_site` conversion: label
+/// identifiers (`label_asym_id`, `label_seq_id`) are used so that the bond
+/// refers to residues as they appear in `structure.atoms`, and author
+/// identifiers are the fallback when a label one is absent (`_struct_disulfid`
+/// has only author columns; non-polymer residues have no `label_seq_id`). Returns `Ok(None)` when a partner cannot be
+/// identified (missing columns, or `?`/`.` values), and an error for a residue
+/// number that is present but not an integer. The serial is set by the caller.
+fn parse_disulfide_row(row: &[String], headers: &[String]) -> Result<Option<SSBond>, PdbError> {
+    let value = |name: &str| -> Option<&str> {
+        let i = headers.iter().position(|h| h == name)?;
+        let v = row.get(i)?.as_str();
+        (v != "?" && v != ".").then_some(v)
+    };
+    let id = |partner: u8, item: &str| {
+        value(&format!("ptnr{partner}_label_{item}"))
+            .or_else(|| value(&format!("ptnr{partner}_auth_{item}")))
+    };
+    let partner = |p: u8| -> Result<Option<DisulfidePartner>, PdbError> {
+        let (Some(chain), Some(name), Some(seq)) =
+            (id(p, "asym_id"), id(p, "comp_id"), id(p, "seq_id"))
+        else {
+            return Ok(None);
+        };
+        let seq: i32 = seq
+            .parse()
+            .map_err(|_| PdbError::ParseError(format!("Invalid residue sequence: {}", seq)))?;
+        let icode = value(&format!("pdbx_ptnr{p}_PDB_ins_code")).and_then(|s| s.chars().next());
+        // "1_555" -> 1555, the PDB SSBOND convention.
+        let sym = value(&format!("ptnr{p}_symmetry"))
+            .and_then(|s| s.replace('_', "").parse().ok())
+            .unwrap_or(1555);
+        Ok(Some(DisulfidePartner {
+            chain_id: chain.to_string(),
+            residue_name: name.to_string(),
+            residue_seq: seq,
+            icode,
+            symmetry: sym,
+        }))
     };
 
-    // This is more complex in mmCIF as connectivity can be of different types
-    // For now, we'll focus on covalent bonds that can be converted to CONECT records
-    // In a full implementation, you might want to filter by conn_type_id
+    let (Some(p1), Some(p2)) = (partner(1)?, partner(2)?) else {
+        return Ok(None);
+    };
+    let length = value("pdbx_dist_value")
+        .or_else(|| value("distance"))
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(2.04); // Typical S-S bond length
 
-    // Note: mmCIF connectivity is more complex than PDB CONECT records
-    // This is a simplified conversion
-    for _row in &struct_conn.rows {
-        // This would need more sophisticated parsing based on the specific
-        // mmCIF connectivity format requirements
-        // Left as a placeholder for now as it requires more detailed mmCIF specification knowledge
-    }
-
-    Ok(())
+    Ok(Some(SSBond {
+        serial: 0,
+        residue1_name: p1.residue_name,
+        chain1_id: p1.chain_id,
+        residue1_seq: p1.residue_seq,
+        icode1: p1.icode,
+        residue2_name: p2.residue_name,
+        chain2_id: p2.chain_id,
+        residue2_seq: p2.residue_seq,
+        icode2: p2.icode,
+        sym1: p1.symmetry,
+        sym2: p2.symmetry,
+        length,
+    }))
 }
 
 /// The first row's value of `category.field` if it is a number ("?" and "."
