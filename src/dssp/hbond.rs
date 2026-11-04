@@ -19,8 +19,9 @@ pub const HBOND_THRESHOLD: f64 = -0.5;
 /// This gives energy in kcal/mol when distances are in Angstroms.
 const ELECTROSTATIC_CONSTANT: f64 = 27.888;
 
-/// Standard bond length for N-H bond (Angstroms).
-const NH_BOND_LENGTH: f64 = 1.020;
+/// N-H distance used for the virtual amide hydrogen (Angstroms).
+/// Kabsch & Sander (and mkdssp) use 1.0 Å.
+const NH_BOND_LENGTH: f64 = 1.0;
 
 /// Maximum distance between C and N atoms to consider H-bond (Angstroms).
 /// This is an initial filter before computing the full energy.
@@ -143,10 +144,13 @@ fn normalize(v: &[f64; 3]) -> Option<[f64; 3]> {
 
 /// Computes a virtual hydrogen position for a residue.
 ///
-/// The virtual H is placed along the C-N bond of the peptide bond
-/// at the standard N-H bond length.
+/// Following Kabsch & Sander (and mkdssp), the amide H is placed
+/// 1.0 Å from N along the previous residue's O→C direction, so
+/// that N–H is antiparallel to the preceding C=O:
+/// `H = N + 1.0 Å · (C_prev − O_prev) / |C_prev − O_prev|`.
 ///
-/// For proline or the first residue in a chain, returns None.
+/// Returns None for proline, for the first residue in a chain, or when the
+/// previous residue lacks C or O.
 pub fn compute_virtual_hydrogen(
     backbone: &BackboneAtoms,
     prev_backbone: Option<&BackboneAtoms>,
@@ -157,18 +161,19 @@ pub fn compute_virtual_hydrogen(
     }
 
     let n = backbone.n?;
-    let prev_c = prev_backbone?.c?;
+    let prev = prev_backbone?;
+    let (prev_c, prev_o) = (prev.c?, prev.o?);
 
-    // Direction from C to N
-    let cn_dir = [n[0] - prev_c[0], n[1] - prev_c[1], n[2] - prev_c[2]];
+    let oc_dir = normalize(&[
+        prev_c[0] - prev_o[0],
+        prev_c[1] - prev_o[1],
+        prev_c[2] - prev_o[2],
+    ])?;
 
-    let cn_normalized = normalize(&cn_dir)?;
-
-    // H position: N + NH_BOND_LENGTH * normalized(C->N)
     Some([
-        n[0] + NH_BOND_LENGTH * cn_normalized[0],
-        n[1] + NH_BOND_LENGTH * cn_normalized[1],
-        n[2] + NH_BOND_LENGTH * cn_normalized[2],
+        n[0] + NH_BOND_LENGTH * oc_dir[0],
+        n[1] + NH_BOND_LENGTH * oc_dir[1],
+        n[2] + NH_BOND_LENGTH * oc_dir[2],
     ])
 }
 
@@ -264,29 +269,46 @@ pub fn extract_backbone_atoms(atoms: &[Atom]) -> Vec<BackboneAtoms> {
     residues
 }
 
+/// Maximum C(i-1)–N(i) distance for two residues to count as peptide-bonded
+/// (Angstroms), as in mkdssp.
+const MAX_PEPTIDE_BOND_LENGTH: f64 = 2.5;
+
+/// Whether `residues[i]` and `residues[i + 1]` are consecutive residues of one
+/// chain, i.e. there is no chain break between them.
+///
+/// Like mkdssp, a break is detected physically: the residues must share a
+/// chain and C(i)–N(i+1) must be at most 2.5 Å. If either atom is missing the
+/// residue numbering decides instead (consecutive or same number).
+pub fn residues_linked(residues: &[BackboneAtoms], i: usize) -> bool {
+    let (Some(a), Some(b)) = (residues.get(i), residues.get(i + 1)) else {
+        return false;
+    };
+    if a.chain_id != b.chain_id {
+        return false;
+    }
+    match (a.c, b.n) {
+        (Some(c), Some(n)) => distance(&c, &n) <= MAX_PEPTIDE_BOND_LENGTH,
+        _ => (0..=1).contains(&(b.residue_seq - a.residue_seq)),
+    }
+}
+
+/// Whether residues `from..=to` form one unbroken stretch of chain.
+pub fn no_chain_break(residues: &[BackboneAtoms], from: usize, to: usize) -> bool {
+    (from..to).all(|i| residues_linked(residues, i))
+}
+
 /// Computes virtual hydrogens for all residues where needed.
 ///
 /// Modifies the backbone atoms in place to add virtual H positions
 /// where explicit H is not present.
 pub fn compute_all_virtual_hydrogens(residues: &mut [BackboneAtoms]) {
     for i in 1..residues.len() {
-        // Only compute virtual H if no explicit H is present
-        if residues[i].h.is_some() {
+        // Only compute virtual H if no explicit H is present, and only when
+        // the previous residue is peptide-bonded to this one.
+        if residues[i].h.is_some() || !residues_linked(residues, i - 1) {
             continue;
         }
 
-        // Check if this residue is on the same chain as the previous
-        if residues[i].chain_id != residues[i - 1].chain_id {
-            continue;
-        }
-
-        // Check for sequence continuity (allow for insertion codes)
-        let seq_diff = residues[i].residue_seq - residues[i - 1].residue_seq;
-        if seq_diff > 1 {
-            continue; // Chain break
-        }
-
-        // Compute virtual H
         let prev = &residues[i - 1];
         if let Some(virtual_h) = compute_virtual_hydrogen(&residues[i], Some(prev)) {
             residues[i].h = Some(virtual_h);
@@ -380,6 +402,32 @@ mod tests {
 
         let proline = BackboneAtoms::new("A".to_string(), 2, "PRO".to_string(), None);
         assert!(proline.is_proline());
+    }
+
+    #[test]
+    fn test_virtual_hydrogen_is_antiparallel_to_previous_carbonyl() {
+        // Kabsch & Sander: H = N + unit(C_prev - O_prev), i.e. N-H points
+        // opposite to the previous residue's C=O, 1.0 A from N.
+        let mut prev = BackboneAtoms::new("A".to_string(), 1, "ALA".to_string(), None);
+        prev.c = Some([0.0, 0.0, 0.0]);
+        prev.o = Some([0.0, 1.23, 0.0]);
+        let mut cur = BackboneAtoms::new("A".to_string(), 2, "GLY".to_string(), None);
+        cur.n = Some([1.33, 0.0, 0.0]);
+
+        let h = compute_virtual_hydrogen(&cur, Some(&prev)).unwrap();
+        let expected = [1.33, -1.0, 0.0];
+        for k in 0..3 {
+            assert!((h[k] - expected[k]).abs() < 1e-9, "H = {h:?}");
+        }
+    }
+
+    #[test]
+    fn test_virtual_hydrogen_needs_previous_carbonyl_oxygen() {
+        let mut prev = BackboneAtoms::new("A".to_string(), 1, "ALA".to_string(), None);
+        prev.c = Some([0.0, 0.0, 0.0]);
+        let mut cur = BackboneAtoms::new("A".to_string(), 2, "GLY".to_string(), None);
+        cur.n = Some([1.33, 0.0, 0.0]);
+        assert!(compute_virtual_hydrogen(&cur, Some(&prev)).is_none());
     }
 
     #[test]

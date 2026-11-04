@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Secondary structure (DSSP) now agrees with mkdssp.** On 40 PDB entries, per-residue agreement with mkdssp 4.6.1 rose from 62.0 % to 99.5 % (three states) and from 54.5 % to 97.6 % (all eight codes); no entry got worse. Before, β-sheets were often missed entirely (crambin, 1CRN, had none) and spurious π-helices were reported. Fixes:
+  - The virtual amide hydrogen is placed along the previous residue's C=O direction (Kabsch & Sander), not along the C→N bond.
+  - β-bridge patterns: the second antiparallel pattern was missing (its place taken by shifted copies of the first, which paired the wrong residues), and both parallel patterns tested the H-bonds in the wrong direction.
+  - Helices need two consecutive n-turns and start one residue after the first turn; single turns are T, not G. Turns cover the residues inside the turn.
+  - Beta ladders are joined across β-bulges, and the mkdssp precedence of E/B, H, G and I is followed.
+  - Chain breaks are detected from the C–N peptide-bond distance (2.5 Å), as in mkdssp.
+- **Backbone H-bond network (`mainchain_hbonds`) uses the corrected hydrogen position.** It now recovers 99.5 % of the backbone H-bonds mkdssp reports (54.6 % before), with a median energy difference of 0.03 kcal/mol (1.14 before). Expect substantially more H-bonds than 0.7.1 reported.
+
 ## [0.7.1] - 2026-09-16
 
 A hardening release: it fixes bugs that could crash the parser or silently give wrong results when reading and writing PDB and mmCIF files. The Rust API has no breaking changes. Three changes can affect existing code:

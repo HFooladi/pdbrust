@@ -5,7 +5,7 @@
 #![cfg(feature = "dssp")]
 
 use pdbrust::dssp::{SecondaryStructure, SecondaryStructureAssignment};
-use pdbrust::{PdbStructure, parse_mmcif_file, parse_pdb_file};
+use pdbrust::{PdbStructure, parse_mmcif_file, parse_pdb_file, parse_structure_file};
 use std::path::PathBuf;
 
 fn get_test_file(name: &str) -> PathBuf {
@@ -69,6 +69,101 @@ fn test_dssp_1crn_mmcif() {
     for c in ss_string.chars() {
         assert!("HGIPEBTSC".contains(c), "Invalid SS code: {}", c);
     }
+}
+
+/// Crambin's secondary structure as assigned by PDBe: helices 7-17 and 23-30,
+/// a 3-10 helix at 42-44, and a two-stranded antiparallel sheet 2-3 / 33-34.
+#[test]
+fn test_dssp_1crn_matches_reference_assignment() {
+    let structure = parse_mmcif_file(get_test_file("1CRN.cif")).expect("Failed to parse 1CRN.cif");
+    let ss = structure.assign_secondary_structure();
+    let code = |seq: i32| {
+        ss.residue_assignments
+            .iter()
+            .find(|r| r.residue_seq == seq)
+            .map(|r| r.ss)
+            .unwrap()
+    };
+    let codes = ss.as_codes();
+
+    for seq in [2, 3, 33, 34] {
+        assert!(
+            code(seq).is_sheet(),
+            "residue {seq} should be in the sheet: {codes}"
+        );
+    }
+    for seq in (7..=17).chain(23..=30) {
+        assert_eq!(
+            code(seq),
+            SecondaryStructure::AlphaHelix,
+            "residue {seq}: {codes}"
+        );
+    }
+    for seq in 42..=44 {
+        assert_eq!(
+            code(seq),
+            SecondaryStructure::Helix310,
+            "residue {seq}: {codes}"
+        );
+    }
+    assert!(!codes.contains('I'), "no pi-helix expected: {codes}");
+    assert!(ss.sheet_fraction > 0.0);
+}
+
+/// Amino-acid residues' codes, in order (ligands and water excluded).
+fn protein_codes(structure: &PdbStructure) -> String {
+    const AA: [&str; 20] = [
+        "ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS", "ILE", "LEU", "LYS", "MET",
+        "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL",
+    ];
+    structure
+        .assign_secondary_structure()
+        .residue_assignments
+        .iter()
+        .filter(|r| AA.contains(&r.residue_name.as_str()))
+        .map(|r| r.ss.code())
+        .collect()
+}
+
+/// Collapses DSSP codes to three states: helix (H, G, I), strand (E, B), other.
+fn three_state(codes: &str) -> String {
+    codes
+        .chars()
+        .map(|c| match c {
+            'H' | 'G' | 'I' => 'H',
+            'E' | 'B' => 'E',
+            _ => 'C',
+        })
+        .collect()
+}
+
+/// Reference strings from mkdssp 4.6.1 run on the same files (blank → C).
+#[test]
+fn test_dssp_matches_mkdssp_reference() {
+    let cases = [
+        ("1CRN.cif", "CEECSSHHHHHHHHHHHTTTCCHHHHHHHHSCEECSSSCCCGGGCC"),
+        (
+            "2GB1.cif",
+            "CEEEEEECCSSCCEEEEEECSSHHHHHHHHHHHHHTTTCCSEEEEETTTTEEEEEC",
+        ),
+        (
+            "1HSG.pdb",
+            "CEECSSSCCEEEEEETTEEEEEEECTTCSSCEEESCCCSSCCEEEEEEETTEEEEEEEEEEEEEEETTEEEEEEEEEESCSSCEECHHHHTTTTCEEECCEECSSSCCEEEEEETTEEEEEEECTTCSSCEESSCCCSSCCEEEEEECSSCEEEEEEEEEEEEEETTEEEEEEEEESCCSSCEECHHHHTTTTCEEEC",
+        ),
+    ];
+    for (file, expected) in cases {
+        let structure = parse_structure_file(get_test_file(file)).unwrap();
+        assert_eq!(protein_codes(&structure), expected, "{file}");
+    }
+}
+
+/// 1UBQ agrees with mkdssp in three states; the only 8-state differences are
+/// polyproline (P) residues.
+#[test]
+fn test_dssp_1ubq_matches_mkdssp_three_state() {
+    let mkdssp = "CEEEEEETTSCEEEEECCTTSBHHHHHHHHHHHHCCCGGGEEEEETTEEPPTTSBTGGGTPPTTCEEEEEECCSCC";
+    let structure = parse_pdb_file(get_test_file("1UBQ.pdb")).unwrap();
+    assert_eq!(three_state(&protein_codes(&structure)), three_state(mkdssp));
 }
 
 #[test]

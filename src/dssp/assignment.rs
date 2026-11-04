@@ -1,12 +1,14 @@
 //! Main DSSP secondary structure assignment algorithm.
 //!
-//! This module implements the complete DSSP 4 algorithm:
+//! This module implements the DSSP 4 algorithm, following mkdssp's rules
+//! and precedence:
 //! 1. Extract backbone atoms
-//! 2. Compute virtual hydrogens where needed
+//! 2. Compute virtual hydrogens where needed (H = N + unit(C_prev − O_prev))
 //! 3. Detect hydrogen bonds using Kabsch-Sander energy
-//! 4. Identify helix patterns (H, G, I)
-//! 5. Identify beta-sheet patterns (E, B)
-//! 6. Detect turns (T) and bends (S)
+//! 4. Identify beta bridges and ladders, joined across beta-bulges (E, B)
+//! 5. Identify helices from consecutive n-turns: α (H), then 3₁₀ (G) and
+//!    π (I) where free; π may replace α, as in DSSP 4
+//! 6. Detect turns (T) and bends (S) in the remaining coil
 //! 7. Detect PPII/κ-helix (P) in coil regions
 //! 8. Assign coil (C) to remaining residues
 
@@ -16,8 +18,8 @@ use super::hbond::{
     extract_backbone_atoms,
 };
 use super::patterns::{
-    HelixType, detect_bends, detect_beta_bridges, detect_helix_patterns, detect_n_turns,
-    detect_ppii_regions, group_bridges_into_ladders,
+    HelixType, detect_bends, detect_beta_bridges, detect_helix_starts, detect_ppii_regions,
+    group_bridges_into_ladders,
 };
 use super::types::{ResidueSSAssignment, SecondaryStructure, SecondaryStructureAssignment};
 use crate::records::Atom;
@@ -80,35 +82,26 @@ pub fn assign_secondary_structure(atoms: &[Atom]) -> SecondaryStructureAssignmen
     // Initialize all residues to Coil
     let mut assignments = vec![SecondaryStructure::Coil; num_residues];
 
-    // Step 5: Detect and assign helices (priority: α > π > 3₁₀)
-    // Higher priority helices can override lower priority ones
-    assign_helices(
-        &mut assignments,
-        &hbond_matrix,
-        num_residues,
-        &residues,
-        HelixType::Alpha,
-    );
-    assign_helices(
-        &mut assignments,
-        &hbond_matrix,
-        num_residues,
-        &residues,
-        HelixType::Pi,
-    );
-    assign_helices(
-        &mut assignments,
-        &hbond_matrix,
-        num_residues,
-        &residues,
-        HelixType::Helix310,
-    );
-
-    // Step 6: Detect and assign beta-sheets
+    // Steps 5-7 follow mkdssp's order and precedence:
+    // E/B first, then H (which may replace them), then G and I only where the
+    // residues are still free (I may also replace H, as in DSSP 4), then T.
     assign_beta_structures(&mut assignments, &hbond_matrix, num_residues, &residues);
 
-    // Step 7: Detect and assign turns
-    assign_turns(&mut assignments, &hbond_matrix, num_residues, &residues);
+    let starts = |n| detect_helix_starts(n, &hbond_matrix, &residues);
+    let (starts3, starts4, starts5) = (starts(3), starts(4), starts(5));
+
+    assign_helices(&mut assignments, &starts4, HelixType::Alpha, |_| true);
+    assign_helices(&mut assignments, &starts3, HelixType::Helix310, |ss| {
+        matches!(ss, SecondaryStructure::Coil | SecondaryStructure::Helix310)
+    });
+    assign_helices(&mut assignments, &starts5, HelixType::Pi, |ss| {
+        matches!(
+            ss,
+            SecondaryStructure::Coil | SecondaryStructure::PiHelix | SecondaryStructure::AlphaHelix
+        )
+    });
+
+    assign_turns(&mut assignments, [&starts3, &starts4, &starts5]);
 
     // Step 8: Detect and assign bends
     assign_bends(&mut assignments, &residues);
@@ -131,33 +124,25 @@ pub fn assign_secondary_structure(atoms: &[Atom]) -> SecondaryStructureAssignmen
     result
 }
 
-/// Assigns helix secondary structure based on detected patterns.
-#[allow(clippy::needless_range_loop)]
+/// Assigns a helix type from n-turn start flags (DSSP rule).
+///
+/// Two consecutive n-turns starting at i-1 and i make residues i..i+n-1 a
+/// helix, provided `can_replace` accepts every residue currently there.
 fn assign_helices(
     assignments: &mut [SecondaryStructure],
-    hbond_matrix: &std::collections::HashMap<(usize, usize), f64>,
-    num_residues: usize,
-    residues: &[BackboneAtoms],
+    starts: &[bool],
     helix_type: HelixType,
+    can_replace: impl Fn(SecondaryStructure) -> bool,
 ) {
-    let segments = detect_helix_patterns(helix_type, hbond_matrix, num_residues, residues);
+    let n = helix_type.offset();
     let ss = helix_type.to_secondary_structure();
-
-    for segment in segments {
-        for i in segment.start..=segment.end.min(num_residues - 1) {
-            // Only assign if current assignment is Coil or a lower-priority helix
-            match assignments[i] {
-                SecondaryStructure::Coil | SecondaryStructure::Turn | SecondaryStructure::Bend => {
-                    assignments[i] = ss;
-                }
-                // α and π helices override 3₁₀
-                SecondaryStructure::Helix310 if helix_type != HelixType::Helix310 => {
-                    assignments[i] = ss;
-                }
-                _ => {
-                    // Don't override existing assignments
-                }
-            }
+    for i in 1..starts.len() {
+        if !(starts[i - 1] && starts[i]) || i + n > assignments.len() {
+            continue;
+        }
+        let span = i..i + n;
+        if assignments[span.clone()].iter().all(|&s| can_replace(s)) {
+            assignments[span].fill(ss);
         }
     }
 }
@@ -170,57 +155,40 @@ fn assign_beta_structures(
     residues: &[BackboneAtoms],
 ) {
     let bridges = detect_beta_bridges(hbond_matrix, num_residues, residues);
-    let ladders = group_bridges_into_ladders(&bridges);
+    let ladders = group_bridges_into_ladders(&bridges, residues);
 
-    // Assign E (extended strand) for residues in ladders with >1 bridge
-    // Assign B (isolated bridge) for single bridges
+    // A ladder with more than one bridge (including bulge-joined ladders)
+    // makes every residue across both strands E; a lone bridge is B.
     for ladder in &ladders {
-        let is_ladder = ladder.bridges.len() > 1;
-
-        for bridge in &ladder.bridges {
-            let ss = if is_ladder {
-                SecondaryStructure::ExtendedStrand
-            } else {
-                SecondaryStructure::BetaBridge
-            };
-
-            // Only assign if not already assigned to helix
-            if !assignments[bridge.residue1].is_helix() {
-                assignments[bridge.residue1] = ss;
-            }
-            if !assignments[bridge.residue2].is_helix() {
-                assignments[bridge.residue2] = ss;
+        let ss = if ladder.bridge_count() > 1 {
+            SecondaryStructure::ExtendedStrand
+        } else {
+            SecondaryStructure::BetaBridge
+        };
+        let (i_first, i_last) = ladder.i_span();
+        let (j_first, j_last) = ladder.j_span();
+        for r in (i_first..=i_last).chain(j_first..=j_last) {
+            // A residue in a ladder stays E even if it also has an isolated bridge.
+            if assignments[r] != SecondaryStructure::ExtendedStrand {
+                assignments[r] = ss;
             }
         }
     }
 }
 
-/// Assigns turn secondary structure.
-fn assign_turns(
-    assignments: &mut [SecondaryStructure],
-    hbond_matrix: &std::collections::HashMap<(usize, usize), f64>,
-    num_residues: usize,
-    residues: &[BackboneAtoms],
-) {
-    // Detect turns of length 3, 4, and 5
-    for n in [3, 4, 5] {
-        let turns = detect_n_turns(n, hbond_matrix, num_residues);
-
-        for i in 0..num_residues {
-            if turns[i] {
-                // Assign T to residues in the turn (i to i+n-1)
-                for j in i..(i + n).min(num_residues) {
-                    // Check chain continuity
-                    if j < residues.len() && residues[j].chain_id != residues[i].chain_id {
-                        break;
-                    }
-
-                    // Only assign if currently Coil
-                    if assignments[j] == SecondaryStructure::Coil {
-                        assignments[j] = SecondaryStructure::Turn;
-                    }
-                }
-            }
+/// Assigns turns (T): a residue still in coil lies inside an n-turn, i.e. an
+/// n-turn starts at one of the n-1 residues before it.
+fn assign_turns(assignments: &mut [SecondaryStructure], starts: [&Vec<bool>; 3]) {
+    for i in 0..assignments.len() {
+        if assignments[i] != SecondaryStructure::Coil {
+            continue;
+        }
+        let in_turn = starts
+            .iter()
+            .zip(3..=5usize)
+            .any(|(flags, n)| (1..n).any(|k| i >= k && flags[i - k]));
+        if in_turn {
+            assignments[i] = SecondaryStructure::Turn;
         }
     }
 }
@@ -257,6 +225,36 @@ fn assign_ppii(assignments: &mut [SecondaryStructure], dihedrals: &[BackboneDihe
 mod tests {
     use super::*;
     use crate::records::Atom;
+
+    fn flags(len: usize, at: &[usize]) -> Vec<bool> {
+        (0..len).map(|i| at.contains(&i)).collect()
+    }
+
+    #[test]
+    fn test_helix_needs_two_consecutive_turns() {
+        // 4-turns starting at 2 and 3 make residues 3..=6 an alpha helix.
+        let mut ss = vec![SecondaryStructure::Coil; 12];
+        assign_helices(&mut ss, &flags(12, &[2, 3]), HelixType::Alpha, |_| true);
+        let helix: Vec<usize> = (0..12).filter(|&i| ss[i].is_helix()).collect();
+        assert_eq!(helix, vec![3, 4, 5, 6]);
+
+        // A single turn is not a helix.
+        let mut ss = vec![SecondaryStructure::Coil; 12];
+        assign_helices(&mut ss, &flags(12, &[2]), HelixType::Alpha, |_| true);
+        assert!(ss.iter().all(|s| *s == SecondaryStructure::Coil));
+    }
+
+    #[test]
+    fn test_turn_covers_residues_inside_the_turn() {
+        // A single 4-turn starting at 2 marks residues 3, 4 and 5 as T.
+        let mut ss = vec![SecondaryStructure::Coil; 12];
+        let none = flags(12, &[]);
+        assign_turns(&mut ss, [&none, &flags(12, &[2]), &none]);
+        let turn: Vec<usize> = (0..12)
+            .filter(|&i| ss[i] == SecondaryStructure::Turn)
+            .collect();
+        assert_eq!(turn, vec![3, 4, 5]);
+    }
 
     #[allow(clippy::too_many_arguments)]
     fn create_test_atom(
